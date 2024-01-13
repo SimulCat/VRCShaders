@@ -1,2 +1,2 @@
 # Shaders
-Unity shaders used to create wave interference patterns in VRC worlds
+Lightweight Unity shaders I used to create wave interference patterns in VRC Worlds that use the quest
