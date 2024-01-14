@@ -46,7 +46,24 @@ ExportedObj/
 *.mdb
 *.opendb
 *.VC.db
+# VRC Project stuff
+#Custom shader
+/[Aa]ssets/Shader/
+# Stock skyboxes
+/[Aa]ssets/Allsky/
+# Video
+/[Aa]ssets/ArchiTech/
+/[Aa]ssets/AVProVideo/
+# Cyan
+/[Aa]ssets/Samples/CyanTrigger/
+/[Aa]ssets/CyanTrigger/
+/[Aa]ssets/StreamingAssets/
+/[Aa]ssets/Samples/
+/[Aa]ssets/VRClib/Fonts/*
 
+/[Aa]ssets/Grids & Nets textures pack/
+/[Aa]ssets/Sand textures pack/
+/[Aa]ssets/SerializedUdonPrograms/
 # Unity3D generated meta files
 *.pidb.meta
 *.pdb.meta
