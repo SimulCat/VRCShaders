@@ -8,7 +8,7 @@ Shader"Phase/Static"
         _LeftPx("Left Edge",float) = 50
         _NumSources("Num Sources",float) = 2
         _SlitPitchPx("Slit Pitch",float) = 448
-        _SlitWidePx("Slit Width", Range(1.0,40.0)) = 12.0
+        _SlitWidePx("Slit Width", Range(1.0,80.0)) = 12.0
         _Color("Colour Wave", color) = (1, 1, 0, 0)
         _ColorNeg("Colour Base", color) = (0, 0.3, 1, 0)
         _ColorVel("Colour Velocity", color) = (0, 0.3, 1, 0)

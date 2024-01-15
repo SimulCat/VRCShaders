@@ -2,8 +2,8 @@ Shader "Phase/Demo Opaque"
 {
     Properties
     {
-        _MainTex ("Texture", 2D) = "white" {}
-
+        _MainTex ("Idle Texture", 2D) = "white" {}
+        _IdleShade ("Idle Shade",color) = (0.5,0.5,0.5,1)
         _LambdaPx("Lambda Pixels", float) = 49.64285714
         _LeftPx("Left Edge",float) = 50
         _NumSources("Num Sources",float) = 2
@@ -14,6 +14,7 @@ Shader "Phase/Demo Opaque"
         _ColorVel("Colour Velocity", color) = (0, 0.3, 1, 0)
         _ColorFlow("Colour Flow", color) = (1, 0.3, 0, 0)
         _DisplayMode("Display Mode", float) = 0
+        _PhaseSpeed("Animation Speed", float) = 0
         _Scale("Simulation Scale",Range(1.0,10.0)) = 1
 
     }
@@ -43,9 +44,10 @@ Shader "Phase/Demo Opaque"
             };
 
             sampler2D _MainTex;
+            float4 _IdleShade;
             float4 _MainTex_ST;
             float4 _MainTex_TexelSize;
-            
+
             float _LambdaPx;
             float _LeftPx;
             int _NumSources;
@@ -56,6 +58,7 @@ Shader "Phase/Demo Opaque"
             float4 _ColorVel;
             float4 _ColorFlow;
             float _DisplayMode;
+            float _PhaseSpeed;
             float _Scale;
             static const float Tau = 6.28318531f;
             static const float PI = 3.14159265f;
@@ -65,7 +68,7 @@ Shader "Phase/Demo Opaque"
             {
                 float rPixels = length(delta);
                 float rLambda = rPixels / _LambdaPx;
-                float tphi = 1 -frac(_Time.y * (lambdaNominal / _LambdaPx));
+                float tphi = 1 - frac(_PhaseSpeed * _Time.y);
                 float rPhi = (rLambda + tphi) * Tau;
                 float amp = _Scale * _LambdaPx / max(_LambdaPx, rPixels);
                 float2 result = float2(cos(rPhi), sin(rPhi));
@@ -83,7 +86,14 @@ Shader "Phase/Demo Opaque"
             fixed4 frag (v2f i) : SV_Target
             {
                 // sample the texture
-                fixed4 col = tex2D(_MainTex, i.uv);
+                fixed4 col = _IdleShade;
+                if (_DisplayMode < 0)
+                {
+                    fixed4 sample = tex2D(_MainTex, i.uv);
+                    col *= sample;
+                    col.a = sample.r * _IdleShade.a;
+                    return col;
+                }
                 float2 pos = i.uv;
                 float xPos = i.uv.x * _MainTex_TexelSize.z;
                 float yPos = i.uv.y * _MainTex_TexelSize.w;
