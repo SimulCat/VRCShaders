@@ -1,4 +1,4 @@
-Shader"Phase/Demo"
+Shader "Phase/Demo Opaque"
 {
     Properties
     {
@@ -6,9 +6,10 @@ Shader"Phase/Demo"
         _IdleShade ("Idle Shade",color) = (0.5,0.5,0.5,1)
         _LambdaPx("Lambda Pixels", float) = 49.64285714
         _LeftPx("Left Edge",float) = 50
+        _TopBotMargin("Margin Top/Bottom", float) = 0
         _NumSources("Num Sources",float) = 2
         _SlitPitchPx("Slit Pitch",float) = 448
-        _SlitWidePx("Slit Width", Range(1.0,80.0)) = 12.0
+        _SlitWidePx("Slit Width", Range(1.0,40.0)) = 12.0
         _Color("Colour Wave", color) = (1, 1, 0, 0)
         _ColorNeg("Colour Base", color) = (0, 0.3, 1, 0)
         _ColorVel("Colour Velocity", color) = (0, 0.3, 1, 0)
@@ -20,10 +21,7 @@ Shader"Phase/Demo"
     }
     SubShader
     {
-        Tags {"Queue"="Transparent" "IgnoreProjector"="True" "RenderType"="Transparent"}
-        ZWrite Off
-        Blend SrcAlpha
-        OneMinusSrcAlpha
+        Tags {"RenderType"="Opaque"}
         LOD 100
 
         Pass
@@ -31,7 +29,6 @@ Shader"Phase/Demo"
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-            // make fog work
 
             #include "UnityCG.cginc"
 
@@ -54,6 +51,7 @@ Shader"Phase/Demo"
 
             float _LambdaPx;
             float _LeftPx;
+            float _TopBotMargin;
             int _NumSources;
             float _SlitPitchPx;
             float _SlitWidePx;
@@ -87,9 +85,9 @@ Shader"Phase/Demo"
                 return o;
             }
 
-            fixed4 frag(v2f i) : SV_Target
+            fixed4 frag (v2f i) : SV_Target
             {
-                            // sample the texture
+                // sample the texture
                 fixed4 col = _IdleShade;
                 if (_DisplayMode < 0)
                 {
@@ -101,7 +99,7 @@ Shader"Phase/Demo"
                 float2 pos = i.uv;
                 float xPos = i.uv.x * _MainTex_TexelSize.z;
                 float yPos = i.uv.y * _MainTex_TexelSize.w;
-                bool isInMargin = (xPos >= _LeftPx);
+                bool isInMargin = (xPos >= _LeftPx) && (yPos >= _TopBotMargin) && (yPos <= _MainTex_TexelSize.w - _TopBotMargin);
                 float2 phasor = float2(0, 0);
                 int slitWidthCount = (int) (max(1.0, _SlitWidePx));
                 int sourceCount = round(_NumSources);
@@ -138,7 +136,7 @@ Shader"Phase/Demo"
                             col = lerp(_ColorNeg, _Color, alpha);
                             alpha = (alpha + 1);
                         }
-                        col.a = clamp(alpha, 0.3, 1); //      alpha;
+                        col.a = clamp(alpha, 0.2, 1); //      alpha;
                     }
                     else if (_DisplayMode < 3.9)
                     {
@@ -153,18 +151,18 @@ Shader"Phase/Demo"
                             col = lerp(_ColorNeg, _ColorVel, alpha);
                             alpha = (alpha + 1);
                         }
-                        col.a = clamp(alpha, 0.3, 1);
+                        col.a = clamp(alpha, 0.2, 1);
                     }
                     else
                     {
                         alpha = (phasor.x * phasor.x) + (phasor.y * phasor.y);
                         col = lerp(_ColorNeg, _ColorFlow, alpha);
-                        col.a = clamp(alpha, 0.3, 1);
+                        col.a = clamp(alpha, 0.2, 1);
                     }
                 }
                 else
                 {
-                    col = _ColorNeg ;
+                    col = _ColorNeg;
                     col.a = 0.33;
                 }
                 return col;
