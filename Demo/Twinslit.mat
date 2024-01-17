@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Twinslit
-  m_Shader: {fileID: 4800000, guid: 22f8e4f86f044b24ba8d27e76d8e0d34, type: 3}
+  m_Shader: {fileID: 4800000, guid: 6b4e6b2e154cd25488855c6df089e0ce, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -84,8 +84,11 @@ Material:
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
+    - _TopBotMargin: 0
     - _UVSec: 0
     - _ZWrite: 1
+    - _mmHigh: 1000
+    - _mmWide: 2000
     m_Colors:
     - _Color: {r: 1, g: 0.19607843, b: 0, a: 0}
     - _ColorFlow: {r: 0, g: 0.36008072, b: 1, a: 0}
