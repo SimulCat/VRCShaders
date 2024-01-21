@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: GUI Panel
+  m_Name: GUI PanelQ
   m_Shader: {fileID: 4800000, guid: 5f8fef09682fab74fb7a29d783391edb, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0

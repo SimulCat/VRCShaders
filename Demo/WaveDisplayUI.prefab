@@ -2389,7 +2389,8 @@ MonoBehaviour:
   thePanel: {fileID: 0}
   speedSlider: {fileID: 5069859427971716785}
   speedPtr: 0
-  waveSpeed: 2
+  waveSpeed: 1
+  defaultSpeed: 1
   togPlay: {fileID: 8572109506217550539}
   playSim: 1
   displayMode: 0
@@ -2406,7 +2407,6 @@ MonoBehaviour:
   scalePtr: 0
   defaultScale: 1
   simScale: 1
-  panelPixels: {x: 2048, y: 1024}
 --- !u!114 &3741908286090499144
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3348,7 +3348,7 @@ PrefabInstance:
     - target: {fileID: 1800714333880337000, guid: 51d25fdc17a58f9418ea473222346b10,
         type: 3}
       propertyPath: maxValue
-      value: 5
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 1800714333880337000, guid: 51d25fdc17a58f9418ea473222346b10,
         type: 3}
@@ -3363,7 +3363,7 @@ PrefabInstance:
     - target: {fileID: 1800714333880337000, guid: 51d25fdc17a58f9418ea473222346b10,
         type: 3}
       propertyPath: currentValue
-      value: 2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1800714333880337000, guid: 51d25fdc17a58f9418ea473222346b10,
         type: 3}
@@ -3519,12 +3519,12 @@ PrefabInstance:
     - target: {fileID: 7179628168701101645, guid: 51d25fdc17a58f9418ea473222346b10,
         type: 3}
       propertyPath: m_Value
-      value: 2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7179628168701101645, guid: 51d25fdc17a58f9418ea473222346b10,
         type: 3}
       propertyPath: m_MaxValue
-      value: 5
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 7179628168701101645, guid: 51d25fdc17a58f9418ea473222346b10,
         type: 3}
