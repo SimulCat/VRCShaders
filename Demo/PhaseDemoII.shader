@@ -84,11 +84,11 @@ Shader"Phase/Demo (No Texture)"
 
             fixed4 frag(v2f i) : SV_Target
             {
-                fixed4 col = (0, 0, 0, 1);
+                fixed4 col = fixed4(0, 0, 0, 1);
                 float2 phasor = float2(0, 0);
                 int slitWidthCount = (int) (max(1.0, _SlitWidePx));
                 int sourceCount = round(_NumSources);
-                float sourceY = ((_NumSources - 1) * +_SlitPitchPx) * 0.5 + (_SlitWidePx * 0.25);
+                float sourceY = ((_NumSources - 1) * _SlitPitchPx) * 0.5 + (_SlitWidePx * 0.25);
                 float2 delta = float2(i.pos.x * _Scale, 0.0);
                 float yScaled = (i.pos.y - _mmHigh / 2.0) * _Scale;
                 for (int nAperture = 0; nAperture < sourceCount; nAperture++)
