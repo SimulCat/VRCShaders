@@ -21,9 +21,9 @@ Shader"Phase/Demo (No Texture)"
     {
         Tags {"Queue"="Transparent" "IgnoreProjector"="True" "RenderType"="Transparent"}
         ZWrite Off
-        Blend SrcAlpha
-        OneMinusSrcAlpha
+        Blend SrcAlpha OneMinusSrcAlpha
         LOD 100
+        Cull Off
 
         Pass
         {
