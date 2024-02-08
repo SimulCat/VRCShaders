@@ -10,53 +10,68 @@ public class CRTWaveDemo : UdonSharpBehaviour
 {
     [SerializeField, Tooltip("Custom Render texture")]
     private CustomRenderTexture simCRT;
-    [SerializeField, Tooltip("Use Render texture mode")] bool useCRT = false;
-    [Tooltip("CRT Material")] public Material matCRT = null;
-    [Tooltip("Display Panel")] public MeshRenderer thePanel;
-    private Material matDisplay = null;
-    [Tooltip("Display CRT Passive Material")] public Material matPassive = null;
-    [Tooltip("Display CRT Active Material")] public Material matActive = null;
-    [SerializeField] public bool playPhase = false;
-    [SerializeField] private bool updateNeeded = false;
     
-    [SerializeField,FieldChangeCallback(nameof(DisplayOnStatic)) ] public bool displayOnStatic = false;
+    [SerializeField, Tooltip("Display Panel")]
+    private MeshRenderer thePanel;
+    
+    [SerializeField] private bool playPhase = false;
+    
     [SerializeField,Tooltip("Texture update interval (Passive Phase)"),Range(0.01f, 0.2f)] float dt = 0.1f;
+    
+    [Header("Serialized for monitoring in Editor")]
+    [SerializeField]
+    private Material matPanel = null;
+    [SerializeField]
+    private Material matCRT = null;
+    [SerializeField]
+    private Material matDisplayControl = null;
+    [SerializeField, Tooltip("Check to invoke CRT Update")] 
+    private bool crtUpdateNeeded = false;
+    [SerializeField]
+    private bool iHaveCRT = false;
+    [SerializeField]
+    private bool iHaveCrtMaterial = false;
+    [SerializeField]
+    private bool iHavePanelMaterial = false;
+    [SerializeField]
+    private bool iHaveDisplayControl = false;
 
-    private bool DisplayOnStatic
-    { 
-        get => displayOnStatic; 
-        set 
-        {  
-            displayOnStatic = value;
-            if (value)
-            {
-                if (thePanel != null && matPassive != null)
-                {
-                    thePanel.material = matPassive;
-                }
-                matDisplay = matCRT;
-                if (iHaveSimMaterial)
-                    matCRT.SetFloat("_OutputRaw", 0);
-            }
-            else
-            {
-                if (thePanel != null && matActive != null)
-                    thePanel.material = matActive;
-                matDisplay = matActive;
-                if (iHaveSimMaterial)
-                    matCRT.SetFloat("_OutputRaw", 1);
-            }
-        } 
+    private bool PanelHasVanillaMaterial
+    {
+        get
+        {
+            if (!iHavePanelMaterial)
+                return true;
+            return !matPanel.HasProperty("_DisplayMode");
+        }
     }
 
-    [SerializeField]
-    bool iHaveSimMaterial = false;
+    private void configureCRTMode(bool vanillaDisplay)
+    {
+        if (!iHaveCrtMaterial)
+            return;
+        if (vanillaDisplay)
+        { // Display mode and wave speed controls get handled by the panel material
+            matDisplayControl = matCRT;
+            if (iHaveCrtMaterial)
+                matCRT.SetFloat("_OutputRaw", 0);
+        }
+        else
+        { // Display mode and wave speed controls get handled by the CRT
+            matDisplayControl = matPanel;
+            if (iHaveCrtMaterial)
+                matCRT.SetFloat("_OutputRaw", 1);
+        }
+        iHaveDisplayControl = matDisplayControl != null;
+    }
+
 
     void UpdateSimulation()
     {
-        if (useCRT)
-            simCRT.Update(1);
-        updateNeeded = false;
+        crtUpdateNeeded = false;
+        if (!iHaveCRT)
+            return;
+        simCRT.Update(1);
     }
 
     float phaseTime = 0;
@@ -66,12 +81,13 @@ public class CRTWaveDemo : UdonSharpBehaviour
 
     private void Update()
     {
-        if (!useCRT) return;
-        if (updateNeeded)
+        if (!iHaveCRT) 
+            return;
+        if (crtUpdateNeeded)
         {
             UpdateSimulation();
         }
-        if (playPhase && displayOnStatic)
+        if (playPhase && iHaveDisplayControl)
         {
             delta = Time.deltaTime;
             waveTime -= delta;
@@ -80,11 +96,10 @@ public class CRTWaveDemo : UdonSharpBehaviour
                 phaseTime += 1;
             if (waveTime < 0)
             {
-                if (iHaveSimMaterial)
+                if (iHaveCrtMaterial)
                     matCRT.SetFloat("_Phase", phaseTime);
                 waveTime += dt;
-                if (useCRT)
-                    UpdateSimulation();
+                UpdateSimulation();
             }
         }
 
@@ -101,21 +116,17 @@ public class CRTWaveDemo : UdonSharpBehaviour
             }
             else
                 useCRT = false;
+            // Check Panel material to see if it looks at CRT
         }
         else
         {
-            matCRT = thePanel.material;
+            matCRT = null;
         }
+        iHaveCrtMaterial = matCRT != null;
         if (thePanel != null)
-        {
-            if (matActive == null)
-                matActive = thePanel.material;
-            if (matPassive == null)
-                matPassive = thePanel.material;
-        }
-        if (useCRT)
-            DisplayOnStatic = displayOnStatic;
-        iHaveSimMaterial = matCRT != null;
-        updateNeeded = true;
+            matPanel = thePanel.material;
+        iHavePanelMaterial = matPanel != null;
+        configureCRTMode(PanelHasVanillaMaterial);
+        crtUpdateNeeded = true;
     }
 }

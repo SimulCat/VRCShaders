@@ -68,7 +68,7 @@ Material:
     - _BumpScale: 1
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
-    - _DisplayMode: 1
+    - _DisplayMode: 2
     - _DstBlend: 0
     - _GlossMapScale: 1
     - _Glossiness: 0.5
@@ -80,9 +80,9 @@ Material:
     - _Mode: 0
     - _NumSources: 2
     - _OcclusionStrength: 1
-    - _OutputRaw: 0
+    - _OutputRaw: 1
     - _Parallax: 0.02
-    - _Phase: 0.22619578
+    - _Phase: 0.50163037
     - _RightPx: 2047
     - _Scale: 1
     - _SlitPitchPx: 200

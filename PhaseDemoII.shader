@@ -105,6 +105,7 @@ Shader"Phase/Demo (No Texture)"
                     sourceY -= _SlitPitchPx;
                 }
                 
+
                 float alpha = 0;
                 if (_DisplayMode < 2)
                 {

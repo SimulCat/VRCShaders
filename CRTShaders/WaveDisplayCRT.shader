@@ -15,10 +15,8 @@ Shader"Simulation/Display from Wave CRT"
     SubShader
     {
         Tags {"Queue"="Transparent" "IgnoreProjector"="True" "RenderType"="Transparent"}
-        ZTest LEqual
         ZWrite Off
-        Blend SrcAlpha
-        OneMinusSrcAlpha
+        Blend SrcAlpha OneMinusSrcAlpha
         LOD 100
         Cull Off
 
@@ -67,20 +65,15 @@ Shader"Simulation/Display from Wave CRT"
             fixed4 frag(v2f i) : SV_Target
             {
                             // sample the texture
-                fixed4 sample = tex2D(_MainTex, i.uv);
+                float4 sample = tex2D(_MainTex, i.uv);
                 float2 pos = i.uv;
                 float2 phasor = float2(0,0);
                 float amplitude = sample.z;
                 float ampSq = sample.z;
                 float value = 0;
-
-                if (_DisplayMode < 0)
-                {
-                    col = _ColorNeg ;
-                    col.a = 0.33;
-                    return col;
-                }
-
+                fixed4 col = _ColorNeg;
+                int displayMode = round(_DisplayMode);
+                // If showing phase, rotate phase vector, no need to recalculate pattern, this allows CRT to calculate once, then leave alone;
                 if (displayMode < 4 && _PhaseSpeed > 0)
                 {
                     float tphi = (1 - frac(_PhaseSpeed * _Time.y)) * Tau;
@@ -90,43 +83,50 @@ Shader"Simulation/Display from Wave CRT"
                     phasor.y = sample.x * sinPhi + sample.y * cosPhi;
                 }
                 else
-                    phasor = sample.xy;
+                    phasor = sample.xy; // Just use the calculated phase
+                
+                switch (displayMode)
+                {
+                    case 0: // Just x component
+                        value = phasor.x;
+                        col = lerp(_ColorNeg, _Color, value);
+                        col.a = clamp(value+1, 0.3,1);
+                        return col;
 
-                if (_DisplayMode < 2)
-                {
-                    value = phasor.x;
-                    if (_DisplayMode > 0.1)
-                    {
-                        value *= value;
-                        col = lerp(_ColorNeg, _Color, alpha);
-                    }
-                    else
-                    {
-                        col = lerp(_ColorNeg, _Color, alpha);
-                        alpha = (alpha + 1);
-                    }
-                    col.a = value; //      alpha;
-                }
-                else if (_DisplayMode < 3.9)
-                {
-                    alpha = phasor.y;
-                    if (_DisplayMode > 2.1)
-                    {
-                        alpha *= alpha;
-                        col = lerp(_ColorNeg, _ColorVel, alpha);
-                    }
-                    else
-                    {
-                        col = lerp(_ColorNeg, _ColorVel, alpha);
-                        alpha = (alpha + 1);
-                    }
-                    col.a = clamp(alpha, 0.3, 1);
-                }
-                else
-                {
-                    alpha = (phasor.x * phasor.x) + (phasor.y * phasor.y);
-                    col = lerp(_ColorNeg, _ColorFlow, alpha);
-                    col.a = clamp(alpha, 0.3, 1);
+                    case 1: // x component squared
+                        value = phasor.x * phasor.x;
+                        col = lerp(_ColorNeg, _Color, value);
+                        col.a = value+0.25;
+                        return col;
+
+                    case 2: // Vertical velocity
+                        value = phasor.y;
+                        col = lerp(_ColorNeg, _ColorVel, value);
+                        col.a = clamp(value+1,0.3,1);
+                        return col;
+
+                    case 3: // Surface kinetic energy from speed of mass rise/fall
+                        value = phasor.y * phasor.y;
+                        col = lerp(_ColorNeg, _ColorVel, value);
+                        col.a = value+0.25;
+                        return col;
+
+                    case 4: // Combined Amplitude (phasor length)
+                        value = amplitude;
+                        col = lerp(_ColorNeg, _ColorFlow, value);
+                        col.a = clamp(value+1, 0.3,1);
+                        return col;
+                    case 5: // Combined Amplitude Squared (Momentum/ Energy transport)
+                        value = ampSq;
+                        col = lerp(_ColorNeg, _ColorFlow, value);
+                        col.a = value+0.25,0,1;
+                        return col;
+
+                    default:
+                        col = _ColorNeg;
+                        col.a = 0.33;
+                        return col;
+                        break;
                 }
                 return col;
             }

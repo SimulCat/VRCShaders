@@ -102,6 +102,7 @@ Shader"Phase/Demo"
                     col.a = sample.r * _IdleShade.a;
                     return col;
                 }
+
                 float2 pos = i.uv;
                 float xPos = i.uv.x * _MainTex_TexelSize.z;
                 float yPos = i.uv.y * _MainTex_TexelSize.w;
