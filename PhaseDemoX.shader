@@ -22,6 +22,7 @@ Shader"Phase/Demo"
     SubShader
     {
         Tags {"Queue"="Transparent" "IgnoreProjector"="True" "RenderType"="Transparent"}
+        ZTest LEqual
         ZWrite Off
         Blend SrcAlpha
         OneMinusSrcAlpha
