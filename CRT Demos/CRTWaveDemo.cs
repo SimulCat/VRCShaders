@@ -83,10 +83,6 @@ public class CRTWaveDemo : UdonSharpBehaviour
     {
         if (!iHaveCRT) 
             return;
-        if (crtUpdateNeeded)
-        {
-            UpdateSimulation();
-        }
         if (playPhase && iHaveDisplayControl)
         {
             delta = Time.deltaTime;
@@ -102,25 +98,19 @@ public class CRTWaveDemo : UdonSharpBehaviour
                 UpdateSimulation();
             }
         }
-
+        if (crtUpdateNeeded)
+        {
+            UpdateSimulation();
+        }
     }
 
     void Start()
     {
-        if (useCRT)
+        if (simCRT != null)
         {
-            if (simCRT != null)
-            {
-                matCRT = simCRT.material;
-                simCRT.Initialize();
-            }
-            else
-                useCRT = false;
-            // Check Panel material to see if it looks at CRT
-        }
-        else
-        {
-            matCRT = null;
+            iHaveCRT = true;
+            matCRT = simCRT.material;
+            simCRT.Initialize();
         }
         iHaveCrtMaterial = matCRT != null;
         if (thePanel != null)
