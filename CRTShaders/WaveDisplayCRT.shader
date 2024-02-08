@@ -69,7 +69,7 @@ Shader"Simulation/Display from Wave CRT"
                 float2 pos = i.uv;
                 float2 phasor = float2(0,0);
                 float amplitude = sample.z;
-                float ampSq = sample.z;
+                float ampSq = sample.w;
                 float value = 0;
                 fixed4 col = _ColorNeg;
                 int displayMode = round(_DisplayMode);

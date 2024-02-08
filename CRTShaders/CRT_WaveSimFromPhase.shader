@@ -144,7 +144,7 @@ float4 frag(v2f_customrendertexture i) : SV_Target
      4 = total amplitude 
      5 = total amp squared
    */
-
+   
    float value = 0;
     if (_DisplayMode < 2)
     {
