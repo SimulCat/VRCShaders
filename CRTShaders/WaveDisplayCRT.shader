@@ -96,7 +96,7 @@ Shader"Simulation/Display from Wave CRT"
                     case 1: // x component squared
                         value = phasor.x * phasor.x;
                         col = lerp(_ColorNeg, _Color, value);
-                        col.a = value+0.25;
+                        col.a = value+0.33;
                         return col;
 
                     case 2: // Vertical velocity
@@ -108,23 +108,23 @@ Shader"Simulation/Display from Wave CRT"
                     case 3: // Surface kinetic energy from speed of mass rise/fall
                         value = phasor.y * phasor.y;
                         col = lerp(_ColorNeg, _ColorVel, value);
-                        col.a = value+0.25;
+                        col.a = value+0.33;
                         return col;
 
                     case 4: // Combined Amplitude (phasor length)
-                        value = amplitude;
+                        value = amplitude*1.5;
                         col = lerp(_ColorNeg, _ColorFlow, value);
-                        col.a = clamp(value+1, 0.3,1);
+                        col.a = clamp(value, .25,1);
                         return col;
                     case 5: // Combined Amplitude Squared (Momentum/ Energy transport)
-                        value = ampSq;
+                        value = ampSq*1.5;
                         col = lerp(_ColorNeg, _ColorFlow, value);
-                        col.a = value+0.25,0,1;
+                        col.a = value+0.33;
                         return col;
 
                     default:
                         col = _ColorNeg;
-                        col.a = 0.33;
+                        col.a = 0.4;
                         return col;
                         break;
                 }

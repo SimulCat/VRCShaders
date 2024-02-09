@@ -8,8 +8,8 @@ Shader"Phase/Demo (No Texture)"
         _NumSources("Num Sources",float) = 2
         _SlitPitchPx("Slit Pitch",float) = 448
         _SlitWidePx("Slit Width", Range(1.0,80.0)) = 12.0
-        _Color("Colour Wave", color) = (1, 1, 0, 0)
         _ColorNeg("Colour Base", color) = (0, 0.3, 1, 0)
+        _Color("Colour Wave", color) = (1, 1, 0, 0)
         _ColorVel("Colour Velocity", color) = (0, 0.3, 1, 0)
         _ColorFlow("Colour Flow", color) = (1, 0.3, 0, 0)
         _DisplayMode("Display Mode", float) = 0
@@ -91,6 +91,7 @@ Shader"Phase/Demo (No Texture)"
                 float sourceY = ((_NumSources - 1) * _SlitPitchPx) * 0.5 + (_SlitWidePx * 0.25);
                 float2 delta = float2(i.pos.x * _Scale, 0.0);
                 float yScaled = (i.pos.y - _mmHigh / 2.0) * _Scale;
+                int displayMode = round(_DisplayMode);
                 for (int nAperture = 0; nAperture < sourceCount; nAperture++)
                 {
                     float slitY = sourceY;
@@ -105,45 +106,51 @@ Shader"Phase/Demo (No Texture)"
                     sourceY -= _SlitPitchPx;
                 }
                 
+                float value = 0;
+                switch (displayMode)
+                {
+                    case 0: // Just x component
+                        value = phasor.x;
+                        col = lerp(_ColorNeg, _Color, value);
+                        col.a = clamp(value+1, 0.3,1);
+                        return col;
 
-                float alpha = 0;
-                if (_DisplayMode < 2)
-                {
-                    alpha = phasor.x;
-                    if (_DisplayMode > 0.1)
-                    {
-                        alpha *= alpha;
-                        col = lerp(_ColorNeg, _Color, alpha);
-                    }
-                    else
-                    {
-                        col = lerp(_ColorNeg, _Color, alpha);
-                        alpha = (alpha + 1);
-                    }
-                    col.a = clamp(alpha, 0.3, 1); //      alpha;
+                    case 1: // x component squared
+                        value = phasor.x * phasor.x;
+                        col = lerp(_ColorNeg, _Color, value);
+                        col.a = value+0.33;
+                        return col;
+
+                    case 2: // Vertical velocity
+                        value = phasor.y;
+                        col = lerp(_ColorNeg, _ColorVel, value);
+                        col.a = clamp(value+1,0.3,1);
+                        return col;
+
+                    case 3: // Surface kinetic energy from speed of mass rise/fall
+                        value = phasor.y * phasor.y;
+                        col = lerp(_ColorNeg, _ColorVel, value);
+                        col.a = value+0.33;
+                        return col;
+
+                    case 4: // Combined Amplitude (phasor length)
+                        value = length(phasor);
+                        col = lerp(_ColorNeg, _ColorFlow, value);
+                        col.a = clamp(value+1, .33,1);
+                        return col;
+                    case 5: // Combined Amplitude Squared (Momentum/ Energy transport)
+                        value = length(phasor);
+                        value *= value*1.5;
+                        col = lerp(_ColorNeg, _ColorFlow, value);
+                        col.a = value+0.33;
+                        return col;
+                    default:
+                        col = _ColorNeg;
+                        col.a = 0.33;
+                        return col;
+                        break;
                 }
-                else if (_DisplayMode < 3.9)
-                {
-                    alpha = phasor.y;
-                    if (_DisplayMode > 2.1)
-                    {
-                        alpha *= alpha;
-                        col = lerp(_ColorNeg, _ColorVel, alpha);
-                    }
-                    else
-                    {
-                        col = lerp(_ColorNeg, _ColorVel, alpha);
-                        alpha = (alpha + 1);
-                    }
-                    col.a = clamp(alpha, 0.3, 1);
-                }
-                else
-                {
-                    alpha = (phasor.x * phasor.x) + (phasor.y * phasor.y);
-                    col = lerp(_ColorNeg, _ColorFlow, alpha);
-                    col.a = clamp(alpha, 0.3, 1);
-                }
-            return col;
+                return col;
             }
             ENDCG
         }

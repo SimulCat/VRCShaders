@@ -68,12 +68,12 @@ Material:
     - _BumpScale: 1
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
-    - _DisplayMode: 2
+    - _DisplayMode: 1
     - _DstBlend: 0
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
-    - _LambdaPx: 50
+    - _LambdaPx: 36.506706
     - _LeftPx: 0
     - _LowerEdge: 1
     - _Metallic: 0
@@ -82,10 +82,10 @@ Material:
     - _OcclusionStrength: 1
     - _OutputRaw: 1
     - _Parallax: 0.02
-    - _Phase: 0.28334054
+    - _Phase: 0.8385827
     - _RightPx: 2047
-    - _Scale: 1
-    - _SlitPitchPx: 200
+    - _Scale: 10
+    - _SlitPitchPx: 186.55872
     - _SlitWidePx: 30
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
