@@ -1,4 +1,4 @@
-﻿Shader"Simulation/Huygens"
+﻿Shader "Simulation/Huygens CRT"
 {
 
     Properties
@@ -9,16 +9,20 @@
         _RightPx("Right Edge",float) = 1964
         _UpperEdge("Upper Edge",float) = 972
         _LowerEdge("Lower Edge",float) = 76
+
         _NumSources("Num Sources",float) = 2
         _SlitPitchPx("Slit Pitch",float) = 448
         _SlitWidePx("Slit Width", Range(1.0,40.0)) = 12.0
+        _Scale("Simulation Scale",Range(1.0,10.0)) = 1
+
         _Color("Colour Wave", color) = (1, 1, 0, 0)
         _ColorNeg("Colour Base", color) = (0, 0.3, 1, 0)
         _ColorVel("Colour Velocity", color) = (0, 0.3, 1, 0)
         _ColorFlow("Colour Flow", color) = (1, 0.3, 0, 0)
+
+        _OutputRaw("Generate Raw Output", float) = 0
         _DisplayMode("Display Mode", float) = 0
-        _Phase("Source Phase", float) = 0
-        _Scale("Simulation Scale",Range(1.0,10.0)) = 1
+        _Frequency("Wave Frequency", float) = 0
     }
 
 CGINCLUDE
@@ -35,13 +39,17 @@ float _LowerEdge;
 int _NumSources;
 float _SlitPitchPx;
 float _SlitWidePx;
+float _Scale;
+
 float4 _Color;
 float4 _ColorNeg;
 float4 _ColorVel;
 float4 _ColorFlow;
+
+float _OutputRaw;
 float _DisplayMode;
-float _Phase;
-float _Scale;
+
+float _Frequency;
 static const float Tau = 6.28318531f;
 static const float PI = 3.14159265f;
    
@@ -49,7 +57,7 @@ float2 sourcePhasor(float2 delta)
 {
     float rPixels = length(delta);
     float rLambda = rPixels/_LambdaPx;
-    float rPhi = (rLambda + _Phase)*Tau;
+    float rPhi = rLambda * Tau;
     float amp = _Scale*_LambdaPx/max(_LambdaPx,rPixels);
     float2 result = float2(cos(rPhi),sin(rPhi));
     return result * amp;
@@ -58,8 +66,8 @@ float2 sourcePhasor(float2 delta)
 float4 frag(v2f_customrendertexture i) : SV_Target
 {
     float2 pos = i.globalTexcoord;
-    float4 updated = float4(1, 0, 1,1);
-    
+    float4 output = float4(1, 0, 1,1);
+    int displayMode = round(_DisplayMode);
     // Pixel Positions
     int xPixel = (int)(floor(pos.x * _CustomRenderTextureWidth));
     int yPixel = (int)(floor(pos.y * _CustomRenderTextureHeight));
@@ -85,52 +93,79 @@ float4 frag(v2f_customrendertexture i) : SV_Target
         phasor += phaseAmp;
         sourceY -= _SlitPitchPx;
     }
-    float alpha = 0;
+
+   float phaseAmp = length(phasor); 
+   float ampSq = phaseAmp * phaseAmp;
+   if (_OutputRaw >= 0.5)
+   {
+       output.xy = phasor;
+       output.z = phaseAmp;
+       output.w = ampSq; 
+       return output;
+   }
+
     if (isInMargin && isInHeadFoot)
     {
-        if (_DisplayMode < 2)
+        if (displayMode < 4 && _Frequency > 0)
         {
-            alpha = phasor.x;
-            if (_DisplayMode > 0.1)
-            {
-                alpha *= alpha;
-                updated = lerp(_ColorNeg, _Color, alpha);
-            }
-            else
-            {
-                updated = lerp(_ColorNeg, _Color, alpha);
-                alpha = (alpha + 1);
-            }
-            updated.a = clamp(alpha, 0.2, 1); //      alpha;
+            float2 sample = phasor;
+            float tphi = (1 - frac(_Frequency * _Time.y)) * Tau;
+            float sinPhi = sin(tphi);
+            float cosPhi = cos(tphi);
+            phasor.x = sample.x * cosPhi - sample.y * sinPhi;
+            phasor.y = sample.x * sinPhi + sample.y * cosPhi;
         }
-        else if (_DisplayMode < 3.9)
+        
+        float value = 0;
+        if (displayMode < 2)
         {
-            alpha = phasor.y;
-            if (_DisplayMode > 2.1)
+            value = phasor.x;
+            if (displayMode == 1)
             {
-                alpha *= alpha;
-                updated = lerp(_ColorNeg, _ColorVel, alpha);
+                value *= value;
+                output = lerp(_ColorNeg, _Color, value);
             }
             else
             {
-                updated = lerp(_ColorNeg, _ColorVel, alpha);
-                alpha = (alpha + 1);
+                output = lerp(_ColorNeg, _Color, value);
+                value = (value + 1);
             }
-            updated.a = clamp(alpha, 0.2, 1);
+            output.a = clamp(value, 0.2, 1); //      value;
+        }
+        else if (displayMode < 4)
+        {
+            value = phasor.y;
+            if (displayMode == 3)
+            {
+                value *= value;
+                output = lerp(_ColorNeg, _ColorVel, value);
+            }
+            else
+            {
+                output = lerp(_ColorNeg, _ColorVel, value);
+                value = (value + 1);
+            }
+            output.a = clamp(value, 0.2, 1);
+        }
+        else if (displayMode == 5)
+        {
+            value = ampSq;
+            output = lerp(_ColorNeg, _ColorFlow, value);
+            output.a = clamp(value, 0.2, 1);
         }
         else
         {
-            alpha = (phasor.x * phasor.x) + (phasor.y * phasor.y);
-            updated = lerp(_ColorNeg, _ColorFlow, alpha);
-            updated.a = clamp(alpha, 0.2, 1);
+            value = phaseAmp * 0.5 + 0.5;
+            output = lerp(_ColorNeg, _ColorFlow, value);
+            output.a = value;
         }
     }
     else
     {
-        updated = _ColorNeg;
-        updated.a = 0.33;
+        output = _ColorNeg;
+        output.a = 0.33;
     }
-    return updated;
+    return output;
 }
 
 ENDCG

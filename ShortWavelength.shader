@@ -14,7 +14,7 @@ Shader"Phase/Static"
         _ColorVel("Colour Velocity", color) = (0, 0.3, 1, 0)
         _ColorFlow("Colour Flow", color) = (1, 0.3, 0, 0)
         _DisplayMode("Display Mode", float) = 0
-        _PhaseSpeed("Animation Speed", float) = 0
+        _Frequency("Wave Frequency", float) = 0
         _Scale("Simulation Scale",Range(1.0,10.0)) = 1
 
     }
@@ -62,7 +62,7 @@ Shader"Phase/Static"
             float4 _ColorVel;
             float4 _ColorFlow;
             float _DisplayMode;
-            float _PhaseSpeed;
+            float _Frequency;
             float _Scale;
             static const float Tau = 6.28318531f;
             static const float PI = 3.14159265f;
@@ -72,8 +72,7 @@ Shader"Phase/Static"
             {
                 float rPixels = length(delta);
                 float rLambda = rPixels / _LambdaPx;
-                float tphi = 1 - frac(_PhaseSpeed * _Time.y);
-                float rPhi = (rLambda + tphi) * Tau;
+                float rPhi = rLambda * Tau;
                 float amp = _Scale * _LambdaPx / max(_LambdaPx, rPixels);
                 float2 result = float2(cos(rPhi), sin(rPhi));
                 return result * amp;
@@ -91,7 +90,8 @@ Shader"Phase/Static"
             {
                             // sample the texture
                 fixed4 col = _IdleShade;
-                if (_DisplayMode < 0)
+                int displayMode = round(_DisplayMode);
+                if (displayMode < 0)
                 {
                     fixed4 sample = tex2D(_MainTex, i.uv);
                     col *= sample;
@@ -121,7 +121,17 @@ Shader"Phase/Static"
                     phasor += phaseAmp;
                     sourceY -= _SlitPitchPx;
                 }
-                
+
+                if (displayMode < 4 && _Frequency > 0)
+                {
+                    float2 sample = phasor;
+                    float tphi = (1 - frac(_Frequency * _Time.y)) * Tau;
+                    float sinPhi = sin(tphi);
+                    float cosPhi = cos(tphi);
+                    phasor.x = sample.x * cosPhi - sample.y * sinPhi;
+                    phasor.y = sample.x * sinPhi + sample.y * cosPhi;
+                }
+
                 float alpha = 0;
                 if (isInMargin)
                 {

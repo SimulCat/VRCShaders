@@ -3,7 +3,7 @@ Shader "Phase/Demo Opaque"
     Properties
     {
         _MainTex ("Idle Texture", 2D) = "white" {}
-        _IdleShade ("Idle Shade",color) = (0.5,0.5,0.5,1)
+        _IdleColour ("Idle Shade",color) = (0.5,0.5,0.5,1)
         _LambdaPx("Lambda Pixels", float) = 49.64285714
         _LeftPx("Left Edge",float) = 50
         _TopBotMargin("Margin Top/Bottom", float) = 0
@@ -15,7 +15,7 @@ Shader "Phase/Demo Opaque"
         _ColorVel("Colour Velocity", color) = (0, 0.3, 1, 0)
         _ColorFlow("Colour Flow", color) = (1, 0.3, 0, 0)
         _DisplayMode("Display Mode", float) = 0
-        _PhaseSpeed("Animation Speed", float) = 0
+        _Frequency("Wave Frequency", float) = 0
         _Scale("Simulation Scale",Range(1.0,10.0)) = 1
 
     }
@@ -45,7 +45,7 @@ Shader "Phase/Demo Opaque"
             };
 
             sampler2D _MainTex;
-            float4 _IdleShade;
+            float4 _IdleColour;
             float4 _MainTex_ST;
             float4 _MainTex_TexelSize;
 
@@ -60,7 +60,7 @@ Shader "Phase/Demo Opaque"
             float4 _ColorVel;
             float4 _ColorFlow;
             float _DisplayMode;
-            float _PhaseSpeed;
+            float _Frequency;
             float _Scale;
             static const float Tau = 6.28318531f;
             static const float PI = 3.14159265f;
@@ -70,8 +70,7 @@ Shader "Phase/Demo Opaque"
             {
                 float rPixels = length(delta);
                 float rLambda = rPixels / _LambdaPx;
-                float tphi = 1 - frac(_PhaseSpeed * _Time.y);
-                float rPhi = (rLambda + tphi) * Tau;
+                float rPhi = rLambda * Tau;
                 float amp = _Scale * _LambdaPx / max(_LambdaPx, rPixels);
                 float2 result = float2(cos(rPhi), sin(rPhi));
                 return result * amp;
@@ -88,12 +87,13 @@ Shader "Phase/Demo Opaque"
             fixed4 frag (v2f i) : SV_Target
             {
                 // sample the texture
-                fixed4 col = _IdleShade;
-                if (_DisplayMode < 0)
+                fixed4 col = _IdleColour;
+                int displayMode = round(_DisplayMode);
+                if (displayMode < 0)
                 {
                     fixed4 sample = tex2D(_MainTex, i.uv);
                     col *= sample;
-                    col.a = sample.r * _IdleShade.a;
+                    col.a = sample.r * _IdleColour.a;
                     return col;
                 }
                 float2 pos = i.uv;
@@ -119,14 +119,24 @@ Shader "Phase/Demo Opaque"
                     phasor += phaseAmp;
                     sourceY -= _SlitPitchPx;
                 }
-                
+
+                if (displayMode < 4 && _Frequency > 0)
+                {
+                    float2 sample = phasor;
+                    float tphi = (1 - frac(_Frequency * _Time.y)) * Tau;
+                    float sinPhi = sin(tphi);
+                    float cosPhi = cos(tphi);
+                    phasor.x = sample.x * cosPhi - sample.y * sinPhi;
+                    phasor.y = sample.x * sinPhi + sample.y * cosPhi;
+                }
+
                 float alpha = 0;
                 if (isInMargin)
                 {
-                    if (_DisplayMode < 2)
+                    if (displayMode < 2)
                     {
                         alpha = phasor.x;
-                        if (_DisplayMode > 0.1)
+                        if (displayMode == 1)
                         {
                             alpha *= alpha;
                             col = lerp(_ColorNeg, _Color, alpha);
@@ -138,10 +148,10 @@ Shader "Phase/Demo Opaque"
                         }
                         col.a = clamp(alpha, 0.2, 1); //      alpha;
                     }
-                    else if (_DisplayMode < 3.9)
+                    else if (displayMode < 4)
                     {
                         alpha = phasor.y;
-                        if (_DisplayMode > 2.1)
+                        if (displayMode == 3)
                         {
                             alpha *= alpha;
                             col = lerp(_ColorNeg, _ColorVel, alpha);

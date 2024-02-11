@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c333ccfdd0cbdbc4ca30cef2dd6e6b9b, type: 3}
   m_Name: CRTWaveDemo
   m_EditorClassIdentifier: 
-  serializedUdonProgramAsset: {fileID: 11400000, guid: 88c54d588298a1d458c854153382f5d9,
+  serializedUdonProgramAsset: {fileID: 11400000, guid: cf960746c595e1a4e98b4596db1b1932,
     type: 2}
   udonAssembly: 
   assemblyError: 
@@ -1097,13 +1097,13 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: matCRT
+      Data: matSimControl
     - Name: $v
       Entry: 7
       Data: 65|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
     - Name: <Name>k__BackingField
       Entry: 1
-      Data: matCRT
+      Data: matSimControl
     - Name: <UserType>k__BackingField
       Entry: 9
       Data: 61
@@ -1151,13 +1151,13 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: matDisplayControl
+      Data: matSimDisplay
     - Name: $v
       Entry: 7
       Data: 68|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
     - Name: <Name>k__BackingField
       Entry: 1
-      Data: matDisplayControl
+      Data: matSimDisplay
     - Name: <UserType>k__BackingField
       Entry: 9
       Data: 61
@@ -1322,13 +1322,13 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: iHaveCrtMaterial
+      Data: iHaveSimControl
     - Name: $v
       Entry: 7
       Data: 78|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
     - Name: <Name>k__BackingField
       Entry: 1
-      Data: iHaveCrtMaterial
+      Data: iHaveSimControl
     - Name: <UserType>k__BackingField
       Entry: 9
       Data: 13
@@ -1376,13 +1376,13 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: iHavePanelMaterial
+      Data: iHaveDisplayControl
     - Name: $v
       Entry: 7
       Data: 81|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
     - Name: <Name>k__BackingField
       Entry: 1
-      Data: iHavePanelMaterial
+      Data: iHaveDisplayControl
     - Name: <UserType>k__BackingField
       Entry: 9
       Data: 13
@@ -1430,13 +1430,13 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: iHaveDisplayControl
+      Data: iHavePanelMaterial
     - Name: $v
       Entry: 7
       Data: 84|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
     - Name: <Name>k__BackingField
       Entry: 1
-      Data: iHaveDisplayControl
+      Data: iHavePanelMaterial
     - Name: <UserType>k__BackingField
       Entry: 9
       Data: 13

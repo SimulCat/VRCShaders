@@ -1,8 +1,7 @@
-﻿Shader"Simulation/Phase Simulation CRT"
+﻿Shader "Simulation/Phase Sim CRT"
 {
     /*
-    A CRT to my mind is a cross between a regular shader and a compute shader.
-    Unlike a compute shader, the output can be linked directly to the game engine graphics as a render texture similar to a camera render texture.
+    A CRT output can be linked directly to a render texture similar to a camera render texture.
     
     Like a compute shader, it is run independently of the graphics frame cadence and needs to be explicitly output from code, you can decide what to do on each pass, and even what zone of the texture needs updating (this example does neither).
 
@@ -26,6 +25,7 @@
             As I understand it, function of the material is to allow the CRT's properties to be managed and output.
             To manage the system your code basically needs to have references to the CRT and it's material.
    */
+
     Properties
     {
         _LambdaPx("Lambda Pixels", float) = 49.64285714
