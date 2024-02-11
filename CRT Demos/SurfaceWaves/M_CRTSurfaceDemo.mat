@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: M_CRTSurfaceDemo
-  m_Shader: {fileID: 4800000, guid: 10afa14e8319035469e7d527132bce9e, type: 3}
+  m_Shader: {fileID: 4800000, guid: 17ad9304b76273f4fbea611098ef0b92, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -57,6 +57,10 @@ Material:
         m_Offset: {x: 0, y: 0}
     - _ParallaxMap:
         m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _PhaseSurface:
+        m_Texture: {fileID: 8600000, guid: 27cf4cf7075b94741b4848b27c9b6333, type: 2}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _WaveMesh:

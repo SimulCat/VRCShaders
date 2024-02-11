@@ -54,6 +54,8 @@ public class CRTWaveDemo : UdonSharpBehaviour
     private bool iHaveDisplayControl = false;
     [SerializeField]
     private bool iHavePanelMaterial = false;
+    [SerializeField]
+    private bool CRTUpdatesMovement;
 
     private int DisplayMode
     {
@@ -141,19 +143,43 @@ public class CRTWaveDemo : UdonSharpBehaviour
 
     private void configureSimControl(bool vanillaDisplay)
     {
+        CRTUpdatesMovement = false;
         if (vanillaDisplay)
         { // Display mode and wave speed controls get handled by the panel material
-            matSimDisplay = matSimControl;
-            if (iHaveCRT && iHaveSimControl)
+            if (iHaveCRT)
+            {
+                matSimDisplay = simCRT.material;
+                matSimControl = simCRT.material;
+                CRTUpdatesMovement = false;
                 matSimControl.SetFloat("_OutputRaw", 0);
+                crtUpdateNeeded = true;
+            }
+            else
+            {
+                // No CRT and not a compatible display
+                matSimDisplay = null;
+                matSimControl = null;
+                Debug.Log("Warning:configureSimControl() no Interference control/display material");
+            }
         }
         else
         { // Display mode and wave speed controls get handled by the CRT
-            matSimDisplay = matPanel;
-            if (iHaveCRT && iHaveSimControl)
-                matSimControl.SetFloat("_OutputRaw", 1);
+            if (iHaveCRT)
+            {
+                matSimDisplay = matPanel;
+                matSimControl = simCRT.material;
+                if (iHaveCRT && iHaveSimControl)
+                    matSimControl.SetFloat("_OutputRaw", 1);
+                crtUpdateNeeded = true;
+            }
+            else
+            {
+                matSimDisplay = matPanel;
+                matSimControl = matPanel;
+            }
         }
         iHaveDisplayControl = matSimDisplay != null;
+        iHaveSimControl = matSimControl != null;
     }
 
 
@@ -165,8 +191,6 @@ public class CRTWaveDemo : UdonSharpBehaviour
         simCRT.Update(1);
     }
 
-    float phaseTime = 0;
-    float phaseRate = 0.6f;
     float waveTime = 0;
     float delta;
 
@@ -174,19 +198,17 @@ public class CRTWaveDemo : UdonSharpBehaviour
     {
         if (!iHaveCRT) 
             return;
-        if (playPhase && iHaveDisplayControl)
+        if (CRTUpdatesMovement)
         {
-            delta = Time.deltaTime;
-            waveTime -= delta;
-            phaseTime -= delta * phaseRate;
-            if (phaseTime < 0)
-                phaseTime += 1;
-            if (waveTime < 0)
+            if (playPhase && displayMode >= 0 && displayMode < 4)
             {
-                if (iHaveSimControl)
-                    matSimControl.SetFloat("_Phase", phaseTime);
-                waveTime += dt;
-                UpdateSimulation();
+                delta = Time.deltaTime;
+                waveTime -= delta;
+                if (waveTime < 0)
+                {
+                    waveTime += dt;
+                    crtUpdateNeeded |= true;
+                }
             }
         }
         if (crtUpdateNeeded)

@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: M_CRTDisplayPanel
-  m_Shader: {fileID: 4800000, guid: 10afa14e8319035469e7d527132bce9e, type: 3}
+  m_Shader: {fileID: 4800000, guid: fd5c36de8bef24e43866c5effe93d6d1, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -70,22 +70,23 @@ Material:
     - _DetailNormalMapScale: 1
     - _DisplayMode: 1
     - _DstBlend: 0
+    - _Frequency: 0
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
-    - _LambdaPx: 36.506706
+    - _LambdaPx: 41.471127
     - _LeftPx: 0
     - _LowerEdge: 1
     - _Metallic: 0
     - _Mode: 0
-    - _NumSources: 2
+    - _NumSources: 17
     - _OcclusionStrength: 1
     - _OutputRaw: 1
     - _Parallax: 0.02
-    - _Phase: 0.8385827
+    - _Phase: 0.8239988
     - _RightPx: 2047
-    - _Scale: 10
-    - _SlitPitchPx: 186.55872
+    - _Scale: 1
+    - _SlitPitchPx: 474.2846
     - _SlitWidePx: 30
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1

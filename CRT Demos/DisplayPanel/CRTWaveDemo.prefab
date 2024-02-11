@@ -2415,7 +2415,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   serializationData:
-    SerializedFormat: 0
+    SerializedFormat: 2
     SerializedBytes: 
     ReferencedUnityObjects: []
     SerializedBytesString: 
@@ -2428,7 +2428,7 @@ MonoBehaviour:
   thePanel: {fileID: 1212370326062341601}
   playPhase: 1
   dt: 0.03
-  displayMode: 0
+  displayMode: 3
   togReal: {fileID: 3626706604285991638}
   togImaginary: {fileID: 8622355812590453926}
   togRealPwr: {fileID: 2555559745075260005}

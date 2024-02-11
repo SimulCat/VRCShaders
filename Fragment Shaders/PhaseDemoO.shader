@@ -1,13 +1,15 @@
-Shader"Phase/Demo (No Texture) Opaque"
+Shader "SimulCat/Phase Demo/Opaque Tex"
 {
     Properties
     {
-        _mmHigh("Frame Height (mm)",float) = 1000
-        _mmWide("Frame Width (mm)",float) = 2000
+        _MainTex ("Idle Texture", 2D) = "white" {}
+        _IdleColour ("Idle Shade",color) = (0.5,0.5,0.5,1)
         _LambdaPx("Lambda Pixels", float) = 49.64285714
+        _LeftPx("Left Edge",float) = 50
+        _TopBotMargin("Margin Top/Bottom", float) = 0
         _NumSources("Num Sources",float) = 2
         _SlitPitchPx("Slit Pitch",float) = 448
-        _SlitWidePx("Slit Width", Range(1.0,80.0)) = 12.0
+        _SlitWidePx("Slit Width", Range(1.0,40.0)) = 12.0
         _Color("Colour Wave", color) = (1, 1, 0, 0)
         _ColorNeg("Colour Base", color) = (0, 0.3, 1, 0)
         _ColorVel("Colour Velocity", color) = (0, 0.3, 1, 0)
@@ -27,25 +29,29 @@ Shader"Phase/Demo (No Texture) Opaque"
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-            // make fog work
 
             #include "UnityCG.cginc"
 
             struct appdata
             {
                 float4 vertex : POSITION;
-                float4 uv0 : TEXCOORD0;
+                float2 uv : TEXCOORD0;
             };
 
             struct v2f
             {
+                float2 uv : TEXCOORD0;
                 float4 vertex : SV_POSITION;
-                float2 pos : TEXCOORD0;
             };
 
-            float _mmHigh;
-            float _mmWide;
+            sampler2D _MainTex;
+            float4 _IdleColour;
+            float4 _MainTex_ST;
+            float4 _MainTex_TexelSize;
+
             float _LambdaPx;
+            float _LeftPx;
+            float _TopBotMargin;
             int _NumSources;
             float _SlitPitchPx;
             float _SlitWidePx;
@@ -74,20 +80,32 @@ Shader"Phase/Demo (No Texture) Opaque"
             {
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
-                o.pos = float2(v.uv0.x * _mmWide, v.uv0.y * _mmHigh);
+                o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 return o;
             }
 
-            fixed4 frag(v2f i) : SV_Target
+            fixed4 frag (v2f i) : SV_Target
             {
-                            // sample the texture
-                fixed4 col = fixed4(0, 0, 0, 1);
+                // sample the texture
+                fixed4 col = _IdleColour;
+                int displayMode = round(_DisplayMode);
+                if (displayMode < 0)
+                {
+                    fixed4 sample = tex2D(_MainTex, i.uv);
+                    col *= sample;
+                    col.a = sample.r * _IdleColour.a;
+                    return col;
+                }
+                float2 pos = i.uv;
+                float xPos = i.uv.x * _MainTex_TexelSize.z;
+                float yPos = i.uv.y * _MainTex_TexelSize.w;
+                bool isInMargin = (xPos >= _LeftPx) && (yPos >= _TopBotMargin) && (yPos <= _MainTex_TexelSize.w - _TopBotMargin);
                 float2 phasor = float2(0, 0);
                 int slitWidthCount = (int) (max(1.0, _SlitWidePx));
                 int sourceCount = round(_NumSources);
                 float sourceY = ((_NumSources - 1) * +_SlitPitchPx) * 0.5 + (_SlitWidePx * 0.25);
-                float2 delta = float2(i.pos.x * _Scale, 0.0);
-                float yScaled = (i.pos.y - _mmHigh / 2.0) * _Scale;
+                float2 delta = float2(abs(xPos - _LeftPx) * _Scale, 0.0);
+                float yScaled = (yPos - _MainTex_TexelSize.w / 2.0) * _Scale;
                 for (int nAperture = 0; nAperture < sourceCount; nAperture++)
                 {
                     float slitY = sourceY;
@@ -101,10 +119,7 @@ Shader"Phase/Demo (No Texture) Opaque"
                     phasor += phaseAmp;
                     sourceY -= _SlitPitchPx;
                 }
-                
-                float alpha = 0;
-                int displayMode = round(_DisplayMode);
-                
+
                 if (displayMode < 4 && _Frequency > 0)
                 {
                     float2 sample = phasor;
@@ -115,43 +130,52 @@ Shader"Phase/Demo (No Texture) Opaque"
                     phasor.y = sample.x * sinPhi + sample.y * cosPhi;
                 }
 
-                if (_DisplayMode < 2)
+                float alpha = 0;
+                if (isInMargin)
                 {
-                    alpha = phasor.x;
-                    if (_DisplayMode > 0.1)
+                    if (displayMode < 2)
                     {
-                        alpha *= alpha;
-                        col = lerp(_ColorNeg, _Color, alpha);
+                        alpha = phasor.x;
+                        if (displayMode == 1)
+                        {
+                            alpha *= alpha;
+                            col = lerp(_ColorNeg, _Color, alpha);
+                        }
+                        else
+                        {
+                            col = lerp(_ColorNeg, _Color, alpha);
+                            alpha = (alpha + 1);
+                        }
+                        col.a = clamp(alpha, 0.2, 1); //      alpha;
+                    }
+                    else if (displayMode < 4)
+                    {
+                        alpha = phasor.y;
+                        if (displayMode == 3)
+                        {
+                            alpha *= alpha;
+                            col = lerp(_ColorNeg, _ColorVel, alpha);
+                        }
+                        else
+                        {
+                            col = lerp(_ColorNeg, _ColorVel, alpha);
+                            alpha = (alpha + 1);
+                        }
+                        col.a = clamp(alpha, 0.2, 1);
                     }
                     else
                     {
-                        col = lerp(_ColorNeg, _Color, alpha);
-                        alpha = (alpha + 1);
+                        alpha = (phasor.x * phasor.x) + (phasor.y * phasor.y);
+                        col = lerp(_ColorNeg, _ColorFlow, alpha);
+                        col.a = clamp(alpha, 0.2, 1);
                     }
-                    col.a = clamp(alpha, 0.3, 1); //      alpha;
-                }
-                else if (_DisplayMode < 3.9)
-                {
-                    alpha = phasor.y;
-                    if (_DisplayMode > 2.1)
-                    {
-                        alpha *= alpha;
-                        col = lerp(_ColorNeg, _ColorVel, alpha);
-                    }
-                    else
-                    {
-                        col = lerp(_ColorNeg, _ColorVel, alpha);
-                        alpha = (alpha + 1);
-                    }
-                    col.a = clamp(alpha, 0.3, 1);
                 }
                 else
                 {
-                    alpha = (phasor.x * phasor.x) + (phasor.y * phasor.y);
-                    col = lerp(_ColorNeg, _ColorFlow, alpha);
-                    col.a = clamp(alpha, 0.3, 1);
+                    col = _ColorNeg;
+                    col.a = 0.33;
                 }
-            return col;
+                return col;
             }
             ENDCG
         }

@@ -1,4 +1,4 @@
-Shader"SimulCat/Huygens/CRT Display"
+Shader"SimulCat/CRT/Display Surface Opaque"
 {
     Properties
     {
@@ -7,11 +7,6 @@ Shader"SimulCat/Huygens/CRT Display"
         _IdleColour ("Idle Shade",color) = (0.5,0.5,0.5,1)
 
        _DisplayMode("Display Mode", float) = 0
-
-        _LeftPx("Left Edge",float) = 50
-        _RightPx("Right Edge",float) = 1964
-        _UpperEdge("Upper Edge",float) = 972
-        _LowerEdge("Lower Edge",float) = 76
 
         _ColorNeg("Colour Base", color) = (0, 0.3, 1, 0)
         _Color("Colour Wave", color) = (1, 1, 0, 0)
@@ -22,9 +17,7 @@ Shader"SimulCat/Huygens/CRT Display"
 
     SubShader
     {
-        Tags {"Queue"="Transparent" "IgnoreProjector"="True" "RenderType"="Transparent"}
-        ZWrite Off
-        Blend SrcAlpha OneMinusSrcAlpha
+        Tags {"RenderType"="Opaque"}
         LOD 100
         Cull Off
 
@@ -55,15 +48,7 @@ Shader"SimulCat/Huygens/CRT Display"
 
             sampler2D _IdleTex;
             float4 _IdleTex_ST;
-            float4 _IdleTex_TexelSize;
-
             float4 _IdleColour;
-
-            float _LeftPx;
-            float _RightPx;
-            float _UpperEdge;
-            float _LowerEdge;
-
 
             float _DisplayMode;
             
@@ -88,15 +73,15 @@ Shader"SimulCat/Huygens/CRT Display"
 
             fixed4 frag(v2f i) : SV_Target
             {
+                int displayMode = round(_DisplayMode);
                 fixed4 col = _ColorNeg;
-                if (_DisplayMode < 0)
+                if (displayMode < 0)
                 {
                     fixed4 sample = tex2D(_IdleTex, i.uv);
                     col.rgb = sample.rgb * _IdleColour;
                     col.a = sample.r * _IdleColour.a;
                     return col;
                 }
-                int displayMode = round(_DisplayMode);
                             // sample the texture
                 float4 sample = tex2D(_MainTex, i.uv);
                 float2 pos = i.uv;
@@ -113,56 +98,47 @@ Shader"SimulCat/Huygens/CRT Display"
                     phasor.x = sample.x * cosPhi - sample.y * sinPhi;
                     phasor.y = sample.x * sinPhi + sample.y * cosPhi;
                 }
-                int xPixel = (int)(floor(pos.x * _MainTex_TexelSize.z));
-                int yPixel = (int)(floor(pos.y * _MainTex_TexelSize.w));
-
-                if ((xPixel < _LeftPx) || (xPixel > _RightPx) || (yPixel < _LowerEdge) || (yPixel > _UpperEdge))
-                {
-                    col = _ColorNeg;
-                    col.a = 0.33;
-                    return col;
-                }
 
                 switch (displayMode)
                 {
                     case 0: // Just x component
                         value = phasor.x;
                         col = lerp(_ColorNeg, _Color, value);
-                        col.a = clamp(value+1, 0.3,1);
+                        //col.a = clamp(value+1, 0.3,1);
                         return col;
 
                     case 1: // x component squared
                         value = phasor.x * phasor.x;
                         col = lerp(_ColorNeg, _Color, value);
-                        col.a = value+0.33;
+                        //col.a = value+0.33;
                         return col;
 
                     case 2: // Vertical velocity
                         value = phasor.y;
                         col = lerp(_ColorNeg, _ColorVel, value);
-                        col.a = clamp(value+1,0.3,1);
+                        //col.a = clamp(value+1,0.3,1);
                         return col;
 
                     case 3: // Surface kinetic energy from speed of mass rise/fall
                         value = phasor.y * phasor.y;
                         col = lerp(_ColorNeg, _ColorVel, value);
-                        col.a = value+0.33;
+                        //col.a = value+0.33;
                         return col;
 
                     case 4: // Combined Amplitude (phasor length)
                         value = amplitude*1.5;
                         col = lerp(_ColorNeg, _ColorFlow, value);
-                        col.a = clamp(value, .25,1);
+                        //col.a = clamp(value, .25,1);
                         return col;
                     case 5: // Combined Amplitude Squared (Momentum/ Energy transport)
                         value = ampSq*1.5;
                         col = lerp(_ColorNeg, _ColorFlow, value);
-                        col.a = value+0.33;
+                        //col.a = value+0.33;
                         return col;
 
                     default:
                         col = _ColorNeg;
-                        col.a = 0.4;
+                        //col.a = 0.4;
                         return col;
                         break;
                 }

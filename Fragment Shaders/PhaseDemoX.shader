@@ -1,15 +1,15 @@
-Shader "Phase/Demo Opaque"
+Shader "SimulCat/Phase Demo/Transparent Tex"
 {
     Properties
     {
-        _MainTex ("Idle Texture", 2D) = "white" {}
-        _IdleColour ("Idle Shade",color) = (0.5,0.5,0.5,1)
+        _MainTex ("Idle Texture", 2D) = "black" {}
+        _IdleShade ("Idle Shade",color) = (0.5,0.5,0.5,1)
         _LambdaPx("Lambda Pixels", float) = 49.64285714
         _LeftPx("Left Edge",float) = 50
         _TopBotMargin("Margin Top/Bottom", float) = 0
         _NumSources("Num Sources",float) = 2
         _SlitPitchPx("Slit Pitch",float) = 448
-        _SlitWidePx("Slit Width", Range(1.0,40.0)) = 12.0
+        _SlitWidePx("Slit Width", Range(1.0,80.0)) = 12.0
         _Color("Colour Wave", color) = (1, 1, 0, 0)
         _ColorNeg("Colour Base", color) = (0, 0.3, 1, 0)
         _ColorVel("Colour Velocity", color) = (0, 0.3, 1, 0)
@@ -21,14 +21,20 @@ Shader "Phase/Demo Opaque"
     }
     SubShader
     {
-        Tags {"RenderType"="Opaque"}
+        Tags {"Queue"="Transparent" "IgnoreProjector"="True" "RenderType"="Transparent"}
+        ZTest LEqual
+        ZWrite Off
+        Blend SrcAlpha
+        OneMinusSrcAlpha
         LOD 100
+        Cull Off
 
         Pass
         {
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
+            // make fog work
 
             #include "UnityCG.cginc"
 
@@ -45,7 +51,7 @@ Shader "Phase/Demo Opaque"
             };
 
             sampler2D _MainTex;
-            float4 _IdleColour;
+            float4 _IdleShade;
             float4 _MainTex_ST;
             float4 _MainTex_TexelSize;
 
@@ -84,18 +90,19 @@ Shader "Phase/Demo Opaque"
                 return o;
             }
 
-            fixed4 frag (v2f i) : SV_Target
+            fixed4 frag(v2f i) : SV_Target
             {
-                // sample the texture
-                fixed4 col = _IdleColour;
+                            // sample the texture
+                fixed4 col = _IdleShade;
                 int displayMode = round(_DisplayMode);
                 if (displayMode < 0)
                 {
                     fixed4 sample = tex2D(_MainTex, i.uv);
                     col *= sample;
-                    col.a = sample.r * _IdleColour.a;
+                    col.a = sample.r * _IdleShade.a;
                     return col;
                 }
+
                 float2 pos = i.uv;
                 float xPos = i.uv.x * _MainTex_TexelSize.z;
                 float yPos = i.uv.y * _MainTex_TexelSize.w;
@@ -119,7 +126,7 @@ Shader "Phase/Demo Opaque"
                     phasor += phaseAmp;
                     sourceY -= _SlitPitchPx;
                 }
-
+                
                 if (displayMode < 4 && _Frequency > 0)
                 {
                     float2 sample = phasor;
@@ -146,7 +153,7 @@ Shader "Phase/Demo Opaque"
                             col = lerp(_ColorNeg, _Color, alpha);
                             alpha = (alpha + 1);
                         }
-                        col.a = clamp(alpha, 0.2, 1); //      alpha;
+                        col.a = clamp(alpha, 0.3, 1); //      alpha;
                     }
                     else if (displayMode < 4)
                     {
@@ -161,18 +168,18 @@ Shader "Phase/Demo Opaque"
                             col = lerp(_ColorNeg, _ColorVel, alpha);
                             alpha = (alpha + 1);
                         }
-                        col.a = clamp(alpha, 0.2, 1);
+                        col.a = clamp(alpha, 0.3, 1);
                     }
                     else
                     {
                         alpha = (phasor.x * phasor.x) + (phasor.y * phasor.y);
                         col = lerp(_ColorNeg, _ColorFlow, alpha);
-                        col.a = clamp(alpha, 0.2, 1);
+                        col.a = clamp(alpha, 0.3, 1);
                     }
                 }
                 else
                 {
-                    col = _ColorNeg;
+                    col = _ColorNeg ;
                     col.a = 0.33;
                 }
                 return col;
