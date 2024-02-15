@@ -16,7 +16,7 @@ Shader "SimulCat/Wave Surface/From Phase CRT"
     }
     SubShader
     {
-        Tags { "Queue"="Opaque"}
+        Tags { "Rendertype"="Opaque"}
         //Tags { "Queue"="Transparent" "RenderType"="Transparent" "IgnoreProjector"="True"}
         Cull Off
         LOD 100
