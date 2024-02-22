@@ -33,6 +33,7 @@
         _SlitPitchPx("Slit Pitch",float) = 448
         _SlitWidePx("Slit Width", Range(1.0,40.0)) = 12.0
         _Scale("Simulation Scale",Range(1.0,10.0)) = 1
+        _SourceResolution("Source Resolution",Range(0.1,5)) = 0.5
 
         _OutputRaw("Generate Raw Output", float) = 0
         _DisplayMode("Display Mode", float) = 0
@@ -54,6 +55,7 @@ int _NumSources;
 float _SlitPitchPx;
 float _SlitWidePx;
 float _Scale;
+float _SourceResolution;
 
 float _OutputRaw;
 float _DisplayMode;
@@ -85,10 +87,12 @@ float4 frag(v2f_customrendertexture i) : SV_Target
     int yPixel = (int)(floor(pos.y * _CustomRenderTextureHeight));
 
     float2 phasor = float2(0,0);
-    
-    int slitWidthCount = (int) (max(1.0, _SlitWidePx));
+    float slitWidePx = max(1.0,_SlitWidePx);
+    float apertureAtRes = slitWidePx/_SourceResolution;
+    int slitWidthCount = max(1,round(apertureAtRes/_SourceResolution));
+    float stepDelta = slitWidePx/slitWidthCount;
     int sourceCount = round(_NumSources);
-    
+    int phasorCount = 0;
     float pixScale = 1 / _Scale;
     
     float sourceY = ((_NumSources - 1) * +_SlitPitchPx) * 0.5 + (_SlitWidePx * 0.25);
@@ -98,15 +102,17 @@ float4 frag(v2f_customrendertexture i) : SV_Target
     {
         float slitY = sourceY;
         float2 phaseAmp = float2(0, 0);
-        for (int pxCount = 0; pxCount < slitWidthCount; pxCount++)
+        for (int apertureStep = 0; apertureStep < slitWidthCount; apertureStep++)
         {
              delta.y = abs(yScaled-slitY);
              phaseAmp += sourcePhasor(delta);
-             slitY -= 1;
+             slitY -= stepDelta;
+             phasorCount++;
         }
         phasor += phaseAmp;
         sourceY -= _SlitPitchPx;
     }
+    phasor *= 1.0/phasorCount;
     /*
        Our mesh point now has a summed phasor that can be used to derive:
          a) Phasor magnitude overall surface amplitude.

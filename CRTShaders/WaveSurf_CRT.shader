@@ -3,20 +3,24 @@ Shader "SimulCat/Wave Surface/From Phase CRT"
     Properties
     {
         _MainTex ("Surface Phase", 2D) = "white" {}
-        _Color("Wave Colour", Color) = (.45,.8,1,.4)
+        _Color("Real Colour", Color) = (.45,.8,1,.4)
+        _ColorIm("Imaginary Colour", Color) = (.45,.8,1,.4)
+
+        _ShowReal("Show Real", float) = 1
+        _ShowImaginary("Show Imaginary", float) = 0
+        _ShowSquare("Show Square", float) = 0
+
+        _ScaleAmplitude("Scale Amplitude", Range(.01, 2)) = 0.5
+        _ScaleEnergy("Scale Energy", Range(0.01, 2)) = 0.5
+
         _Glossiness ("Smoothness", Range(0,1)) = 0.5
         _Metallic ("Metallic", Range(0,1)) = 0.0
-        _ScaleAmplitude("Scale Amplitude", Range(0, 0.1)) = 0.01
-        _ScaleEnergy("Scale Energy", Range(0, 0.1)) = 0.003
         _ClipHeight("Clip Height", Range(0.01,1)) = .25
         _Frequency("Wave Frequency", float) = 0
-        _ShowHeight("Show Real", float) = 1
-        _ShowVelocity("Show Imaginary", float) = 0
-        _ShowSquare("Show Energy", float) = 0
     }
     SubShader
     {
-        Tags { "Rendertype"="Opaque"}
+        Tags { "Queue"="Opaque"}
         //Tags { "Queue"="Transparent" "RenderType"="Transparent" "IgnoreProjector"="True"}
         Cull Off
         LOD 100
@@ -35,14 +39,15 @@ Shader "SimulCat/Wave Surface/From Phase CRT"
         half _Metallic;
 
         fixed4 _Color;
+        fixed4 _ColorIm;
 
         float _ScaleAmplitude;
         float _ScaleEnergy;
         float _ClipHeight;
         float _Frequency;
         
-        float _ShowHeight;
-        float _ShowVelocity;
+        float _ShowReal;
+        float _ShowImaginary;
         float _ShowSquare;
 
         static const float Tau = 6.28318531f;
@@ -52,7 +57,7 @@ Shader "SimulCat/Wave Surface/From Phase CRT"
             float2 uv_MainTex;
         };
 
-        float rotatePhase(float2 phSample)
+        float2 rotatePhase(float2 phSample)
         {
             float tphi = (1 - frac(_Frequency * _Time.y)) * Tau;
             float sinPhi = sin(tphi);
@@ -64,18 +69,19 @@ Shader "SimulCat/Wave Surface/From Phase CRT"
         float samplePhase(float4 phaseSample)
         {
             float result = 0;
-            if ((_ShowHeight > 0.1) && (_ShowVelocity > 0.1))
+            if ((_ShowReal > 0.1) && (_ShowImaginary > 0.1))
             {
-                result = _ShowSquare > 0.1 ? phaseSample.w : phaseSample.z;
                 if (_ShowSquare > 0.1) 
-                    result *= _ScaleEnergy;
+                {
+                    result = _ScaleEnergy * phaseSample.w;
+                }
                 else
-                    result *= _ScaleAmplitude;
+                    result = _ScaleAmplitude * phaseSample.z;
             }
             else
             {
                 float2 phasor = (_Frequency > 0) ? rotatePhase(phaseSample.xy) : phaseSample.xy;
-                result = (_ShowHeight > 0) ? phasor.x : phasor.y;
+                result = (_ShowReal > 0) ? phasor.x : phasor.y;
 
                 result = (_ShowSquare > 0.1) ? result * result * _ScaleEnergy : result * _ScaleAmplitude;
             }
@@ -96,9 +102,13 @@ Shader "SimulCat/Wave Surface/From Phase CRT"
 
             // Albedo comes from a texture tinted by color
             float hgt = samplePhase(tex2D(_MainTex, i.uv_MainTex));
-            float lvl = (_ShowSquare > 0.1) ? hgt/_ClipHeight : ((hgt*.5) +0.5)/_ClipHeight;
-            fixed4 c = _Color * lvl;
-            o.Alpha = lerp(1,0.35,lvl);
+            fixed4 c = ((_Color * _ShowReal) + (_ColorIm * _ShowImaginary));
+            if (_ShowReal > 0.5 && _ShowImaginary > 0.5)
+                c *= 0.5;
+            float lvl = hgt/_ClipHeight;
+            lvl = _ShowSquare > 0.1 ? lvl + 0.3 : (lvl *.5) + 0.5;
+            c *= (lvl+ 0.2f);
+            //o.Alpha = lerp(1,0.35,lvl);
             
             float3 duv = float3(_MainTex_TexelSize.xy, 0);
             float delta = _MainTex_TexelSize.x*2;

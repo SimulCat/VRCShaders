@@ -14,8 +14,8 @@ CustomRenderTexture:
   m_DownscaleFallback: 0
   m_IsAlphaChannelOptional: 0
   serializedVersion: 5
-  m_Width: 256
-  m_Height: 160
+  m_Width: 512
+  m_Height: 320
   m_AntiAliasing: 1
   m_MipCount: -1
   m_DepthStencilFormat: 0
@@ -43,7 +43,7 @@ CustomRenderTexture:
   m_InitMaterial: {fileID: 0}
   m_InitColor: {r: 0.20388272, g: 0.18098077, b: 0.46226418, a: 1}
   m_InitTexture: {fileID: 0}
-  m_UpdateMode: 0
+  m_UpdateMode: 1
   m_InitializationMode: 2
   m_UpdateZoneSpace: 1
   m_CurrentUpdateZoneSpace: 1
