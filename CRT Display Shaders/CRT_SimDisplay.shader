@@ -6,7 +6,12 @@ Shader "SimulCat/CRT/Display Surface"
         _IdleTex ("Idle Wallpaper", 2D) = "grey" {}
         _IdleColour ("Idle Shade",color) = (0.5,0.5,0.5,1)
 
-       _DisplayMode("Display Mode", float) = 0
+        _DisplayMode("Display Mode", float) = 0
+        _DisplayMode("Display Mode", float) = 0
+        _DisplayMode("Display Mode", float) = 0
+
+        _ScaleAmplitude("Scale Amplitude", Range(1, 100)) = 50
+        _ScaleEnergy("Scale Energy", Range(1, 100)) = 50
 
         _ColorNeg("Colour Base", color) = (0, 0.3, 1, 0)
         _Color("Colour Wave", color) = (1, 1, 0, 0)
@@ -53,6 +58,8 @@ Shader "SimulCat/CRT/Display Surface"
             float4 _IdleColour;
 
             float _DisplayMode;
+            float _ScaleAmplitude;
+            float _ScaleEnergy;
             
             float4 _Color;
             float4 _ColorNeg;
@@ -104,36 +111,38 @@ Shader "SimulCat/CRT/Display Surface"
                 switch (displayMode)
                 {
                     case 0: // Just x component
-                        value = phasor.x;
+                        value = phasor.x * _ScaleAmplitude;
                         col = lerp(_ColorNeg, _Color, value);
                         col.a = clamp(value+1, 0.3,1);
                         return col;
 
                     case 1: // x component squared
-                        value = phasor.x * phasor.x;
+                        value = phasor.x * _ScaleEnergy;
+                        value *= value;
                         col = lerp(_ColorNeg, _Color, value);
                         col.a = value+0.33;
                         return col;
 
                     case 2: // Vertical velocity
-                        value = phasor.y;
+                        value = phasor.y * _ScaleAmplitude;
                         col = lerp(_ColorNeg, _ColorVel, value);
                         col.a = clamp(value+1,0.3,1);
                         return col;
 
                     case 3: // Surface kinetic energy from speed of mass rise/fall
-                        value = phasor.y * phasor.y;
+                        value = phasor.y * _ScaleEnergy;
+                        value *= value;
                         col = lerp(_ColorNeg, _ColorVel, value);
                         col.a = value+0.33;
                         return col;
 
                     case 4: // Combined Amplitude (phasor length)
-                        value = amplitude*1.5;
+                        value = amplitude* _ScaleAmplitude;
                         col = lerp(_ColorNeg, _ColorFlow, value);
                         col.a = clamp(value, .25,1);
                         return col;
                     case 5: // Combined Amplitude Squared (Momentum/ Energy transport)
-                        value = ampSq*1.5;
+                        value = ampSq * _ScaleEnergy * _ScaleEnergy;
                         col = lerp(_ColorNeg, _ColorFlow, value);
                         col.a = value+0.33;
                         return col;

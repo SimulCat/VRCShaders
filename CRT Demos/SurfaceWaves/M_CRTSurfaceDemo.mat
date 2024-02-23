@@ -91,7 +91,7 @@ Material:
     - _HeightScale: 0.002
     - _K: 0.1
     - _LambdaPx: 49.642857
-    - _Metallic: 0.968
+    - _Metallic: 0.942
     - _Mode: 0
     - _NumSources: 2
     - _OcclusionStrength: 1
@@ -100,6 +100,7 @@ Material:
     - _Phase: 0
     - _Scale: 1
     - _ScaleAmplitude: 0.3
+    - _ScaleColour: 7.51
     - _ScaleEnergy: 0.5
     - _ShowHeight: 0
     - _ShowImaginary: 0

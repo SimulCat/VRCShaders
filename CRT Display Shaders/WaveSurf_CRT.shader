@@ -5,6 +5,7 @@ Shader "SimulCat/Wave Surface/From Phase CRT"
         _MainTex ("Surface Phase", 2D) = "white" {}
         _Color("Real Colour", Color) = (.45,.8,1,.4)
         _ColorIm("Imaginary Colour", Color) = (.45,.8,1,.4)
+        _ScaleColour("Scale Colour", Range(0.5, 10)) = 1
 
         _ShowReal("Show Real", float) = 1
         _ShowImaginary("Show Imaginary", float) = 0
@@ -13,6 +14,7 @@ Shader "SimulCat/Wave Surface/From Phase CRT"
         _ScaleAmplitude("Scale Amplitude", Range(.01, 2)) = 0.5
         _ScaleEnergy("Scale Energy", Range(0.01, 2)) = 0.5
 
+
         _Glossiness ("Smoothness", Range(0,1)) = 0.5
         _Metallic ("Metallic", Range(0,1)) = 0.0
         _ClipHeight("Clip Height", Range(0.01,1)) = .25
@@ -20,14 +22,12 @@ Shader "SimulCat/Wave Surface/From Phase CRT"
     }
     SubShader
     {
-        Tags { "Queue"="Opaque"}
-        //Tags { "Queue"="Transparent" "RenderType"="Transparent" "IgnoreProjector"="True"}
+        Tags { "RenderType"="Opaque"}
         Cull Off
         LOD 100
         CGPROGRAM
         // Physically based Standard lighting model, and enable shadows on all light types
         #pragma surface surf Standard addshadow fullforwardshadows vertex:verts
-        //#pragma surface surf Standard alpha addshadow fullforwardshadows vertex:verts
 
         // Use shader model 3.0 target, to get nicer looking lighting
         #pragma target 3.0
@@ -40,6 +40,7 @@ Shader "SimulCat/Wave Surface/From Phase CRT"
 
         fixed4 _Color;
         fixed4 _ColorIm;
+        float _ScaleColour;
 
         float _ScaleAmplitude;
         float _ScaleEnergy;
@@ -107,7 +108,7 @@ Shader "SimulCat/Wave Surface/From Phase CRT"
                 c *= 0.5;
             float lvl = hgt/_ClipHeight;
             lvl = _ShowSquare > 0.1 ? lvl + 0.3 : (lvl *.5) + 0.5;
-            c *= (lvl+ 0.2f);
+            c *= (lvl+ 0.2f)*_ScaleColour;
             //o.Alpha = lerp(1,0.35,lvl);
             
             float3 duv = float3(_MainTex_TexelSize.xy, 0);
