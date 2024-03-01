@@ -6,12 +6,13 @@ Shader"SimulCat/CRT/Display Surface Opaque"
         _IdleTex ("Idle Wallpaper", 2D) = "grey" {}
         _IdleColour ("Idle Shade",color) = (0.5,0.5,0.5,1)
 
+        _ShowCRT ("Show CRT", float) = 1
         _ShowReal("Show Real", float) = 1
         _ShowImaginary("Show Imaginary", float) = 0
         _ShowSquare("Show Square", float) = 0
 
-        _ScaleAmplitude("Scale Amplitude", Range(0.1, 5)) = 1
-        _ScaleEnergy("Scale Energy", Range(0.1, 5)) = 1
+        _ScaleAmplitude("Scale Amplitude", Range(0.1, 120)) = 50
+        _ScaleEnergy("Scale Energy", Range(0.1, 100)) = 50
 
         _ColorNeg("Colour Base", color) = (0, 0.3, 1, 0)
         _Color("Colour Wave", color) = (1, 1, 0, 0)
@@ -58,6 +59,7 @@ Shader"SimulCat/CRT/Display Surface Opaque"
             float _ScaleAmplitude;
             float _ScaleEnergy;
 
+            float _ShowCRT;
             float _ShowReal;
             float _ShowImaginary;
             float _ShowSquare;
@@ -98,20 +100,21 @@ Shader"SimulCat/CRT/Display Surface Opaque"
                             // sample the texture
                 float4 sample = tex2D(_MainTex, i.uv);
                 float2 pos = i.uv;
-                float2 phasor;
-
-                // If showing phase, rotate phase vector, no need to recalculate pattern, this allows CRT to calculate once, then leave alone;
+                float2 phasor = float2(1,0);
+                float value = 0;
                 if (displayIm && displayReal)
                 {
-                    float value;
                     if (displaySquare)
-                        value = sample.w * _ScaleEnergy;
+                    {
+                        value = sample.w * _ScaleEnergy * _ScaleEnergy;
+                    }
                     else
                         value = sample.z * _ScaleAmplitude;
                     col = lerp(_ColorNeg, _ColorFlow, value);
                     return col;
                 }
 
+                // If showing phase, rotate phase vector, no need to recalculate pattern, this allows CRT to calculate once, then leave alone;
                 if (_Frequency > 0 )
                 {
                     float tphi = (1 - frac(_Frequency * _Time.y)) * Tau;
@@ -123,21 +126,15 @@ Shader"SimulCat/CRT/Display Surface Opaque"
                 else
                     phasor = sample.xy;
 
-                if (displayReal)
-                {
-                    if (displaySquare)
-                        phasor.x *= (phasor.x * _ScaleEnergy);
-                    else
-                        phasor.x *= _ScaleAmplitude;
-                    col = lerp(_ColorNeg, _Color, phasor.x);
-                    return col;
-                }
-                // else (displayIm)
+                value = displayReal ? phasor.x : phasor.y;
                 if (displaySquare)
-                    phasor.y *= (phasor.y * _ScaleEnergy);
+                {
+                    value *= _ScaleEnergy;
+                    value *= value;
+                }
                 else
-                    phasor.y *= _ScaleAmplitude;
-                col = lerp(_ColorNeg, _ColorVel, phasor.y);
+                    value *= _ScaleAmplitude;
+                col = lerp(_ColorNeg, _ShowReal ? _Color : _ColorVel, value);
                 return col;
             }
             ENDCG

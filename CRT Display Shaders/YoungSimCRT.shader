@@ -1,4 +1,4 @@
-﻿Shader "SimulCat/Huygens/CRT Simulation"
+﻿Shader "SimulCat/Young/CRT Simulation"
 {
 
     Properties

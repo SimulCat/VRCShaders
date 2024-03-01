@@ -6,12 +6,13 @@ Shader "SimulCat/CRT/Display Surface"
         _IdleTex ("Idle Wallpaper", 2D) = "grey" {}
         _IdleColour ("Idle Shade",color) = (0.5,0.5,0.5,1)
 
-        _DisplayMode("Display Mode", float) = 0
-        _DisplayMode("Display Mode", float) = 0
-        _DisplayMode("Display Mode", float) = 0
+        _ShowCRT ("Show CRT", float) = 1
+        _ShowReal("Show Real", float) = 0
+        _ShowImaginary("Show Imaginary", float) = 0
+        _ShowSquare("Show Square", float) = 0
 
-        _ScaleAmplitude("Scale Amplitude", Range(1, 100)) = 50
-        _ScaleEnergy("Scale Energy", Range(1, 100)) = 50
+        _ScaleAmplitude("Scale Amplitude", Range(1, 120)) = 50
+        _ScaleEnergy("Scale Energy", Range(1, 120)) = 50
 
         _ColorNeg("Colour Base", color) = (0, 0.3, 1, 0)
         _Color("Colour Wave", color) = (1, 1, 0, 0)
@@ -57,9 +58,13 @@ Shader "SimulCat/CRT/Display Surface"
             float4 _IdleTex_ST;
             float4 _IdleColour;
 
-            float _DisplayMode;
             float _ScaleAmplitude;
             float _ScaleEnergy;
+
+            float _ShowCRT;
+            float _ShowReal;
+            float _ShowImaginary;
+            float _ShowSquare;
             
             float4 _Color;
             float4 _ColorNeg;
@@ -73,7 +78,7 @@ Shader "SimulCat/CRT/Display Surface"
             {
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
-                if (_DisplayMode >= 0)
+                if (_ShowReal <= 0 && _ShowImaginary <= 0)
                     o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 else
                     o.uv = TRANSFORM_TEX(v.uv, _IdleTex);
@@ -82,9 +87,11 @@ Shader "SimulCat/CRT/Display Surface"
 
             fixed4 frag(v2f i) : SV_Target
             {
-                int displayMode = round(_DisplayMode);
+                bool displaySquare = round(_ShowSquare) > 0;
+                bool displayReal = round(_ShowReal) > 0;
+                bool displayIm = round(_ShowImaginary) > 0;                       
                 fixed4 col = _ColorNeg;
-                if (displayMode < 0)
+                if (!(displayReal || displayIm))
                 {
                     fixed4 sample = tex2D(_IdleTex, i.uv);
                     col.rgb = sample.rgb * _IdleColour;
@@ -94,12 +101,25 @@ Shader "SimulCat/CRT/Display Surface"
                             // sample the texture
                 float4 sample = tex2D(_MainTex, i.uv);
                 float2 pos = i.uv;
-                float2 phasor = sample.xy;
+                float2 phasor = float2(1,0);
                 float amplitude = sample.z;
                 float ampSq = sample.w;
                 float value = 0;
+
+                if (displayIm && displayReal)
+                {
+                    if (displaySquare)
+                        value = sample.w * _ScaleEnergy * _ScaleEnergy;
+                    else
+                        value = sample.z * _ScaleAmplitude;
+                    col = lerp(_ColorNeg, _ColorFlow, value);
+                    col.a = displaySquare ? value+0.33 : clamp(value, .25,1);
+                    return col;
+                }
+
                 // If showing phase, rotate phase vector, no need to recalculate pattern, this allows CRT to calculate once, then leave alone;
-                if (displayMode < 4 && _Frequency > 0)
+
+                if (_Frequency > 0 )
                 {
                     float tphi = (1 - frac(_Frequency * _Time.y)) * Tau;
                     float sinPhi = sin(tphi);
@@ -107,52 +127,20 @@ Shader "SimulCat/CRT/Display Surface"
                     phasor.x = sample.x * cosPhi - sample.y * sinPhi;
                     phasor.y = sample.x * sinPhi + sample.y * cosPhi;
                 }
-
-                switch (displayMode)
+                else
+                    phasor = sample.xy;
+                
+                value = displayReal ? phasor.x : phasor.y;
+                if (displaySquare)
                 {
-                    case 0: // Just x component
-                        value = phasor.x * _ScaleAmplitude;
-                        col = lerp(_ColorNeg, _Color, value);
-                        col.a = clamp(value+1, 0.3,1);
-                        return col;
-
-                    case 1: // x component squared
-                        value = phasor.x * _ScaleEnergy;
-                        value *= value;
-                        col = lerp(_ColorNeg, _Color, value);
-                        col.a = value+0.33;
-                        return col;
-
-                    case 2: // Vertical velocity
-                        value = phasor.y * _ScaleAmplitude;
-                        col = lerp(_ColorNeg, _ColorVel, value);
-                        col.a = clamp(value+1,0.3,1);
-                        return col;
-
-                    case 3: // Surface kinetic energy from speed of mass rise/fall
-                        value = phasor.y * _ScaleEnergy;
-                        value *= value;
-                        col = lerp(_ColorNeg, _ColorVel, value);
-                        col.a = value+0.33;
-                        return col;
-
-                    case 4: // Combined Amplitude (phasor length)
-                        value = amplitude* _ScaleAmplitude;
-                        col = lerp(_ColorNeg, _ColorFlow, value);
-                        col.a = clamp(value, .25,1);
-                        return col;
-                    case 5: // Combined Amplitude Squared (Momentum/ Energy transport)
-                        value = ampSq * _ScaleEnergy * _ScaleEnergy;
-                        col = lerp(_ColorNeg, _ColorFlow, value);
-                        col.a = value+0.33;
-                        return col;
-
-                    default:
-                        col = _ColorNeg;
-                        col.a = 0.4;
-                        return col;
-                        break;
+                    value *= _ScaleEnergy;
+                    value *= value;
                 }
+                else
+                    value *= _ScaleAmplitude;
+                col = lerp(_ColorNeg, displayReal ? _Color : _ColorVel, value);
+                col.a = (displaySquare) ? value +0.33 : clamp(value + 1, 0.3, 1);
+
                 return col;
             }
             ENDCG

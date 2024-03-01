@@ -1,4 +1,4 @@
-Shader"SimulCat/Huygens/CRT Display"
+Shader"SimulCat/Young/CRT Display"
 {
     Properties
     {
