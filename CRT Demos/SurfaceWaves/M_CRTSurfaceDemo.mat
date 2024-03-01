@@ -105,7 +105,7 @@ Material:
     - _ShowHeight: 0
     - _ShowImaginary: 0
     - _ShowReal: 1
-    - _ShowSquare: 0
+    - _ShowSquare: 1
     - _ShowVelocity: 1
     - _SlitPitchPx: 448
     - _SlitWidePx: 40
