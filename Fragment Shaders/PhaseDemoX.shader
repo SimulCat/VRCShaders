@@ -4,12 +4,12 @@ Shader "SimulCat/Phase Demo/Transparent Tex"
     {
         _MainTex ("Idle Texture", 2D) = "black" {}
         _IdleShade ("Idle Shade",color) = (0.5,0.5,0.5,1)
-        _LambdaPx("Lambda Pixels", float) = 49.64285714
+        _Lambda("Lambda Pixels", float) = 49.64285714
         _LeftPx("Left Edge",float) = 50
         _TopBotMargin("Margin Top/Bottom", float) = 0
-        _NumSources("Num Sources",float) = 2
-        _SlitPitchPx("Slit Pitch",float) = 448
-        _SlitWidePx("Slit Width", Range(1.0,80.0)) = 12.0
+        _SlitCount("Num Sources",float) = 2
+        _SlitPitch("Slit Pitch",float) = 448
+        _SlitWidth("Slit Width", Range(1.0,80.0)) = 12.0
         _Color("Colour Wave", color) = (1, 1, 0, 0)
         _ColorNeg("Colour Base", color) = (0, 0.3, 1, 0)
         _ColorVel("Colour Velocity", color) = (0, 0.3, 1, 0)
@@ -55,12 +55,12 @@ Shader "SimulCat/Phase Demo/Transparent Tex"
             float4 _MainTex_ST;
             float4 _MainTex_TexelSize;
 
-            float _LambdaPx;
+            float _Lambda;
             float _LeftPx;
             float _TopBotMargin;
-            int _NumSources;
-            float _SlitPitchPx;
-            float _SlitWidePx;
+            int _SlitCount;
+            float _SlitPitch;
+            float _SlitWidth;
             float4 _Color;
             float4 _ColorNeg;
             float4 _ColorVel;
@@ -75,9 +75,9 @@ Shader "SimulCat/Phase Demo/Transparent Tex"
             float2 sourcePhasor(float2 delta)
             {
                 float rPixels = length(delta);
-                float rLambda = rPixels / _LambdaPx;
+                float rLambda = rPixels / _Lambda;
                 float rPhi = rLambda * Tau;
-                float amp = _Scale * _LambdaPx / max(_LambdaPx, rPixels);
+                float amp = _Scale * _Lambda / max(_Lambda, rPixels);
                 float2 result = float2(cos(rPhi), sin(rPhi));
                 return result * amp;
             }
@@ -108,9 +108,9 @@ Shader "SimulCat/Phase Demo/Transparent Tex"
                 float yPos = i.uv.y * _MainTex_TexelSize.w;
                 bool isInMargin = (xPos >= _LeftPx) && (yPos >= _TopBotMargin) && (yPos <= _MainTex_TexelSize.w - _TopBotMargin);
                 float2 phasor = float2(0, 0);
-                int slitWidthCount = (int) (max(1.0, _SlitWidePx));
-                int sourceCount = round(_NumSources);
-                float sourceY = ((_NumSources - 1) * +_SlitPitchPx) * 0.5 + (_SlitWidePx * 0.25);
+                int slitWidthCount = (int) (max(1.0, _SlitWidth));
+                int sourceCount = round(_SlitCount);
+                float sourceY = ((_SlitCount - 1) * +_SlitPitch) * 0.5 + (_SlitWidth * 0.25);
                 float2 delta = float2(abs(xPos - _LeftPx) * _Scale, 0.0);
                 float yScaled = (yPos - _MainTex_TexelSize.w / 2.0) * _Scale;
                 for (int nAperture = 0; nAperture < sourceCount; nAperture++)
@@ -124,7 +124,7 @@ Shader "SimulCat/Phase Demo/Transparent Tex"
                         slitY -= 1;
                     }
                     phasor += phaseAmp;
-                    sourceY -= _SlitPitchPx;
+                    sourceY -= _SlitPitch;
                 }
                 
                 if (displayMode < 4 && _Frequency > 0)

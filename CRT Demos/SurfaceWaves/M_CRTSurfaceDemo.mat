@@ -99,9 +99,9 @@ Material:
     - _Parallax: 0.02
     - _Phase: 0
     - _Scale: 1
-    - _ScaleAmplitude: 0.3
+    - _ScaleAmplitude: 0.8
     - _ScaleColour: 7.51
-    - _ScaleEnergy: 0.5
+    - _ScaleEnergy: 0.9
     - _ShowHeight: 0
     - _ShowImaginary: 0
     - _ShowReal: 1

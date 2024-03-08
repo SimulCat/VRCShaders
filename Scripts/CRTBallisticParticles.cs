@@ -1,5 +1,4 @@
 ﻿
-using System.Xml.Linq;
 using TMPro;
 using UdonSharp;
 using UnityEngine;
@@ -15,16 +14,28 @@ public class CRTBallisticParticles : UdonSharpBehaviour
     [SerializeField] Material matCRT;
     [SerializeField] bool iHaveCRT;
 
-    [SerializeField] private Vector2Int SimDimensions = new Vector2Int(512,320);
-
-    [SerializeField, UdonSynced, FieldChangeCallback(nameof(SlitCount))]
+    [SerializeField, FieldChangeCallback(nameof(SlitCount))]
     private int slitCount;
-
-    [SerializeField, UdonSynced, FieldChangeCallback(nameof(SlitWidth))]
+    [SerializeField, FieldChangeCallback(nameof(SlitWidth))]
     private float slitWidth;
-    [SerializeField, UdonSynced, FieldChangeCallback(nameof(SlitPitch))]
+    [SerializeField, FieldChangeCallback(nameof(SlitPitch))]
     private float slitPitch;
+    [SerializeField, FieldChangeCallback(nameof(SimScale))]
+    private float simScale;
 
+
+    [SerializeField, Tooltip("Planck Value for simulation; lambda=h/p"), UdonSynced, FieldChangeCallback(nameof(PlanckSim))]
+    private float planckSim = 12;
+
+    float PlanckSim
+    {
+        get=>planckSim; 
+        set
+        {
+            planckSim = value;
+            updateParticleK();
+        }
+    }
 
     [SerializeField, Range(1,10), UdonSynced, FieldChangeCallback(nameof(ParticleSpeed))]
     private float particleSpeed;
@@ -41,46 +52,32 @@ public class CRTBallisticParticles : UdonSharpBehaviour
             value = Mathf.Max(value, 1f);
             particleSpeed = value; 
             gratingChanged = true;
-            speedToGratingPhase(particleSpeed);
-            if (speedSlider != null && !speedSlider.PointerDown && speedSlider.CurrentValue != particleSpeed)
-                speedSlider.SetValue(particleSpeed);
-            RequestSerialization();
+            updateParticleK();
         }
     }
-
-    [Header("UI Elements")]
-    // UI
-    [SerializeField]
-    UdonSlider pitchSlider;
-    [SerializeField]
-    UdonSlider widthSlider;
-    [SerializeField]
-    UdonSlider speedSlider;
-    [SerializeField]
-    TextMeshProUGUI slitCountLabel;
 
     [Header("Constants"), SerializeField]
     private int MAX_SLITS = 17;
     [SerializeField]
-    private float speedToSimLambda = 10; // Speed 1 matches wavelength 10
+    private float particleMass = 1; // Speed 1 matches wavelength 10
 
     [Header("Useful Feedback (Debug)")]
     [SerializeField]
-    private float distributionTheta;
-    //[SerializeField]
-    //private float[] gratingTransform;
+    private float particleMomentum;
     [SerializeField]
-    private float particleLambda;
+    private float particleK;
 
-    int simWidth
+
+    public float SimScale
     {
-        get => SimDimensions.y;
-        set { SimDimensions.y = value; }
-    }
-    int simLength
-    {
-        get => SimDimensions.x;
-        set { SimDimensions.x = value; }
+        get => simScale; 
+        set 
+        { 
+            gratingChanged = true;
+            if (matCRT != null)
+                matCRT.SetFloat("_Scale", simScale);
+            simScale = value; 
+        }
     }
 
 
@@ -96,11 +93,6 @@ public class CRTBallisticParticles : UdonSharpBehaviour
                 if (iHaveCRT)
                     matCRT.SetFloat("_SlitPitch", value);
             }
-            if (pitchSlider != null && !pitchSlider.PointerDown && slitPitch != pitchSlider.CurrentValue)
-            {
-                    pitchSlider.SetValue(value);
-            }
-            RequestSerialization();
         }
     }
 
@@ -117,22 +109,10 @@ public class CRTBallisticParticles : UdonSharpBehaviour
                 if (iHaveCRT)
                     matCRT.SetFloat("_SlitWidth", value);
             }
-            if (widthSlider != null && !widthSlider.PointerDown && widthSlider.CurrentValue != widthSlider.CurrentValue)
-                widthSlider.SetValue(value);
-            RequestSerialization();
         }
     }
 
-    public void incSlits()
-    {
-        SlitCount = slitCount + 1;
-    }
-    public void decSlits()
-    {
-        SlitCount = slitCount - 1;
-    }
-
-    public int SlitCount
+       public int SlitCount
     {
         get => slitCount;
         set
@@ -144,145 +124,56 @@ public class CRTBallisticParticles : UdonSharpBehaviour
             if (value != slitCount)
             {
                 slitCount = value;
+                if (iHaveCRT)
+                    matCRT.SetFloat("_SlitCount", slitCount);
                 gratingChanged = true;
-                if (slitCountLabel != null)
-                {
-                    slitCountLabel.text = value.ToString();
-                }
             }
-            RequestSerialization();
         }
     }
 
-    private float speedToGratingPhase(float speed)
-    {
-        float value = Mathf.PI * speedToSimLambda / (2 * speed);
+    private void updateParticleK()
+    { //_particleK("pi*p/h", float)
+        particleK = Mathf.PI * (particleMass * particleSpeed) / planckSim;
         if (iHaveCRT)
         {
-            matCRT.SetFloat("_MomentumToPhase",value);
+            matCRT.SetFloat("_ParticleK",particleK);
+            gratingChanged = true;
         }
-        return value;
     }
 
-    /*
-    public bool CreateTexture(string texName)
+    public void init()
     {
-        if (string.IsNullOrEmpty(texName))
-            texName = "_MomentumTex2D";
-        if (!iHaveCRT)
-        {
-            Debug.LogWarning(gameObject.name + " Create Texture: [No Material]");
-            return false;
-        }
-        var tex = new Texture2D(pointsWide, 1, TextureFormat.RGBAFloat, false);
-        Color xColor = Color.clear;
-        for (int i = 0; i < pointsWide; i++)
-        {
-            xColor.r = gratingTransform[i];
-            xColor.g = gratingTransform[i];
-            xColor.b = gratingTransform[i];
-            tex.SetPixel(i, 0, xColor);
-        }
-        tex.filterMode = FilterMode.Point;
-        tex.wrapMode = TextureWrapMode.Clamp;
-        tex.Apply();
-        matCRT.SetTexture(texName, tex);
-        Debug.Log(gameObject.name + ": Created Texture: [" + texName + "]");
-        return true;
-    }
-
-    private void loadGrating(float lambda)
-    {
-        Debug.Log(gameObject.name + ": Load Grating(lambda=" + lambda.ToString() + ")");
-        if (slitWidth <= 0)
-            return;
-        gratingChanged = false;
-        if (gratingTransform == null || gratingTransform.Length < pointsWide)
-            gratingTransform = new float[pointsWide];
-        // Calculte aperture parameters in terms of width per (min particleSpeed)
-        Debug.Log(gameObject.name + string.Format(": loadGrating() {0} aperture={1} pitch={2}", gameObject.name, slitWidth, slitPitch));
-        // Assume momentum spectrum is symmetrical so calculate from zero.
-        float integralSum = 0f;
-        float singleSlitValueSq;
-        float manySlitValueSq;
-        float dSinqd;
-        float dX;
-        float thisValue;
-        float thetaMaxSingle = Mathf.Asin((7.0f * lambda / slitWidth));
-        distributionTheta = Mathf.PI;
-        if (thetaMaxSingle < Mathf.PI)
-            distributionTheta = thetaMaxSingle;
-
-        for (int nPoint = 0; nPoint < pointsWide; nPoint++)
-        {
-            singleSlitValueSq = 1;
-            dX = (distributionTheta * nPoint) / pointsWide;
-            if (nPoint != 0)
-            {
-                float ssTheta = dX * slitWidth;
-                singleSlitValueSq = Mathf.Sin(ssTheta) / ssTheta;
-                singleSlitValueSq *= singleSlitValueSq;
-            }
-            thisValue = singleSlitValueSq;
-            if (slitCount > 1)
-            {
-                dSinqd = Mathf.Sin(dX * slitPitch);
-                if (dSinqd == 0)
-                    manySlitValueSq = slitCount;
-                else
-                    manySlitValueSq = Mathf.Sin(slitCount * dX * slitPitch) / dSinqd;
-                manySlitValueSq *= manySlitValueSq;
-                thisValue = singleSlitValueSq * manySlitValueSq;
-            }
-            integralSum += thisValue;
-            gratingTransform[nPoint] = thisValue;
-        }
-        // Now Convert Distribution to a Normalized Distribution 0 to pointsWide;
-        float normScale = pointsWide / integralSum;
-        for (int nPoint = 0; nPoint < pointsWide; nPoint++)
-            gratingTransform[nPoint] *= normScale;
-
         if (iHaveCRT)
-            CreateTexture("_MomentumTex2D");
-    }
-    */
-    /*
-    private void reloadGrating()
-    {
-        quantumScatter.SetGratingByPitch(SlitCount, SlitWidth, SlitPitch, particleSpeedMin);
-        Debug.Log(gameObject.name + ": reloadGrating()");
-        quantumScatter.Touch();
-    }
-    */
+        {
+            updateParticleK();
+            matCRT.SetFloat("_SlitCount", slitCount);
+            matCRT.SetFloat("_SlitPitch", slitPitch);
+            matCRT.SetFloat("_SlitWidth", slitWidth);
+            matCRT.SetFloat("_Scale", simScale);
+        }
 
+    }
     private void Update()
     {
         if (!gratingChanged)
             return;
-        // if (!iHaveQuantumScatter || !quantumScatter.IsStarted)
-        //     return;
-        particleLambda = speedToSimLambda / particleSpeed;
-        //loadGrating(particleLambda);
-        speedToGratingPhase(particleSpeed);
-
-        if (widthSlider != null && !widthSlider.PointerDown)
-            widthSlider.SetValue(slitWidth);
-        if (pitchSlider != null && !pitchSlider.PointerDown)
-            pitchSlider.SetValue(slitPitch);
+        simCRT.Update(1);
+        gratingChanged = false;
     }
     void Start()
     {
         if (simCRT != null)
             matCRT = simCRT.material;
         iHaveCRT = (simCRT != null && matCRT != null);
+        /*
         if (iHaveCRT)
         {
-            SimDimensions = new Vector2Int(simCRT.width, simCRT.height);
-
-            SlitCount = Mathf.RoundToInt(matCRT.GetFloat("_NumSources"));
+            SlitCount = Mathf.RoundToInt(matCRT.GetFloat("_SlitCount"));
             SlitPitch = matCRT.GetFloat("_SlitPitch");
             SlitWidth = matCRT.GetFloat("_SlitWidth");
+            SimScale = matCRT.GetFloat("_Scale");
         }
+        */
         gratingChanged |= true;
     }
 }

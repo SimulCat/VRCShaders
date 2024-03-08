@@ -4,10 +4,10 @@ Shader "SimulCat/Phase Demo/Transparent"
     {
         _mmHigh("Frame Height (mm)",float) = 1000
         _mmWide("Frame Width (mm)",float) = 2000
-        _LambdaPx("Lambda Pixels", float) = 49.64285714
-        _NumSources("Num Sources",float) = 2
-        _SlitPitchPx("Slit Pitch",float) = 448
-        _SlitWidePx("Slit Width", Range(1.0,80.0)) = 12.0
+        _Lambda("Lambda Pixels", float) = 49.64285714
+        _SlitCount("Num Sources",float) = 2
+        _SlitPitch("Slit Pitch",float) = 448
+        _SlitWidth("Slit Width", Range(1.0,80.0)) = 12.0
         _ColorNeg("Colour Base", color) = (0, 0.3, 1, 0)
         _Color("Colour Wave", color) = (1, 1, 0, 0)
         _ColorVel("Colour Velocity", color) = (0, 0.3, 1, 0)
@@ -48,10 +48,10 @@ Shader "SimulCat/Phase Demo/Transparent"
 
             float _mmHigh;
             float _mmWide;
-            float _LambdaPx;
-            int _NumSources;
-            float _SlitPitchPx;
-            float _SlitWidePx;
+            float _Lambda;
+            int _SlitCount;
+            float _SlitPitch;
+            float _SlitWidth;
             float4 _Color;
             float4 _ColorNeg;
             float4 _ColorVel;
@@ -66,9 +66,9 @@ Shader "SimulCat/Phase Demo/Transparent"
             float2 sourcePhasor(float2 delta)
             {
                 float rPixels = length(delta);
-                float rLambda = rPixels / _LambdaPx;
+                float rLambda = rPixels / _Lambda;
                 float rPhi = rLambda * Tau;
-                float amp = _Scale * _LambdaPx / max(_LambdaPx, rPixels);
+                float amp = _Scale * _Lambda / max(_Lambda, rPixels);
                 float2 result = float2(cos(rPhi), sin(rPhi));
                 return result * amp;
             }
@@ -85,9 +85,9 @@ Shader "SimulCat/Phase Demo/Transparent"
             {
                 fixed4 col = fixed4(0, 0, 0, 1);
                 float2 phasor = float2(0, 0);
-                int slitWidthCount = (int) (max(1.0, _SlitWidePx));
-                int sourceCount = round(_NumSources);
-                float sourceY = ((_NumSources - 1) * _SlitPitchPx) * 0.5 + (_SlitWidePx * 0.25);
+                int slitWidthCount = (int) (max(1.0, _SlitWidth));
+                int sourceCount = round(_SlitCount);
+                float sourceY = ((_SlitCount - 1) * _SlitPitch) * 0.5 + (_SlitWidth * 0.25);
                 float2 delta = float2(i.pos.x * _Scale, 0.0);
                 float yScaled = (i.pos.y - _mmHigh / 2.0) * _Scale;
                 int displayMode = round(_DisplayMode);
@@ -102,7 +102,7 @@ Shader "SimulCat/Phase Demo/Transparent"
                         slitY -= 1;
                     }
                     phasor += phaseAmp;
-                    sourceY -= _SlitPitchPx;
+                    sourceY -= _SlitPitch;
                 }
                                     
                 // Rotate final phasor according if frequency is non-zero

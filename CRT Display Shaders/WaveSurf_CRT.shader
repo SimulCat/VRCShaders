@@ -5,14 +5,14 @@ Shader "SimulCat/Wave Surface/From Phase CRT"
         _MainTex ("Surface Phase", 2D) = "white" {}
         _Color("Real Colour", Color) = (.45,.8,1,.4)
         _ColorIm("Imaginary Colour", Color) = (.45,.8,1,.4)
+        _ColorBase("Base Colour", Color) = (.2,.3,.4,1)
+
         _ScaleColour("Scale Colour", Range(0.5, 10)) = 1
+        _ScaleHeight("Scale Amplitude", Range(.01, 2)) = 0.5
 
         _ShowReal("Show Real", float) = 1
         _ShowImaginary("Show Imaginary", float) = 0
         _ShowSquare("Show Square", float) = 0
-
-        _ScaleAmplitude("Scale Amplitude", Range(.01, 2)) = 0.5
-        _ScaleEnergy("Scale Energy", Range(0.01, 2)) = 0.5
 
 
         _Glossiness ("Smoothness", Range(0,1)) = 0.5
@@ -40,10 +40,11 @@ Shader "SimulCat/Wave Surface/From Phase CRT"
 
         fixed4 _Color;
         fixed4 _ColorIm;
-        float _ScaleColour;
+        fixed4 _ColorBase;
 
-        float _ScaleAmplitude;
-        float _ScaleEnergy;
+        float _ScaleColour;
+        float _ScaleHeight;
+
         float _ClipHeight;
         float _Frequency;
         
@@ -73,20 +74,18 @@ Shader "SimulCat/Wave Surface/From Phase CRT"
             if ((_ShowReal > 0.1) && (_ShowImaginary > 0.1))
             {
                 if (_ShowSquare > 0.1) 
-                {
-                    result = _ScaleEnergy * phaseSample.w;
-                }
+                    result = phaseSample.w;
                 else
-                    result = _ScaleAmplitude * phaseSample.z;
+                    result = phaseSample.z;
             }
             else
             {
                 float2 phasor = (_Frequency > 0) ? rotatePhase(phaseSample.xy) : phaseSample.xy;
                 result = (_ShowReal > 0) ? phasor.x : phasor.y;
-
-                result = (_ShowSquare > 0.1) ? result * result * _ScaleEnergy : result * _ScaleAmplitude;
+                if (_ShowSquare > 0.1)
+                    result *= result;
             }
-            return clamp(result, -_ClipHeight,_ClipHeight);
+            return clamp(result * _ScaleHeight, -_ClipHeight,_ClipHeight);
         }
 
         void verts (inout appdata_full vertices) 
@@ -106,10 +105,13 @@ Shader "SimulCat/Wave Surface/From Phase CRT"
             fixed4 c = ((_Color * _ShowReal) + (_ColorIm * _ShowImaginary));
             if (_ShowReal > 0.5 && _ShowImaginary > 0.5)
                 c *= 0.5;
-            float lvl = hgt/_ClipHeight;
-            lvl = _ShowSquare > 0.1 ? lvl + 0.3 : (lvl *.5) + 0.5;
-            c *= (lvl+ 0.2f)*_ScaleColour;
-            //o.Alpha = lerp(1,0.35,lvl);
+            c *=_ScaleColour;
+            float lvl = hgt;
+            if (_ShowSquare < 0.1)
+                lvl = (lvl/_ClipHeight *.5) + 0.5;
+            else
+                lvl *= 0.1 + 3/_ClipHeight;
+            c = lerp(_ColorBase, c, lvl);
             
             float3 duv = float3(_MainTex_TexelSize.xy, 0);
             float delta = _MainTex_TexelSize.x*2;

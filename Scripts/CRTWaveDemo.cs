@@ -9,9 +9,6 @@ using VRC.Udon;
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class CRTWaveDemo : UdonSharpBehaviour
 {
-    [SerializeField, Tooltip("Custom Render texture")]
-    private CustomRenderTexture simCRT;
-    
     [SerializeField, Tooltip("Display Mesh")]
     private MeshRenderer waveMesh;
     
@@ -36,30 +33,27 @@ public class CRTWaveDemo : UdonSharpBehaviour
     [SerializeField] Toggle togProbability;
     bool iHaveTogProb = false;
 
-    [SerializeField] UdonSlider scaleSlider;
-    bool iHaveScale = false;
-
     [Header("Serialized for monitoring in Editor")]
     [SerializeField]
     private Material matPanel = null;
-    [SerializeField]
-    private Material matSimControl = null;
-    [SerializeField]
-    private Material matSimDisplay = null;
-    [SerializeField, Tooltip("Check to invoke CRT Update")] 
-    private bool crtUpdateNeeded = false;
-    [SerializeField]
-    private bool iHaveCRT = false;
-    [SerializeField]
-    private bool iHaveSimControl = false;
     [SerializeField]
     private bool useDisplayMode = false;
     [SerializeField]
     private bool useDisplayStates = false;
     [SerializeField]
     private bool iHavePanelMaterial = false;
-    [SerializeField]
-    private bool CRTUpdatesMovement;
+
+    private VRCPlayerApi player;
+    private bool iamOwner = false;
+
+    private void ReviewOwnerShip()
+    {
+        iamOwner = Networking.IsOwner(this.gameObject);
+    }
+    public override void OnOwnershipTransferred(VRCPlayerApi player)
+    {
+        ReviewOwnerShip();
+    }
 
     private int DisplayMode
     {
@@ -68,45 +62,45 @@ public class CRTWaveDemo : UdonSharpBehaviour
         {
             displayMode = value;
             if (useDisplayMode)
-                matSimDisplay.SetFloat("_DisplayMode", value);
+                matPanel.SetFloat("_DisplayMode", value);
             if (useDisplayStates)
             {
                 switch (displayMode)
                 {
                     case 0:
-                        matSimDisplay.SetFloat("_ShowReal", 1f);
-                        matSimDisplay.SetFloat("_ShowImaginary", 0f);
-                        matSimDisplay.SetFloat("_ShowSquare", 0f);
+                        matPanel.SetFloat("_ShowReal", 1f);
+                        matPanel.SetFloat("_ShowImaginary", 0f);
+                        matPanel.SetFloat("_ShowSquare", 0f);
                         break;
                     case 1:
-                        matSimDisplay.SetFloat("_ShowReal", 1f);
-                        matSimDisplay.SetFloat("_ShowImaginary", 0f);
-                        matSimDisplay.SetFloat("_ShowSquare", 1f);
+                        matPanel.SetFloat("_ShowReal", 1f);
+                        matPanel.SetFloat("_ShowImaginary", 0f);
+                        matPanel.SetFloat("_ShowSquare", 1f);
                         break;
                     case 2:
-                        matSimDisplay.SetFloat("_ShowReal", 0f);
-                        matSimDisplay.SetFloat("_ShowImaginary", 1f);
-                        matSimDisplay.SetFloat("_ShowSquare", 0f);
+                        matPanel.SetFloat("_ShowReal", 0f);
+                        matPanel.SetFloat("_ShowImaginary", 1f);
+                        matPanel.SetFloat("_ShowSquare", 0f);
                         break;
                     case 3:
-                        matSimDisplay.SetFloat("_ShowReal", 0f);
-                        matSimDisplay.SetFloat("_ShowImaginary", 1f);
-                        matSimDisplay.SetFloat("_ShowSquare", 1f);
+                        matPanel.SetFloat("_ShowReal", 0f);
+                        matPanel.SetFloat("_ShowImaginary", 1f);
+                        matPanel.SetFloat("_ShowSquare", 1f);
                         break;
                     case 4:
-                        matSimDisplay.SetFloat("_ShowReal", 1f);
-                        matSimDisplay.SetFloat("_ShowImaginary", 1f);
-                        matSimDisplay.SetFloat("_ShowSquare", 0f);
+                        matPanel.SetFloat("_ShowReal", 1f);
+                        matPanel.SetFloat("_ShowImaginary", 1f);
+                        matPanel.SetFloat("_ShowSquare", 0f);
                         break;
                     case 5:
-                        matSimDisplay.SetFloat("_ShowReal", 1f);
-                        matSimDisplay.SetFloat("_ShowImaginary", 1f);
-                        matSimDisplay.SetFloat("_ShowSquare", 1f);
+                        matPanel.SetFloat("_ShowReal", 1f);
+                        matPanel.SetFloat("_ShowImaginary", 1f);
+                        matPanel.SetFloat("_ShowSquare", 1f);
                         break;
                     default:
-                        matSimDisplay.SetFloat("_ShowReal", 0f);
-                        matSimDisplay.SetFloat("_ShowImaginary", 0f);
-                        matSimDisplay.SetFloat("_ShowSquare", 0f);
+                        matPanel.SetFloat("_ShowReal", 0f);
+                        matPanel.SetFloat("_ShowImaginary", 0f);
+                        matPanel.SetFloat("_ShowSquare", 0f);
                         break;
                 }
             }
@@ -141,9 +135,13 @@ public class CRTWaveDemo : UdonSharpBehaviour
         }
     }
 
+
     // Display mode Toggles are all set to send custom event to this function
     public void togMode()
     {
+        if (!iamOwner)
+            Networking.SetOwner(player, gameObject);
+
         if (iHaveTogReal && togReal.isOn && displayMode != 0)
         {
             DisplayMode = 0;
@@ -191,107 +189,22 @@ public class CRTWaveDemo : UdonSharpBehaviour
         //Debug.Log("CRTWaveDemo: useDisplayMode" + useDisplayMode.ToString());
     }
 
-    private void configureSimControl()
-    {
-        CRTUpdatesMovement = false;
-        if (useDisplayMode || useDisplayStates)
-        { // Display mode and wave speed controls get handled by the Panel/Mesh Shader
-            if (iHaveCRT)
-            {
-                matSimDisplay = matPanel;
-                matSimControl = simCRT.material;
-                if (iHaveCRT && iHaveSimControl)
-                    matSimControl.SetFloat("_OutputRaw", 1);
-                crtUpdateNeeded = true;
-            }
-            else
-            {
-                matSimDisplay = matPanel;
-                matSimControl = matPanel;
-            }
-        }
-        else
-        { // Display mode and wave speed controls get handled by the panel material
-            if (iHaveCRT)
-            {
-                matSimDisplay = simCRT.material;
-                matSimControl = simCRT.material;
-                useDisplayStates = matSimDisplay.HasProperty("_ShowReal");
-                useDisplayMode = matSimDisplay.HasProperty("_DisplayMode");
-
-                CRTUpdatesMovement = false;
-                matSimControl.SetFloat("_OutputRaw", 0);
-                crtUpdateNeeded = true;
-            }
-            else
-            {
-                // No CRT and not a compatible display
-                matSimDisplay = null;
-                matSimControl = null;
-                Debug.Log("Warning:configureSimControl() no Interference control/display material");
-            }
-        }
-        iHaveSimControl = matSimControl != null;
-    }
-
-
-    void UpdateSimulation()
-    {
-        crtUpdateNeeded = false;
-        if (!iHaveCRT)
-            return;
-        simCRT.Update(1);
-    }
-
-    float waveTime = 0;
-    float delta;
-
-    private void Update()
-    {
-        if (!iHaveCRT) 
-            return;
-        if (CRTUpdatesMovement)
-        {
-            if (playPhase && displayMode >= 0 && displayMode < 4)
-            {
-                delta = Time.deltaTime;
-                waveTime -= delta;
-                if (waveTime < 0)
-                {
-                    waveTime += dt;
-                    crtUpdateNeeded |= true;
-                }
-            }
-        }
-        if (crtUpdateNeeded)
-        {
-            UpdateSimulation();
-        }
-    }
-
     void Start()
     {
+        player = Networking.LocalPlayer;
+        ReviewOwnerShip();
+
         iHaveTogReal = togReal != null;
         iHaveTogIm = togImaginary != null;
         iHaveTogRealPwr = togRealPwr != null;
         iHaveToImPwr = togImPwr != null;
         iHaveTogAmp = togAmplitude != null;
         iHaveTogProb = togProbability != null;
-        iHaveScale = scaleSlider != null;
 
-        if (simCRT != null)
-        {
-            iHaveCRT = true;
-            matSimControl = simCRT.material;
-            simCRT.Initialize();
-        }
-        iHaveSimControl = matSimControl != null;
         if (waveMesh != null)
             matPanel = waveMesh.material;
         iHavePanelMaterial = matPanel != null;
         checkPanelType();
-        configureSimControl();
         DisplayMode = displayMode;
-        crtUpdateNeeded = true;
     }
 }

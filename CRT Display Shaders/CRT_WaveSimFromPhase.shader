@@ -28,10 +28,10 @@
    */
     Properties
     {
-        _LambdaPx("Lambda Pixels", float) = 49.64285714
-        _NumSources("Num Sources",float) = 2
-        _SlitPitchPx("Slit Pitch",float) = 448
-        _SlitWidePx("Slit Width", Range(1.0,40.0)) = 12.0
+        _Lambda("Lambda Pixels", float) = 49.64285714
+        _SlitCount("Num Sources",float) = 2
+        _SlitPitch("Slit Pitch",float) = 448
+        _SlitWidth("Slit Width", Range(1.0,40.0)) = 12.0
         _Scale("Simulation Scale",Range(1.0,10.0)) = 1
         _SourceResolution("Source Resolution",Range(0.1,5)) = 0.5
 
@@ -50,10 +50,10 @@ CGINCLUDE
 #include "UnityCustomRenderTexture.cginc"
     
 
-float _LambdaPx;
-int _NumSources;
-float _SlitPitchPx;
-float _SlitWidePx;
+float _Lambda;
+int _SlitCount;
+float _SlitPitch;
+float _SlitWidth;
 float _Scale;
 float _SourceResolution;
 
@@ -71,9 +71,9 @@ static const float Tau = 6.28318531f;
 float2 sourcePhasor(float2 delta)
 {
     float rPixels = length(delta);
-    float rLambda = rPixels/_LambdaPx;
+    float rLambda = rPixels/_Lambda;
     float rPhi = rLambda*Tau;
-    float amp = _Scale*_LambdaPx/max(_LambdaPx,rPixels);
+    float amp = _Scale*_Lambda/max(_Lambda,rPixels);
     float2 result = float2(cos(rPhi),sin(rPhi));
     return result * amp;
 }
@@ -87,15 +87,15 @@ float4 frag(v2f_customrendertexture i) : SV_Target
     int yPixel = (int)(floor(pos.y * _CustomRenderTextureHeight));
 
     float2 phasor = float2(0,0);
-    float slitWidePx = max(1.0,_SlitWidePx);
+    float slitWidePx = max(1.0,_SlitWidth);
     float apertureAtRes = slitWidePx/_SourceResolution;
     int slitWidthCount = max(1,round(apertureAtRes/_SourceResolution));
     float stepDelta = slitWidePx/slitWidthCount;
-    int sourceCount = round(_NumSources);
+    int sourceCount = round(_SlitCount);
     int phasorCount = 0;
     float pixScale = 1 / _Scale;
     
-    float sourceY = ((_NumSources - 1) * +_SlitPitchPx) * 0.5 + (_SlitWidePx * 0.25);
+    float sourceY = ((_SlitCount - 1) * +_SlitPitch) * 0.5 + (_SlitWidth * 0.25);
     float2 delta = float2(xPixel*_Scale,0.0);
     float yScaled = (yPixel - _CustomRenderTextureHeight / 2.0)*_Scale;
     for (int nAperture = 0; nAperture < sourceCount; nAperture++)
@@ -110,7 +110,7 @@ float4 frag(v2f_customrendertexture i) : SV_Target
              phasorCount++;
         }
         phasor += phaseAmp;
-        sourceY -= _SlitPitchPx;
+        sourceY -= _SlitPitch;
     }
     phasor *= 1.0/phasorCount;
     /*

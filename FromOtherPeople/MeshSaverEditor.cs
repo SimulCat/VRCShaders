@@ -1,10 +1,9 @@
 using UnityEditor;
-
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-
-public static class MeshSaverEditor
+/*
+public static class MeshSaverEditor 
 {
 
     [MenuItem("CONTEXT/MeshFilter/Save Mesh...")]
@@ -39,4 +38,4 @@ public static class MeshSaverEditor
         AssetDatabase.SaveAssets();
     }
 
-}
+} */

@@ -29,7 +29,7 @@ public class UdonSlider : UdonSharpBehaviour
     [SerializeField]
     string clientVariableName = "SliderValueVar";
     [SerializeField]
-    string clientPointerStateVar = "PointerStateVar";
+    string clientPtrEvent = "slidePtr";
     [SerializeField]
     private float currentValue;
     [SerializeField]
@@ -174,13 +174,11 @@ public class UdonSlider : UdonSharpBehaviour
     {
         pointerDown = true;
         if (iHaveClientPtr)
-            SliderClient.SetProgramVariable<bool>(clientPointerStateVar, true);
+            SliderClient.SendCustomEvent(clientPtrEvent);
     }
     public void ptrUp()
     {
         pointerDown = false;
-        if (iHaveClientPtr)
-            SliderClient.SetProgramVariable<bool>(clientPointerStateVar, false);
     }
 
     private bool iHaveLabel = false;
@@ -193,7 +191,7 @@ public class UdonSlider : UdonSharpBehaviour
         iHaveTitle = sliderTitle != null;
         iHaveLabel = sliderLabel != null;
         iHaveClientVar = (SliderClient != null) && (!string.IsNullOrEmpty(clientVariableName));
-        iHaveClientPtr = (SliderClient != null) && (!string.IsNullOrEmpty(clientPointerStateVar));
+        iHaveClientPtr = (SliderClient != null) && (!string.IsNullOrEmpty(clientPtrEvent));
         if (!iHaveLabel)
             hideLabel = true;
         isInteractible = mySlider.interactable;

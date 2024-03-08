@@ -2810,7 +2810,7 @@ GameObject:
   - component: {fileID: 2859406592902976512}
   - component: {fileID: 2513998296350149995}
   m_Layer: 17
-  m_Name: MomentumSlider
+  m_Name: SpeedSlider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2883,10 +2883,10 @@ MonoBehaviour:
   m_FillRect: {fileID: 8677494394437536391}
   m_HandleRect: {fileID: 2902002725644096732}
   m_Direction: 0
-  m_MinValue: 10
-  m_MaxValue: 100
+  m_MinValue: 1
+  m_MaxValue: 10
   m_WholeNumbers: 0
-  m_Value: 24
+  m_Value: 2.4
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls:
@@ -2973,14 +2973,14 @@ MonoBehaviour:
   sliderTitle: {fileID: 6770909266818742618}
   hideLabel: 0
   unitsInteger: 0
-  displayInteger: 1
+  displayInteger: 0
   sliderUnit: m/s
   SliderClient: {fileID: 0}
   clientVariableName: particleSpeed
   clientPointerStateVar: speedPtr
-  currentValue: 20
-  maxValue: 100
-  minValue: 10
+  currentValue: 2.4
+  maxValue: 10
+  minValue: 1
 --- !u!114 &2513998296350149995
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3390,7 +3390,7 @@ MonoBehaviour:
   sliderTitle: {fileID: 5755357670183576194}
   hideLabel: 0
   unitsInteger: 0
-  displayInteger: 1
+  displayInteger: 0
   sliderUnit: <br>mm
   SliderClient: {fileID: 0}
   clientVariableName: slitWidth
@@ -3773,7 +3773,7 @@ MonoBehaviour:
   sliderTitle: {fileID: 6175649371667962530}
   hideLabel: 0
   unitsInteger: 0
-  displayInteger: 1
+  displayInteger: 0
   sliderUnit: <br>mm
   SliderClient: {fileID: 0}
   clientVariableName: slitPitch

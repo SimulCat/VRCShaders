@@ -81,19 +81,22 @@ Material:
     - _MapLength: 0
     - _Metallic: 0
     - _Mode: 0
-    - _MomentumToPhase: 6.544985
+    - _MomentumToPhase: 23.561945
     - _NumSources: 2
     - _OcclusionStrength: 1
     - _Parallax: 0.02
-    - _SamplesPerSlit: 7
+    - _ParticleK: 0.6283186
+    - _SamplesPerSlit: 64
     - _Scale: 1
-    - _SlitPitch: 67.29265
-    - _SlitWidth: 10.590855
+    - _SlitCount: 2
+    - _SlitPitch: 50
+    - _SlitWidth: 10
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _UVSec: 0
     - _ZWrite: 1
+    - _particleK: 0.2617994
     m_Colors:
     - _BeamVector: {r: 0, g: 0, b: 0, a: 0}
     - _CellDimensions: {r: 1, g: 1, b: 1, a: 1}
