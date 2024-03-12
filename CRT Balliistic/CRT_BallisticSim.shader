@@ -11,9 +11,8 @@
         _SamplesPerSlit("Samples per Slit", Range(1,255)) = 7
         _ParticleK("pi*p/h", float) = 0.26179939
         _Scale("Simulation Scale",Range(1.0,10.0)) = 1
-
-//        _MomentumTex2D("Momentum Map", 2D ) = "black" {}
-//        _MapLength("Momentum Scale", float ) = 1
+        _MomentumTex2D("Momentum Map", 2D ) = "black" {}
+        _MapLength("Momentum Scale", float ) = 1
 //        _ApertureTex2D("Aperture Map", 2D ) = "black" {}
 //        _GratingWidth("Grating Width", float ) = 1
     }
@@ -31,8 +30,8 @@ CGINCLUDE
         float _SamplesPerSlit;
         float _ParticleK;
         float _Scale;
- //       sampler2D _MomentumTex2D;
- //       float _MapLength;
+        sampler2D _MomentumTex2D;
+        float _MapLength;
  //       sampler2D _ApertureTex2D;
  //       float _GratingWidth;
 /*
@@ -71,7 +70,7 @@ float applyGratingToPoint(uint xPix, uint yPix, uint seed)
 */
 
 
-float sampleDistribution(float2 pixelDeltaPos, float length)
+float sampleDistribution(float2 pixelDeltaPos)//, float length)
 {
     if (abs(pixelDeltaPos.x) <= 1)
     {
@@ -118,14 +117,16 @@ float4 frag(v2f_customrendertexture i) : SV_Target
     int yPixel = (int)(floor(pos.y * _CustomRenderTextureHeight));
 
     int sourceCount = round(_SlitCount);
+    int edgeCount = 2;
     int sampleCount = 0;
     float particleRate = 0;
     float pixScale = 1 / _Scale;
     int samplesPerSlit = max(1,round(_SamplesPerSlit));
+
     float slitIncrement = samplesPerSlit <= 1 ? 0 : _SlitWidth/(samplesPerSlit - 1);
 
 
-    float sourceY = ((_SlitCount - 1) * _SlitPitch + samplesPerSlit * slitIncrement) * 0.5;
+    float sourceY = ((_SlitCount - 1) * _SlitPitch + _SlitWidth) * 0.5;
     float2 delta = float2(xPixel * _Scale,0.0);
     float yScaled = (yPixel - _CustomRenderTextureHeight / 2.0) * _Scale;
     float pixelDistance = 0;
@@ -138,7 +139,7 @@ float4 frag(v2f_customrendertexture i) : SV_Target
         {
              delta.y = abs(yScaled-slitY);
              apertureDistance += length(delta);
-             apertureRate += sampleDistribution(delta,apertureDistance);
+             apertureRate += sampleDistribution(delta);//,apertureDistance);
              slitY -= slitIncrement;
         }
         particleRate += apertureRate/samplesPerSlit;

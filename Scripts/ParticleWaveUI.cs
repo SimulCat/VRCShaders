@@ -27,10 +27,12 @@ public class ParticleWaveUI : UdonSharpBehaviour
     private float slitWidth;
     [SerializeField, UdonSynced, FieldChangeCallback(nameof(SlitPitch))]
     private float slitPitch;
-    [SerializeField, UdonSynced, FieldChangeCallback(nameof(SimScale))]
+    [SerializeField, Range(1, 5),UdonSynced, FieldChangeCallback(nameof(SimScale))]
     private float simScale;
-    [SerializeField, Range(1, 10), UdonSynced, FieldChangeCallback(nameof(IncidentP))]
-    private float incidentP;
+    [SerializeField, Range(1, 8), UdonSynced, FieldChangeCallback(nameof(Momentum))]
+    private float momentum;
+    [SerializeField]
+    private bool crtUpdateRequired;
 
     [Header("UI Controls")]
     // UI
@@ -41,12 +43,29 @@ public class ParticleWaveUI : UdonSharpBehaviour
     [SerializeField]
     UdonSlider momentumSlider;
     [SerializeField]
+    TextMeshProUGUI lblMomentum;
+    [SerializeField]
+    float lambda;
+    [SerializeField]
+    TextMeshProUGUI lblLambda;
+    [SerializeField]
     UdonSlider scaleSlider;
     [SerializeField]
-    TextMeshProUGUI slitCountLabel;
+    TextMeshProUGUI lblSlitCount;
+    [Header("Particle Properties")]
+    [SerializeField]
+    private float particleMomentum;
+    [SerializeField]
+    private float particleMass = 1; // Speed 1 matches wavelength 10
 
     [Header("Constants"), SerializeField]
     private int MAX_SLITS = 17;
+    [SerializeField, Tooltip("Planck Value for simulation; lambda=h/p"), UdonSynced, FieldChangeCallback(nameof(PlanckSim))]
+    private float planckSim = 12;
+
+    [Header("Working Value Feedback")]
+    [SerializeField]
+    private float particleK;
 
     private VRCPlayerApi player;
     private bool iamOwner = false;
@@ -55,6 +74,37 @@ public class ParticleWaveUI : UdonSharpBehaviour
     private bool iHaveWidthSlider;
     private bool iHaveMomentumSlider;
     private bool iHaveScaleSlider;
+
+    float PlanckSim
+    {
+        get => planckSim;
+        set
+        {
+            planckSim = value;
+            updateParticleK();
+            RequestSerialization();
+        }
+    }
+
+    private void updateParticleK()
+    { //_particleK("pi*p/h", float)
+        particleK = Mathf.PI * momentum / planckSim;
+        if (lblMomentum != null)
+            lblMomentum.text = string.Format("p={0:0.0}", momentum);
+        if (iHaveParticleCRT)
+        {
+            matParticleCRT.SetFloat("_ParticleK", particleK);
+            crtUpdateRequired = true;
+        }
+        lambda = planckSim/momentum;
+        if (lblLambda != null)
+            lblLambda.text = string.Format("λ={0:0.0}", lambda);
+        if (iHaveWaveCRT)
+        {
+            matWaveCRT.SetFloat("_Lambda",lambda);
+        }
+    }
+
 
     private void ReviewOwnerShip()
     {
@@ -86,7 +136,28 @@ public class ParticleWaveUI : UdonSharpBehaviour
         Debug.Log("DualUI SlidePtr Event");
     }
 
-    public int SlitCount
+    private void loadCRTs()
+    {
+        if (iHaveParticleCRT)
+        {
+            matParticleCRT.SetFloat("_SlitCount", slitCount);
+            matParticleCRT.SetFloat("_SlitWidth", slitWidth);
+            matParticleCRT.SetFloat("_SlitPitch", slitPitch);
+            matParticleCRT.SetFloat("_Scale", simScale);
+            particleCRT.Update(1);
+
+        }
+        if (iHaveWaveCRT)
+        {
+            matWaveCRT.SetFloat("_SlitCount", slitCount);
+            matWaveCRT.SetFloat("_SlitWidth", slitWidth);
+            matWaveCRT.SetFloat("_SlitPitch", slitPitch);
+            matWaveCRT.SetFloat("_Scale", simScale);
+            waveCRT.Update(1);
+        }
+        crtUpdateRequired = false;
+    }
+public int SlitCount
     {
         get => slitCount;
         set
@@ -98,13 +169,14 @@ public class ParticleWaveUI : UdonSharpBehaviour
             if (value != slitCount)
             {
                 slitCount = value;
+                crtUpdateRequired = true;
                 if (iHaveParticleCRT)
                     matParticleCRT.SetFloat("_SlitCount",slitCount);
                 if (iHaveWaveCRT)
                     matWaveCRT.SetFloat("_SlitCount", slitCount);
-                if (slitCountLabel != null)
-                    slitCountLabel.text = value.ToString();
             }
+            if (lblSlitCount != null)
+                lblSlitCount.text = value.ToString();
             RequestSerialization();
         }
     }
@@ -114,9 +186,9 @@ public class ParticleWaveUI : UdonSharpBehaviour
         get => slitWidth;
         private set
         {
-            Debug.Log(gameObject.name + "slitWidth=" + value.ToString());
             if (value != slitWidth)
             {
+                crtUpdateRequired = true;
                 slitWidth = value;
                 if (iHaveParticleCRT)
                     matParticleCRT.SetFloat("_SlitWidth", slitWidth);
@@ -141,6 +213,7 @@ public class ParticleWaveUI : UdonSharpBehaviour
                     matParticleCRT.SetFloat("_SlitPitch", slitPitch);
                 if (iHaveWaveCRT)
                     matWaveCRT.SetFloat("_SlitPitch", slitPitch);
+                crtUpdateRequired = true;
             }
             if (iHavePitchSlider && !pitchSlider.PointerDown && slitPitch != pitchSlider.CurrentValue)
             {
@@ -155,26 +228,42 @@ public class ParticleWaveUI : UdonSharpBehaviour
         get => simScale;
         set
         {
-            simScale = value;
+            if (simScale != value)
+            {
+                simScale = value;
+                crtUpdateRequired = true;
+            }
             if (iHaveParticleCRT)
                 matParticleCRT.SetFloat("_Scale", simScale);
             if (iHaveWaveCRT)
-                matWaveCRT.SetFloat("_Scale", value);
+                matWaveCRT.SetFloat("_Scale", simScale);
             if (iHaveScaleSlider && !scaleSlider.PointerDown && scaleSlider.CurrentValue != simScale)
                 scaleSlider.SetValue(simScale);
         }
     }
 
-    private float IncidentP
+    private float Momentum
     {
-        get { return incidentP; }
+        get { return momentum; }
         set
         {
             value = Mathf.Max(value, 1f);
-            incidentP = value;
-            if (iHaveMomentumSlider && !momentumSlider.PointerDown && momentumSlider.CurrentValue != incidentP)
-                momentumSlider.SetValue(incidentP);
+            momentum = value;
+            if (iHaveMomentumSlider && !momentumSlider.PointerDown && momentumSlider.CurrentValue != momentum)
+                momentumSlider.SetValue(momentum);
+            updateParticleK();
         }
+    }
+
+    private void Update()
+    {
+        if (!crtUpdateRequired)
+            return;
+        crtUpdateRequired = false;
+        if (iHaveParticleCRT)
+            particleCRT.Update(1);
+        if (iHaveWaveCRT)
+            waveCRT.Update(1);
     }
 
     void Start()
@@ -198,5 +287,11 @@ public class ParticleWaveUI : UdonSharpBehaviour
         iHaveWidthSlider = widthSlider != null;
         iHaveMomentumSlider = momentumSlider != null; 
         iHaveScaleSlider = scaleSlider != null;
+        loadCRTs();
+        SlitCount = slitCount;
+        SlitWidth = slitWidth;
+        SlitPitch = slitPitch;
+        Momentum = momentum;
+        SimScale = simScale;
     }
 }

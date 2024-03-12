@@ -157,7 +157,8 @@ public class CRTBallisticParticles : UdonSharpBehaviour
     {
         if (!gratingChanged)
             return;
-        simCRT.Update(1);
+        if (iHaveCRT)
+            simCRT.Update(1);
         gratingChanged = false;
     }
     void Start()
@@ -174,6 +175,10 @@ public class CRTBallisticParticles : UdonSharpBehaviour
             SimScale = matCRT.GetFloat("_Scale");
         }
         */
+        if (iHaveCRT)
+        {
+            init();
+        }
         gratingChanged |= true;
     }
 }

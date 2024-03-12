@@ -85,12 +85,12 @@ Material:
     - _NumSources: 2
     - _OcclusionStrength: 1
     - _Parallax: 0.02
-    - _ParticleK: 0.6283186
+    - _ParticleK: 0.2864215
     - _SamplesPerSlit: 64
     - _Scale: 1
     - _SlitCount: 2
     - _SlitPitch: 50
-    - _SlitWidth: 10
+    - _SlitWidth: 12.4713745
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1

@@ -12,10 +12,6 @@ public class CRTWaveDemo : UdonSharpBehaviour
     [SerializeField, Tooltip("Display Mesh")]
     private MeshRenderer waveMesh;
     
-    [SerializeField] private bool playPhase = false;
-    
-    [SerializeField,Tooltip("Texture update interval (Passive Phase)"),Range(0.01f, 0.2f)] float dt = 0.1f;
-
     [Header("Display Mode")]
     [SerializeField, UdonSynced, FieldChangeCallback(nameof(DisplayMode))]
     public int displayMode;

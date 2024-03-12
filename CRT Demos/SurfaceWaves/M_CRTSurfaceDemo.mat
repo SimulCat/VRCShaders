@@ -100,8 +100,9 @@ Material:
     - _Phase: 0
     - _Scale: 1
     - _ScaleAmplitude: 0.8
-    - _ScaleColour: 7.51
+    - _ScaleColour: 9.2
     - _ScaleEnergy: 0.9
+    - _ScaleHeight: 0.19
     - _ShowHeight: 0
     - _ShowImaginary: 0
     - _ShowReal: 1
@@ -121,6 +122,7 @@ Material:
     - _ZWrite: 1
     m_Colors:
     - _Color: {r: 0.21226418, g: 0.7188862, b: 1, a: 1}
+    - _ColorBase: {r: 0.19999996, g: 0.29999998, b: 0.39999998, a: 1}
     - _ColorFlow: {r: 1, g: 0.29999998, b: 0, a: 0}
     - _ColorIm: {r: 1, g: 0.57254905, b: 0, a: 1}
     - _ColorNeg: {r: 0, g: 0.29999998, b: 1, a: 0}

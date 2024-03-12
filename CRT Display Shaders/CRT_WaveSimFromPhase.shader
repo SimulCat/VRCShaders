@@ -28,7 +28,7 @@
    */
     Properties
     {
-        _Lambda("Lambda Pixels", float) = 49.64285714
+        _Lambda("Wavelength", float) = 49.64285714
         _SlitCount("Num Sources",float) = 2
         _SlitPitch("Slit Pitch",float) = 448
         _SlitWidth("Slit Width", Range(1.0,40.0)) = 12.0
