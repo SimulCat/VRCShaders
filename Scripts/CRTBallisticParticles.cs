@@ -1,5 +1,4 @@
 ﻿
-using TMPro;
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
@@ -130,6 +129,8 @@ public class CRTBallisticParticles : UdonSharpBehaviour
             }
         }
     }
+
+    
 
     private void updateParticleK()
     { //_particleK("pi*p/h", float)

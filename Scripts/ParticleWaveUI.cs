@@ -9,16 +9,18 @@ public class ParticleWaveUI : UdonSharpBehaviour
 {
     [Header("Demo Handlers")]
     [SerializeField]
-    CustomRenderTexture particleCRT;
-    [SerializeField]
-    Material matParticleCRT;
-    private bool iHaveWaveCRT;
+    BallisticScatter particleSim;
+    private bool iHaveParticleSim;
+
+    //CustomRenderTexture particleCRT;
+    //[SerializeField]
+    //Material matParticleCRT;
 
     [SerializeField]
     CustomRenderTexture waveCRT;
     [SerializeField]
     Material matWaveCRT;
-    private bool iHaveParticleCRT;
+    private bool iHaveWaveCRT;
 
     [Header("Grating Properties")]
     [SerializeField, UdonSynced, FieldChangeCallback(nameof(SlitCount))]
@@ -54,13 +56,13 @@ public class ParticleWaveUI : UdonSharpBehaviour
     TextMeshProUGUI lblSlitCount;
     [Header("Particle Properties")]
     [SerializeField]
-    private float particleMomentum;
-    [SerializeField]
     private float particleMass = 1; // Speed 1 matches wavelength 10
-
+    [SerializeField]
+    private float maxMomentum = 8;
     [Header("Constants"), SerializeField]
+
     private int MAX_SLITS = 17;
-    [SerializeField, Tooltip("Planck Value for simulation; lambda=h/p"), UdonSynced, FieldChangeCallback(nameof(PlanckSim))]
+    [SerializeField, Tooltip("Planck Value for simulation; e.g. lambda=h/p"), UdonSynced, FieldChangeCallback(nameof(PlanckSim))]
     private float planckSim = 12;
 
     [Header("Working Value Feedback")]
@@ -81,27 +83,22 @@ public class ParticleWaveUI : UdonSharpBehaviour
         set
         {
             planckSim = value;
-            updateParticleK();
+            if (iHaveParticleSim)
+                particleSim.PlanckSim = value;
+            updateLambda();
             RequestSerialization();
         }
     }
 
-    private void updateParticleK()
+    private void updateLambda()
     { //_particleK("pi*p/h", float)
-        particleK = Mathf.PI * momentum / planckSim;
-        if (lblMomentum != null)
-            lblMomentum.text = string.Format("p={0:0.0}", momentum);
-        if (iHaveParticleCRT)
-        {
-            matParticleCRT.SetFloat("_ParticleK", particleK);
-            crtUpdateRequired = true;
-        }
         lambda = planckSim/momentum;
         if (lblLambda != null)
             lblLambda.text = string.Format("λ={0:0.0}", lambda);
         if (iHaveWaveCRT)
         {
             matWaveCRT.SetFloat("_Lambda",lambda);
+            crtUpdateRequired = true;
         }
     }
 
@@ -138,13 +135,11 @@ public class ParticleWaveUI : UdonSharpBehaviour
 
     private void loadCRTs()
     {
-        if (iHaveParticleCRT)
+        if (iHaveParticleSim)
         {
-            matParticleCRT.SetFloat("_SlitCount", slitCount);
-            matParticleCRT.SetFloat("_SlitWidth", slitWidth);
-            matParticleCRT.SetFloat("_SlitPitch", slitPitch);
-            matParticleCRT.SetFloat("_Scale", simScale);
-            particleCRT.Update(1);
+            particleSim.SetGrating(slitCount, slitWidth, slitPitch, maxMomentum);
+            particleSim.SimScale = simScale;
+            particleSim.PlanckSim = planckSim;
 
         }
         if (iHaveWaveCRT)
@@ -170,8 +165,8 @@ public int SlitCount
             {
                 slitCount = value;
                 crtUpdateRequired = true;
-                if (iHaveParticleCRT)
-                    matParticleCRT.SetFloat("_SlitCount",slitCount);
+                if (iHaveParticleSim)
+                    particleSim.SlitCount = slitCount;
                 if (iHaveWaveCRT)
                     matWaveCRT.SetFloat("_SlitCount", slitCount);
             }
@@ -190,8 +185,8 @@ public int SlitCount
             {
                 crtUpdateRequired = true;
                 slitWidth = value;
-                if (iHaveParticleCRT)
-                    matParticleCRT.SetFloat("_SlitWidth", slitWidth);
+                if (iHaveParticleSim)
+                    particleSim.SlitWidth = slitWidth;
                 if (iHaveWaveCRT)
                     matWaveCRT.SetFloat("_SlitWidth",slitWidth);
             }
@@ -209,8 +204,8 @@ public int SlitCount
             if (value != slitPitch)
             {
                 slitPitch = value;
-                if (iHaveParticleCRT)
-                    matParticleCRT.SetFloat("_SlitPitch", slitPitch);
+                if (iHaveParticleSim)
+                    particleSim.SlitPitch = slitPitch;
                 if (iHaveWaveCRT)
                     matWaveCRT.SetFloat("_SlitPitch", slitPitch);
                 crtUpdateRequired = true;
@@ -233,8 +228,8 @@ public int SlitCount
                 simScale = value;
                 crtUpdateRequired = true;
             }
-            if (iHaveParticleCRT)
-                matParticleCRT.SetFloat("_Scale", simScale);
+            if (iHaveParticleSim)
+                particleSim.SimScale = simScale;
             if (iHaveWaveCRT)
                 matWaveCRT.SetFloat("_Scale", simScale);
             if (iHaveScaleSlider && !scaleSlider.PointerDown && scaleSlider.CurrentValue != simScale)
@@ -251,7 +246,12 @@ public int SlitCount
             momentum = value;
             if (iHaveMomentumSlider && !momentumSlider.PointerDown && momentumSlider.CurrentValue != momentum)
                 momentumSlider.SetValue(momentum);
-            updateParticleK();
+            if (lblMomentum != null)
+                lblMomentum.text = string.Format("p={0:0.0}", momentum);
+            if (iHaveParticleSim)
+                particleSim.ParticleMomentum = value;
+            updateLambda();
+            RequestSerialization();
         }
     }
 
@@ -260,20 +260,13 @@ public int SlitCount
         if (!crtUpdateRequired)
             return;
         crtUpdateRequired = false;
-        if (iHaveParticleCRT)
-            particleCRT.Update(1);
         if (iHaveWaveCRT)
             waveCRT.Update(1);
     }
 
     void Start()
     {
-        iHaveParticleCRT = particleCRT != null;
-        if (iHaveParticleCRT)
-        {
-            matParticleCRT = particleCRT.material;
-            iHaveParticleCRT = matParticleCRT != null;
-        }    
+        iHaveParticleSim = particleSim != null;
         iHaveWaveCRT = waveCRT != null;
         if (iHaveWaveCRT)
         {
@@ -286,6 +279,8 @@ public int SlitCount
         iHavePitchSlider = pitchSlider != null;
         iHaveWidthSlider = widthSlider != null;
         iHaveMomentumSlider = momentumSlider != null; 
+        if (iHaveMomentumSlider)
+            maxMomentum = momentumSlider.MaxValue;
         iHaveScaleSlider = scaleSlider != null;
         loadCRTs();
         SlitCount = slitCount;
