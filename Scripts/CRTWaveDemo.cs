@@ -39,6 +39,21 @@ public class CRTWaveDemo : UdonSharpBehaviour
     [SerializeField]
     private bool iHavePanelMaterial = false;
 
+    [SerializeField]
+    private Color flowColour = Color.magenta;
+
+    public Color FlowColour
+    {
+        get => flowColour; 
+        set
+        {
+           flowColour = value;
+            if (matPanel != null)
+            {
+                matPanel.SetColor("_ColorFlow", flowColour);
+            }
+        } 
+    }
     private VRCPlayerApi player;
     private bool iamOwner = false;
 

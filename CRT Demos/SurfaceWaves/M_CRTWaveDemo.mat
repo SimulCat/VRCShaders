@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: M_CRTSurfaceDemo
-  m_Shader: {fileID: 4800000, guid: 17ad9304b76273f4fbea611098ef0b92, type: 3}
+  m_Name: M_CRTWaveDemo
+  m_Shader: {fileID: 4800000, guid: 0eb0e8585d06c9d4eac4fff7f517a976, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -40,6 +40,10 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _EmissionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _IdleTex:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
@@ -99,12 +103,13 @@ Material:
     - _Parallax: 0.02
     - _Phase: 0
     - _Scale: 1
-    - _ScaleAmplitude: 0.8
+    - _ScaleAmplitude: 60.9
     - _ScaleColour: 9.2
-    - _ScaleEnergy: 0.9
+    - _ScaleEnergy: 61.4
     - _ScaleHeight: 0.19
+    - _ShowCRT: 1
     - _ShowHeight: 0
-    - _ShowImaginary: 0
+    - _ShowImaginary: 1
     - _ShowReal: 1
     - _ShowSquare: 1
     - _ShowVelocity: 1
@@ -121,15 +126,16 @@ Material:
     - _WaveStrength: 0.01
     - _ZWrite: 1
     m_Colors:
-    - _Color: {r: 0.21226418, g: 0.7188862, b: 1, a: 1}
+    - _Color: {r: 1, g: 0.29803923, b: 0.2509804, a: 0}
     - _ColorBase: {r: 0.19999996, g: 0.29999998, b: 0.39999998, a: 1}
-    - _ColorFlow: {r: 1, g: 0.29999998, b: 0, a: 0}
+    - _ColorFlow: {r: 0.64705884, g: 0.20784314, b: 0.90588236, a: 0}
     - _ColorIm: {r: 1, g: 0.57254905, b: 0, a: 1}
-    - _ColorNeg: {r: 0, g: 0.29999998, b: 1, a: 0}
-    - _ColorVel: {r: 0, g: 0.29999998, b: 1, a: 0}
+    - _ColorNeg: {r: 0.26666668, g: 0.15294118, b: 0.39607844, a: 0}
+    - _ColorVel: {r: 0.2971698, g: 0.5066406, b: 1, a: 0}
     - _ColourDeep: {r: 0.6792453, g: 0.086507656, b: 0.12975544, a: 1}
     - _ColourPeak: {r: 0.66935843, g: 0.34509802, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _IdleColour: {r: 0.5, g: 0.5, b: 0.5, a: 1}
     - _TreeInstanceColor: {r: 1, g: 1, b: 1, a: 1}
     - _TreeInstanceScale: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []

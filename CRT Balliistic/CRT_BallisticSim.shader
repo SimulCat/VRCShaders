@@ -9,19 +9,19 @@
         _SlitPitch("Slit Pitch",float) = 448
         _SlitWidth("Slit Width", Range(1.0,40.0)) = 12.0
         _SamplesPerSlit("Samples per Slit", Range(1,255)) = 7
-        _ParticleK("pi*p/h", float) = 0.26179939
+        _ParticleK("Particle p*pi/h", float) = 0.26179939
+        _ParticleP("Particle p", float) = 1
         _Scale("Simulation Scale",Range(1.0,10.0)) = 1
-        _MomentumTex2D("Momentum Map", 2D ) = "black" {}
-        _MapLength("Momentum Scale", float ) = 1
-//        _ApertureTex2D("Aperture Map", 2D ) = "black" {}
-//        _GratingWidth("Grating Width", float ) = 1
+        _MomentumMap("Momentum Map", 2D ) = "black" {}
+        _MapMaxP("Map max momentum", float ) = 1
+        _MapSum("Map sum probability", float ) = 1
     }
 
 CGINCLUDE
 
 #include "UnityCustomRenderTexture.cginc"
 
-    #define M(U) tex2D(_MomentumTex2D, float2(U))
+    #define M(U) tex2D(_MomentumMap, float2(U))
     
 
         float _SlitCount;
@@ -29,9 +29,12 @@ CGINCLUDE
         float _SlitWidth;
         float _SamplesPerSlit;
         float _ParticleK;
+        float _ParticleP;
         float _Scale;
-        sampler2D _MomentumTex2D;
-        float _MapLength;
+        sampler2D _MomentumMap;
+        float4 _MomentumMap_TexelSize;
+        float _MapMaxP;
+        float _MapSum;
  //       sampler2D _ApertureTex2D;
  //       float _GratingWidth;
 /*
@@ -106,7 +109,57 @@ float sampleDistribution(float2 pixelDeltaPos)//, float length)
     return multiSlitProbSq * apertureProbSq;
 }
 
-// Each point in the reciprocal lattice has a 
+
+// Sample the distribution of cumulative probability
+float4 sampleDistribution(float momentum)
+{
+    float mometumFrac = clamp((momentum/_MapMaxP)*0.5,-0.5,0.5);
+    return M(float2(mometumFrac+.5,0.5));
+}
+
+float sampleEdges (float xDelta, float yDelta, float slitHalf)
+{
+    if (xDelta < 1)
+        xDelta = 1;
+
+
+    float thetaTop = atan2(yDelta - slitHalf,xDelta);
+    float momentumTop = sin(thetaTop) * _ParticleP;
+    float4 probTop = sampleDistribution(momentumTop);
+
+    float thetaLwr = atan2(yDelta + slitHalf,xDelta);
+    float momentumLwr = sin(thetaLwr) * _ParticleP;
+    float4 probLwr = sampleDistribution(momentumLwr);
+
+    return abs(probTop.y - probLwr.y)/_MapMaxP;
+}
+
+float4 fragBallistic(v2f_customrendertexture i) : SV_Target
+{
+    float4 result = float4(0,0,0,0);
+    float2 pos = i.globalTexcoord.xy;
+    int xPixel = (int)(floor(pos.x * _CustomRenderTextureWidth));
+    int yPixel = (int)(floor(pos.y * _CustomRenderTextureHeight));
+    int slitCount = round(_SlitCount);
+    float apertureY = (slitCount > 1 ? (slitCount - 1) * _SlitPitch : 0.0) *0.5;
+    float yScaled = (yPixel - _CustomRenderTextureHeight / 2.0) * _Scale;
+    float xDelta = xPixel * _Scale;
+    float scaleWidth = (_CustomRenderTextureWidth * _Scale);
+    float halfAperture = _SlitWidth * 0.5;
+
+    for (int nAperture = 0; nAperture < slitCount; nAperture++)
+    {
+        float yDelta = yScaled - apertureY;
+        float2 delta = float2(xDelta,yDelta);
+        float dist = (scaleWidth - length(delta))/scaleWidth;
+        //result.g += dist; 
+        result.r += sampleEdges (xDelta, yDelta, halfAperture);
+        apertureY -= _SlitPitch;
+    }
+    return result;
+}
+
+
 float4 frag(v2f_customrendertexture i) : SV_Target
 {
     float4 height = float4(0,0,0,1);
@@ -164,6 +217,15 @@ ENDCG
             CGPROGRAM
             #pragma vertex CustomRenderTextureVertexShader
             #pragma fragment frag
+            ENDCG
+        }
+
+        Pass
+        {
+            Name "Ballistic"
+            CGPROGRAM
+            #pragma vertex CustomRenderTextureVertexShader
+            #pragma fragment fragBallistic
             ENDCG
         }
     }

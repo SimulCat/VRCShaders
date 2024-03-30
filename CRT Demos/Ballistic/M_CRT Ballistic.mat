@@ -55,6 +55,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _MomentumMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _MomentumTex2D:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -79,13 +83,17 @@ Material:
     - _GlossyReflections: 1
     - _GratingWidth: 1
     - _MapLength: 0
+    - _MapMaxP: 8
+    - _MapSum: 146.80417
+    - _MaxP: 1
     - _Metallic: 0
     - _Mode: 0
     - _MomentumToPhase: 23.561945
     - _NumSources: 2
     - _OcclusionStrength: 1
     - _Parallax: 0.02
-    - _ParticleK: 0.25132743
+    - _ParticleK: 0.2617994
+    - _ParticleP: 4
     - _SamplesPerSlit: 64
     - _Scale: 1
     - _SlitCount: 2
@@ -100,6 +108,6 @@ Material:
     m_Colors:
     - _BeamVector: {r: 0, g: 0, b: 0, a: 0}
     - _CellDimensions: {r: 1, g: 1, b: 1, a: 1}
-    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _Color: {r: 0.69391435, g: 0, b: 0, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []

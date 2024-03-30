@@ -74,7 +74,7 @@ Material:
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
-    - _Lambda: 12.5
+    - _Lambda: 12
     - _LambdaPx: 12
     - _LeftPx: 0
     - _LowerEdge: 1
@@ -94,7 +94,7 @@ Material:
     - _SlitWidth: 10
     - _SmoothnessTextureChannel: 0
     - _SourcePixelSize: 1
-    - _SourceResolution: 0.3
+    - _SourceResolution: 2.38
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _UVSec: 0

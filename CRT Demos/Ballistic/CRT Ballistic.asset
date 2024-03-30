@@ -14,18 +14,18 @@ CustomRenderTexture:
   m_DownscaleFallback: 0
   m_IsAlphaChannelOptional: 0
   serializedVersion: 5
-  m_Width: 512
-  m_Height: 320
+  m_Width: 1024
+  m_Height: 640
   m_AntiAliasing: 1
   m_MipCount: -1
-  m_DepthStencilFormat: 94
-  m_ColorFormat: 8
+  m_DepthStencilFormat: 0
+  m_ColorFormat: 52
   m_MipMap: 0
   m_GenerateMips: 1
   m_SRGB: 0
   m_UseDynamicScale: 0
   m_BindMS: 0
-  m_EnableCompatibleFormat: 1
+  m_EnableCompatibleFormat: 0
   m_EnableRandomWrite: 0
   m_TextureSettings:
     serializedVersion: 2
@@ -49,7 +49,7 @@ CustomRenderTexture:
   m_CurrentUpdateZoneSpace: 0
   m_UpdateZones: []
   m_UpdatePeriod: 0
-  m_ShaderPass: 0
+  m_ShaderPass: 1
   m_CubemapFaceMask: 4294967295
   m_DoubleBuffered: 0
   m_WrapUpdateZones: 0

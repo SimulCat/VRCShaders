@@ -2,8 +2,9 @@ using UnityEditor;
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-/*
-public static class MeshSaverEditor 
+
+#if UNITY_EDITOR 
+public static class MeshSaverEditor
 {
 
     [MenuItem("CONTEXT/MeshFilter/Save Mesh...")]
@@ -37,5 +38,5 @@ public static class MeshSaverEditor
         AssetDatabase.CreateAsset(meshToSave, path);
         AssetDatabase.SaveAssets();
     }
-
-} */
+}
+#endif

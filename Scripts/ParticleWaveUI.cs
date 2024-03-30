@@ -21,6 +21,9 @@ public class ParticleWaveUI : UdonSharpBehaviour
     [SerializeField]
     Material matWaveCRT;
     private bool iHaveWaveCRT;
+    [SerializeField]
+    private CRTWaveDemo waveDemo;
+    private bool iHaveWaveDemo;
 
     [Header("Grating Properties")]
     [SerializeField, UdonSynced, FieldChangeCallback(nameof(SlitCount))]
@@ -55,10 +58,12 @@ public class ParticleWaveUI : UdonSharpBehaviour
     [SerializeField]
     TextMeshProUGUI lblSlitCount;
     [Header("Particle Properties")]
-    [SerializeField]
-    private float particleMass = 1; // Speed 1 matches wavelength 10
+    //[SerializeField]
+    //private float particleMass = 1; // Speed 1 matches wavelength 10
     [SerializeField]
     private float maxMomentum = 8;
+    [SerializeField]
+    private float minMomentum = 1;
     [Header("Constants"), SerializeField]
 
     private int MAX_SLITS = 17;
@@ -88,6 +93,90 @@ public class ParticleWaveUI : UdonSharpBehaviour
             updateLambda();
             RequestSerialization();
         }
+    }
+
+    public Color lerpColour(float frac)
+    {
+        return spectrumColour(Mathf.Lerp(700, 400, frac));
+    }
+
+    public Color spectrumColour(float wavelength, float gamma = 0.8f)
+    {
+        Color result = Color.white;
+        if (wavelength >= 380 & wavelength <= 440)
+        {
+            float attenuation = 0.3f + 0.7f * (wavelength - 380.0f) / (440.0f - 380.0f);
+            result.r = Mathf.Pow(((-(wavelength - 440) / (440 - 380)) * attenuation), gamma);
+            result.g = 0.0f;
+            result.b = Mathf.Pow((1.0f * attenuation), gamma);
+        }
+
+        else if (wavelength >= 440 & wavelength <= 490)
+        {
+            result.r = 0.0f;
+            result.g = Mathf.Pow((wavelength - 440f) / (490f - 440f), gamma);
+            result.b = 1.0f;
+        }
+        else if (wavelength >= 490 & wavelength <= 510)
+        {
+            result.r = 0.0f;
+            result.g = 1.0f;
+            result.b = Mathf.Pow(-(wavelength - 510f) / (510f - 490f), gamma);
+        }
+        else if (wavelength >= 510 & wavelength <= 580)
+        {
+            result.r = Mathf.Pow((wavelength - 510f) / (580f - 510f), gamma);
+            result.g = 1.0f;
+            result.b = 0.0f;
+        }
+        else if (wavelength >= 580f & wavelength <= 645f)
+        {
+            result.r = 1.0f;
+            result.g = Mathf.Pow(-(wavelength - 645f) / (645f - 580f), gamma);
+            result.b = 0.0f;
+        }
+        else if (wavelength >= 645 & wavelength <= 750)
+        {
+            float attenuation = 0.3f + 0.7f * (750 - wavelength) / (750 - 645);
+            result.r = Mathf.Pow(1.0f * attenuation, gamma);
+            result.g = 0.0f;
+            result.b = 0.0f;
+        }
+        else
+        {
+            result.r = 0.0f;
+            result.g = 0.0f;
+            result.b = 0.0f;
+            result.a = 0.1f;
+        }
+        return result;
+    }
+
+    [SerializeField, UdonSynced, FieldChangeCallback(nameof(DisplayColour))]
+    Color displayColour;
+
+    public Color DisplayColour
+    {
+        get => displayColour;
+        set
+        {
+            displayColour = value;
+            {
+                if (iHaveParticleSim)
+                    particleSim.DisplayColor = displayColour;
+                if (iHaveWaveDemo)
+                    waveDemo.FlowColour = displayColour;
+            }
+            RequestSerialization();
+        }
+    }
+    private void SetMomentumColour()
+    {
+        Color dColour = lerpColour((momentum - minMomentum) / (maxMomentum - minMomentum));
+        dColour.r = Mathf.Clamp(dColour.r, 0.2f, 2f);
+        dColour.g = Mathf.Clamp(dColour.g, 0.2f, 2f);
+        dColour.b = Mathf.Clamp(dColour.b, 0.2f, 2f);
+        DisplayColour = dColour;
     }
 
     private void updateLambda()
@@ -137,7 +226,7 @@ public class ParticleWaveUI : UdonSharpBehaviour
     {
         if (iHaveParticleSim)
         {
-            particleSim.SetGrating(slitCount, slitWidth, slitPitch, maxMomentum);
+            particleSim.SetGrating(slitCount, slitWidth, slitPitch,maxMomentum);
             particleSim.SimScale = simScale;
             particleSim.PlanckSim = planckSim;
 
@@ -242,19 +331,25 @@ public int SlitCount
         get { return momentum; }
         set
         {
-            value = Mathf.Max(value, 1f);
+            value = Mathf.Max(value, minMomentum);
+            bool changed = momentum != value;
             momentum = value;
             if (iHaveMomentumSlider && !momentumSlider.PointerDown && momentumSlider.CurrentValue != momentum)
                 momentumSlider.SetValue(momentum);
             if (lblMomentum != null)
                 lblMomentum.text = string.Format("p={0:0.0}", momentum);
+            SetMomentumColour();
             if (iHaveParticleSim)
+            {
                 particleSim.ParticleMomentum = value;
+                particleSim.DisplayColor = displayColour;
+            }
             updateLambda();
             RequestSerialization();
         }
     }
 
+    bool started = false;
     private void Update()
     {
         if (!crtUpdateRequired)
@@ -262,11 +357,16 @@ public int SlitCount
         crtUpdateRequired = false;
         if (iHaveWaveCRT)
             waveCRT.Update(1);
+        if (started)
+            return;
+        if (iHaveWaveDemo)
+            waveDemo.FlowColour = displayColour;
     }
 
     void Start()
     {
         iHaveParticleSim = particleSim != null;
+        iHaveWaveDemo = waveDemo != null;
         iHaveWaveCRT = waveCRT != null;
         if (iHaveWaveCRT)
         {
@@ -288,5 +388,6 @@ public int SlitCount
         SlitPitch = slitPitch;
         Momentum = momentum;
         SimScale = simScale;
+        SetMomentumColour();
     }
 }
