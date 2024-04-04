@@ -6,14 +6,12 @@ using VRC.Udon;
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class QuadMesh : UdonSharpBehaviour
 {
-    [SerializeField]
-    float ballRadius = 1.0f;
-    [SerializeField]
-    int radiusPoints = 2;
-    [SerializeField]
-    bool is2D = true;
-    [SerializeField]
-    bool rectangular = false;
+    [Tooltip("Width/Height/Depth in model space")] public Vector3 meshDimensions = Vector3.one;
+    [SerializeField, Tooltip("Uncheck for circular/sphere point distribution")] public bool fillRectangle = false;
+    [SerializeField, Tooltip("Center array around mesh origin")] public bool centerArrayOrigin = true;
+    [Tooltip("# quads across")] public Vector3Int pointsAcross = new Vector3Int(16,16,16);
+    [Tooltip("Snap points to origin (adds 1 point when origin at model center & even #points across)")] 
+    public bool snapOrigin = true;
     [SerializeField]
     public Material material;
     
@@ -26,9 +24,13 @@ public class QuadMesh : UdonSharpBehaviour
     [SerializeField]
     private Vector3Int maxRes = new Vector3Int(3, 3, 3);
     [SerializeField]
-    Vector3 gridSteps;
-    //[SerializeField]
-    Vector3 quadOrigin;
+    Vector3 arraySpacing;
+    [SerializeField]
+    float arrayRadius;
+    [SerializeField]
+    Vector3 arrayOrigin;
+
+    // Only Uncomment for verification in editor 
     //[SerializeField]
     private Vector3[] vertices;
     //[SerializeField]
@@ -45,50 +47,69 @@ public class QuadMesh : UdonSharpBehaviour
     {
         if (mf == null)
             return false;
-        if (radiusPoints <= 0 || ballRadius <= 0)
-            return false;
-        int pointsAcross = (radiusPoints * 2) - 1;
-        float gridStep = ballRadius / (radiusPoints-1);
 
-        radiusSq = ballRadius + (gridStep * 0.5f);
+        Vector3 arrayRadius = centerArrayOrigin ? meshDimensions * 0.5f : meshDimensions;
+        
+        Vector3Int numGridPoints = pointsAcross;
+        if (numGridPoints.x < 1) numGridPoints.x = 1;
+        if (numGridPoints.y < 1) numGridPoints.y = 1;
+        if (numGridPoints.z < 1) numGridPoints.z = 1;
+        if (centerArrayOrigin && snapOrigin)
+        {
+            numGridPoints.x = numGridPoints.x % 2 == 1 ? numGridPoints.x : numGridPoints.x + 1;
+            numGridPoints.y = numGridPoints.y % 2 == 1 ? numGridPoints.y : numGridPoints.y + 1;
+            numGridPoints.z = numGridPoints.z % 2 == 1 ? numGridPoints.z : numGridPoints.z + 1;
+        }
+
+        arraySpacing = new Vector3((numGridPoints.x <= 1) ? meshDimensions.x : (meshDimensions.x/(numGridPoints.x-1)),
+                                (numGridPoints.y <= 1) ? meshDimensions.y : (meshDimensions.y / (numGridPoints.y - 1)),
+                                (numGridPoints.z <= 1) ? meshDimensions.z : (meshDimensions.z/(numGridPoints.z -1)));
+
+        radiusSq = arrayRadius.x + (arraySpacing.x * 0.5f);
         radiusSq *=radiusSq;
 
-        maxRes = is2D ? new Vector3Int(pointsAcross, pointsAcross, 1) : Vector3Int.one * pointsAcross;
-        numQuads = pointsAcross * pointsAcross * maxRes.z;
+        numQuads = numGridPoints.x*numGridPoints.y*numGridPoints.z;
         numVertices = numQuads * 4;
         vertices = new Vector3[numVertices];
         uvs = new Vector2[numVertices];
         triangles = new int[numQuads * 6];
 
-        gridSteps = Vector3.one * gridStep;
-        quadOrigin = Vector3.one * -ballRadius;
-        if (is2D)
+        arrayOrigin = Vector3.zero;
+        if (centerArrayOrigin)
         {
-            quadOrigin.z = 0;
-            gridSteps.z = 0;
+            arrayOrigin = Vector3.Scale(-arrayRadius, new Vector3(numGridPoints.x <= 1 ? 0 : 1, numGridPoints.y <= 1 ? 0 : 1, numGridPoints.z <= 1 ? 0 : 1));
         }
-        Vector3 quadPos = quadOrigin;
+        Vector3 quadPos = arrayOrigin;
 
         numVertices = 0;
         numTriangles = 0;
-        Vector3 right = Vector3.right * (gridSteps.x * 0.5f);
-        Vector3 up = Vector3.up * (gridSteps.y * 0.5f);
+        float quadDim = Mathf.Min(arraySpacing.x, arraySpacing.y) * 0.5f;
+        Vector3 right = Vector3.right * quadDim;
+        Vector3 up = Vector3.up * quadDim;
         Vector3 upright = up + right;
         Vector3 upleft = up - right;
         Vector3 downright = -up + right;
         Vector3 downleft = -upright;
-        
-        for (int nPlane = 0; nPlane < maxRes.z; nPlane++)
+        bool positionInRange;
+        for (int nPlane = 0; nPlane < numGridPoints.z; nPlane++)
         {
-            quadPos.y = quadOrigin.y;
-            for (int nRow = 0; nRow < maxRes.y; nRow++)
+            quadPos.y = arrayOrigin.y;
+            for (int nRow = 0; nRow < numGridPoints.y; nRow++)
             {
-                quadPos.x = quadOrigin.x;
-                for (int nCol = 0; nCol < maxRes.x; nCol++)
+                quadPos.x = arrayOrigin.x;
+                for (int nCol = 0; nCol < numGridPoints.x; nCol++)
                 {
-                    float rsq = Vector3.Dot(quadPos, quadPos);
-                    //Debug.Log("QuadMesh r=" + r.ToString());
-                    if (rsq <= radiusSq)
+                    if (fillRectangle)
+                    {
+                        positionInRange = true;
+                    }
+                    else
+                    {
+                        float rsq = Vector3.Dot(quadPos, quadPos);
+                        positionInRange = rsq <= radiusSq;
+                    }
+
+                    if (positionInRange)
                     {
 
                         triangles[numTriangles++] = numVertices;
@@ -110,11 +131,11 @@ public class QuadMesh : UdonSharpBehaviour
                         uvs[numVertices] = Vector2.right + Vector2.up;
                         vertices[numVertices++] = quadPos + upleft;
                     }
-                    quadPos.x += gridSteps.x;
+                    quadPos.x += arraySpacing.x;
                 }
-                quadPos.y += gridSteps.y;
+                quadPos.y += arraySpacing.y;
             }
-            quadPos.z += gridSteps.z;
+            quadPos.z += arraySpacing.z;
         }
         theMesh = mf.mesh;
         theMesh.Clear();
@@ -139,7 +160,10 @@ public class QuadMesh : UdonSharpBehaviour
         uvs = null;
         if (material != null)
         {
-            material.SetVector("_MeshSpacing", gridSteps);
+            Vector4 pointVec = new Vector4(numGridPoints.x,numGridPoints.y,numGridPoints.z,numGridPoints.x*numGridPoints.y*numGridPoints.z);
+            material.SetVector("_QuadSpacing", arraySpacing);
+            material.SetVector("_QuadDimension", pointVec);
+
             //material.SetFloat("_MarkerSize", value: 0.3f);
         }
         return true;

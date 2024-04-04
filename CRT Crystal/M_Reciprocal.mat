@@ -73,8 +73,8 @@ Material:
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
-    - _LatticeType: 1
-    - _MarkerSize: 0.607
+    - _LatticeType: 0
+    - _MarkerSize: 1
     - _MaxImpulse: 10
     - _MaxP: 0.9
     - _MeshSpacing: 1
@@ -104,7 +104,7 @@ Material:
     - _ColorVel: {r: 0, g: 0.29999998, b: 1, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _IdleColour: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-    - _LatticeSpacing: {r: 1, g: 1, b: 1, a: 0}
-    - _MaxMinP: {r: 31, g: 5, b: 0, a: 0}
-    - _MeshSpacing: {r: 0.1, g: 0.1, b: 0.1, a: 0.1}
+    - _LatticeSpacing: {r: 0.4706016, g: 0.4706016, b: 0.4706016, a: 0.4706016}
+    - _MaxMinP: {r: 33, g: 3, b: 0, a: 0}
+    - _MeshSpacing: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []

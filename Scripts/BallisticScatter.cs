@@ -1,10 +1,7 @@
-﻿
-using UdonSharp;
-using Unity.Mathematics;
+﻿using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
-using static UnityEngine.ParticleSystem;
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class BallisticScatter : UdonSharpBehaviour
@@ -17,9 +14,13 @@ public class BallisticScatter : UdonSharpBehaviour
     [SerializeField]
     string texName = "_MomentumMap";
     [SerializeField]
-    bool matSimIsValid = false;
+    bool iHaveMatSim = false;
     [SerializeField]
-    Material matDisplay = null;
+    MeshRenderer particleMeshRend = null;
+    [SerializeField]
+    Material matParticleFlow = null;
+    [SerializeField]
+    bool ihaveParticleFlow = false;
     
     [SerializeField, Tooltip("Distribution Points")]
     private int pointsWide = 256;
@@ -35,21 +36,25 @@ public class BallisticScatter : UdonSharpBehaviour
     private float slitWidth = 12f;        // _SlitWidth("Slit Width", Range(1.0,40.0)) = 12.0
     [SerializeField, Range(1, 5)]
     private float simScale;
-    [SerializeField]
+    //[SerializeField]
     private Color displayColor = Color.cyan;
     [SerializeField]
     private float maxMomentum = 10;
     [SerializeField]
     private float particleMomentum = 1;       // _ParticleK("pi*p/h", float) = 0.26179939
 
-    [SerializeField]
-    private float particleK = 0.26179939f;       // _ParticleK("pi*p/h", float) = 0.26179939
+    //[SerializeField]
+    //private float particleK = 0.26179939f;       // _ParticleK("pi*p/h", float) = 0.26179939
     [SerializeField] bool crtUpdateRequired = false;
     [SerializeField] bool gratingUpdateRequired = false;
 
-    //[SerializeField]
-    //float[] probs;
-    Color[] texData;
+    private void setGratingParams(Material mat)
+    {
+        mat.SetFloat("_SlitCount", slitCount);
+        mat.SetFloat("_SlitWidth", slitWidth);
+        mat.SetFloat("_SlitPitch", slitPitch);
+        mat.SetFloat("_Scale", simScale);
+    }
     public void SetGrating(int numSlits, float widthSlit, float pitchSlits, float momentumMax)
     {
         Debug.Log(string.Format("{0} SetGrating: #slit1={1} width={2} pitch={3}", gameObject.name,  numSlits, widthSlit, pitchSlits));
@@ -63,13 +68,8 @@ public class BallisticScatter : UdonSharpBehaviour
         gratingUpdateRequired = isChanged;
         if (isChanged)
         {
-            if (matSimIsValid) 
-            {
-                matSim.SetFloat("_SlitCount", slitCount);
-                matSim.SetFloat("_SlitWidth", slitWidth);
-                matSim.SetFloat("_SlitPitch", slitPitch);
-                matSim.SetFloat("_Scale", simScale);
-            }
+            if (iHaveMatSim) setGratingParams(matSim);
+            if (ihaveParticleFlow) setGratingParams(matParticleFlow);
         }
     }
 
@@ -94,8 +94,10 @@ public class BallisticScatter : UdonSharpBehaviour
             if (value != simScale)
                 crtUpdateRequired = true;
             simScale = value;
-            if (matSimIsValid)
+            if (iHaveMatSim)
                 matSim.SetFloat("_Scale", simScale);
+            if (ihaveParticleFlow)
+                matParticleFlow.SetFloat("_Scale", simScale);
         }
     }
 
@@ -110,8 +112,10 @@ public class BallisticScatter : UdonSharpBehaviour
                 crtUpdateRequired = true;
             }
             slitCount = value;
-            if (matSimIsValid)
+            if (iHaveMatSim)
                 matSim.SetFloat("_SlitCount", slitCount);
+            if (ihaveParticleFlow)
+                matParticleFlow.SetFloat("_SlitCount", slitCount);
         }
     }
     public float SlitWidth
@@ -125,9 +129,10 @@ public class BallisticScatter : UdonSharpBehaviour
                 crtUpdateRequired = true;
             }
             slitWidth = value;
-            if (matSimIsValid)
+            if (iHaveMatSim)
                 matSim.SetFloat("_SlitWidth", slitWidth);
-
+            if (ihaveParticleFlow)
+                matParticleFlow.SetFloat("_SlitWidth", slitCount);
         }
     }
 
@@ -142,8 +147,10 @@ public class BallisticScatter : UdonSharpBehaviour
                 crtUpdateRequired = true;
             }
             slitPitch = value;
-            if (matSimIsValid)
+            if (iHaveMatSim)
                 matSim.SetFloat("_SlitPitch", slitPitch);
+            if (ihaveParticleFlow)
+                matParticleFlow.SetFloat("_SlitPitch", slitPitch);
 
         }
     }
@@ -214,11 +221,13 @@ public class BallisticScatter : UdonSharpBehaviour
             crtUpdateRequired |= value != particleMomentum;
             particleMomentum = value;
             float particleP = particleMomentum / planckSim;
-            particleK = Mathf.PI * particleP;
-            if (matSimIsValid)
+            if (iHaveMatSim)
             {
-                matSim.SetFloat("_ParticleK", particleK);
                 matSim.SetFloat("_ParticleP", particleMomentum);
+            }
+            if (ihaveParticleFlow)
+            {
+                matParticleFlow.SetFloat("_ParticleP", particleMomentum);
             }
         }
     }
@@ -229,18 +238,16 @@ public class BallisticScatter : UdonSharpBehaviour
         set
         {
             displayColor = value;
-            if (matDisplay != null)
-                matDisplay.SetColor("_Color", displayColor);
+            if (iHaveParticleCRT)
+                matSim.SetColor("_Color", displayColor);
+            if (ihaveParticleFlow)
+                matParticleFlow.SetColor("_Color", displayColor);
         }
     }
 
-    public void DefineTexture(Material theMaterial, string thePropertyName)
+    public bool ValidMaterial(Material theMaterial, string thePropertyName)
     {
-        matSim = theMaterial;
-        texName = !string.IsNullOrWhiteSpace(thePropertyName) ? thePropertyName : "_MainTex";
-        matSimIsValid = (matSim != null);
-        if (matSimIsValid)
-            matSimIsValid = matSim.HasProperty(texName); 
+        return (theMaterial != null) && theMaterial.HasProperty(thePropertyName); 
     }
 
     private float sampleDistribution(float spatialK)
@@ -265,49 +272,129 @@ public class BallisticScatter : UdonSharpBehaviour
         }
         return multiSlitProbSq * apertureProbSq;
     }
+   // [SerializeField]
+    private float[] gratingFourierSq;
+   // [SerializeField]
+    private float[] probIntegral;
+    //[SerializeField]
+    private float[] probabilityLookup;
 
-    public bool CreateTexture()
+    private void GenerateSamples()
     {
-        //if (probs == null || probs.Length != pointsWide)
-        //    probs = new float[pointsWide];
-        if (texData == null || texData.Length != (pointsWide*2))
-            texData = new Color[pointsWide+pointsWide];
-        if (!matSimIsValid)
+        if (gratingFourierSq == null || gratingFourierSq.Length < pointsWide)
         {
-            Debug.LogWarning(gameObject.name + "BallisticScatter->Create Texture->[No Material]");
-            return false;
+            gratingFourierSq = new float[pointsWide];
+            probIntegral = new float[pointsWide];
         }
-        var tex = new Texture2D(pointsWide*2, 1, TextureFormat.RGBAFloat,0,true);
-        tex.filterMode = FilterMode.Bilinear;
-        tex.wrapMode = TextureWrapMode.Clamp;
-
-        float probSummed = 0;
         float impulse;
         float prob;
-        float pi_h = Mathf.PI/planckSim;
+        float pi_h = Mathf.PI / planckSim;
+        float probIntegralSum = 0;
         for (int i = 0; i < pointsWide; i++)
         {
-            impulse = (maxMomentum*i)/pointsWide;
+            impulse = (maxMomentum * i) / pointsWide;
 
-            prob = sampleDistribution(impulse*pi_h);
-            //probs[i] = prob;
-            texData[pointsWide+i] = new Color(prob, probSummed, impulse,1f);
-            texData[pointsWide-i] = new Color(prob, -probSummed, impulse,1f);
-            probSummed += prob;
+            prob = sampleDistribution(impulse * pi_h);
+            gratingFourierSq[i] = prob;
+            probIntegral[i] = probIntegralSum;
+            probIntegralSum += prob;
         }
-        texData[0] = new Color(0, -probSummed, -1, 1f);
+        // Scale (Normalize?) Integral to Width of Distribution
+        float normScale = pointsWide / probIntegral[pointsWide-1];
+        for (int nPoint = 0; nPoint < pointsWide; nPoint++)
+            probIntegral[nPoint] *= normScale;
+        //probIntegral[pointsWide] = pointsWide;
+    }
 
-        // Normalize
-        //float total = texData[pointsWide-1].g;
-        //for (int i = 0;i < pointsWide; i++)
-        //    texData[i].g /= total;
-        matSim.SetFloat("_MapMaxP",maxMomentum); // "Map max momentum", float ) = 1
-        matSim.SetFloat("_MapSum", probSummed); // "Map Summed probability", float ) = 1
-        tex.SetPixels(0, 0, pointsWide*2, 1, texData, 0);
-        tex.filterMode = FilterMode.Bilinear;
-        tex.wrapMode = TextureWrapMode.Clamp;
-        tex.Apply();
-        matSim.SetTexture(texName, tex);
+    private void GenerateReverseLookup()
+    {
+        if (probabilityLookup == null || probabilityLookup.Length < pointsWide)
+            probabilityLookup = new float[pointsWide];
+        // Scale prob distribution to be 0 to pointsWide at max;
+        int indexAbove = 0;
+        int indexBelow;
+        float vmin;
+        float vmax = 0;
+        float frac;
+
+        for (int i = 0; i < pointsWide; i++)
+        {
+            while ((vmax <= i) && (indexAbove < pointsWide - 1))
+            {
+                indexAbove++;
+                vmax = probIntegral[indexAbove];
+            }
+            vmin = vmax; indexBelow = indexAbove;
+            while ((indexBelow > 0) && (vmin > i))
+            {
+                indexBelow--;
+                vmin = probIntegral[indexBelow];
+            }
+            if (indexBelow >= indexAbove)
+                probabilityLookup[i] = vmax;
+            else
+            {
+                frac = Mathf.InverseLerp(vmin, vmax, i);
+                probabilityLookup[i] = Mathf.Lerp(indexBelow, indexAbove, frac);
+            }
+        }
+    }
+    public bool CreateTextures()
+    {
+        GenerateSamples();
+
+        Color[] texData = new Color[pointsWide + pointsWide];
+
+        if (iHaveMatSim)
+        {
+            var tex = new Texture2D(pointsWide * 2, 1, TextureFormat.RGBAFloat, 0, true);
+
+            tex.filterMode = FilterMode.Bilinear;
+            tex.wrapMode = TextureWrapMode.Clamp;
+
+            float impulse;
+            for (int i = 0; i < pointsWide; i++)
+            {
+                impulse = (maxMomentum * i) / pointsWide;
+
+                float sample = gratingFourierSq[i];
+                float integral = probIntegral[i];
+                texData[pointsWide + i] = new Color(sample, integral, impulse, 1f);
+                texData[pointsWide - i] = new Color(sample, -integral, -impulse, 1f);
+            }
+            texData[0] = new Color(0, -probIntegral[pointsWide-1], -1, 1f);
+
+            // Normalize
+            //float total = texData[pointsWide-1].g;
+            //for (int i = 0;i < pointsWide; i++)
+            //    texData[i].g /= total;
+            matSim.SetFloat("_MapMaxP", maxMomentum); // "Map max momentum", float ) = 1
+            matSim.SetFloat("_MapSum", probIntegral[pointsWide-1]); // "Map Summed probability", float ) = 1
+            tex.SetPixels(0, 0, pointsWide * 2, 1, texData, 0);
+            tex.filterMode = FilterMode.Bilinear;
+            tex.wrapMode = TextureWrapMode.Clamp;
+            tex.Apply();
+            matSim.SetTexture(texName, tex);
+        }
+        if (ihaveParticleFlow)
+        {
+            GenerateReverseLookup();
+            texData = new Color[pointsWide];
+            for (int i = 0; i < pointsWide; i++)
+            {
+                float sample = gratingFourierSq[i];
+                float reverse = probabilityLookup[i];
+                texData[i] = new Color(sample, reverse, 0, 1f);
+            }
+           // var tex = new Texture2D(pointsWide, 1, TextureFormat.RGBAFloat, 0, true);
+           // tex.SetPixels(0, 0, pointsWide, 1, texData, 0);
+           // tex.filterMode = FilterMode.Bilinear;
+           // tex.wrapMode = TextureWrapMode.Clamp;
+           // tex.Apply();
+
+            matParticleFlow.SetFloat("_MapMaxP", maxMomentum); // "Map max momentum", float ) = 1
+            //matParticleFlow.SetTexture(texName, tex);
+        }
         Debug.Log(" Created Texture: [" + texName + "]");
         crtUpdateRequired = true;
         return true;
@@ -317,7 +404,7 @@ public class BallisticScatter : UdonSharpBehaviour
     {
         if (gratingUpdateRequired)
         {
-            CreateTexture();
+            CreateTextures();
             crtUpdateRequired = true;
             gratingUpdateRequired = false;
         }
@@ -329,13 +416,16 @@ public class BallisticScatter : UdonSharpBehaviour
         }
     }
 
-
     void Start()
     {
-        texData = new Color[pointsWide];
         iHaveParticleCRT = simCRT != null;
         if (iHaveParticleCRT)
             matSim = simCRT.material;
-        DefineTexture(matSim, texName);
+        iHaveMatSim = ValidMaterial(matSim, texName);
+        if (particleMeshRend != null)
+        {
+            matParticleFlow = particleMeshRend.material;
+        }
+        ihaveParticleFlow = ValidMaterial(matParticleFlow, texName);
     }
 }

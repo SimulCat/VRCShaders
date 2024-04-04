@@ -4,20 +4,24 @@
 
 Shader "SimulCat/Crystal/ReciprocalUnlit"
 {
-   CGINCLUDE
-		#include "../include/spectrum_zucconi.cginc"
-	ENDCG
+
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
-        _MeshSpacing("Mesh Spacing", Vector) = (0.1,0.1,0.1,0.1)
-        _LatticeSpacing("Lattice Spacing", Vector) = (1.0,1.0,1.0,1.0)
-        _MarkerSize ("Marker Size", Range(0.01,1)) = 1
+        _LatticeSpacing("Lattice Spacing", Vector) = (0.1,0.1,0.1,0.1)
+        _QuadSpacing("Quad Array Spacing", Vector) = (1.0,1.0,1.0,1.0)
+        _QuadDimension("Quad Array Dimension", Vector) = (1.0,1.0,1.0,1.0)
+        _MarkerScale ("Marker Size", Range(0.01,2)) = 0.3
         _BeamVector ("Local Beam Vector", Vector) = (1,0,0,0)
         _MaxMinP("Max / Min Momentum", Vector) = (1,0,0,0)
         _LatticeType("0=Cubic, 1=Ionic, 2=Face Center, 3=Body Center", Float) = 0
         _Scale("Scale Lattice",Float) = 0.25
     }
+
+   CGINCLUDE
+		#include "../include/spectrum_zucconi.cginc"
+	ENDCG
+
     SubShader
     {
         Tags { "Queue"="Transparent" "IgnoreProjector"="True" "RenderType"="Transparent" "PreviewType"="Plane" }
@@ -64,10 +68,12 @@ Shader "SimulCat/Crystal/ReciprocalUnlit"
 
             sampler2D _MainTex;
             float4 _MainTex_ST;
-            float4 _MeshSpacing;
-            float4 _LatticeSpacing;
+            float4 _LatticeSpacing; // Crystal/Reciprocal Lattice Spacing
+            float4 _QuadSpacing; // Initial Quad Mesh Spacing
+            float4 _QuadDimension; // Quad Mesh Dimension x,y,z (integer)
+
             float4 _BeamVector;
-            float _MarkerSize;
+            float _MarkerScale;
             float4 _MaxMinP;
             float _LatticeType;
             float _Scale;
@@ -116,7 +122,7 @@ Shader "SimulCat/Crystal/ReciprocalUnlit"
                 uint quadID = v.id/4;
                 uint cornerID = v.id%4;
                 float3 centerOffset;
-                float3 halfSpacing = (_MeshSpacing.xyz)*0.5;
+                float3 halfSpacing = (_QuadSpacing.xyz)*0.5;
                 switch(cornerID)
                 {
                     case 3:
@@ -135,7 +141,8 @@ Shader "SimulCat/Crystal/ReciprocalUnlit"
                 float3 vertexOffset = centerOffset*halfSpacing;
                 float3 quadCenterInMesh = v.vertex - vertexOffset;
                 
-                int3 indices = int3(round(quadCenterInMesh/_MeshSpacing));
+                int3 indices = int3(round(quadCenterInMesh/_QuadSpacing));
+                // Now Scale to lattice
                 float3 quadCenterInLattice = indices * _LatticeSpacing;
 
 
@@ -148,7 +155,7 @@ Shader "SimulCat/Crystal/ReciprocalUnlit"
                 float cosineBeamDirection = -dot(normReflect, _BeamVector.xyz);
                 float projectedMaxP = _MaxMinP.x*cosineBeamDirection;
                 float4 col = float4(0.3,0.3,0.3,0.4);
-                float markerSize =  _MarkerSize;
+                float markerSize =  _MarkerScale;
                 float reactionPx2 = reflectP+reflectP;
                 if (projectedMaxP >= reactionPx2)
                 {

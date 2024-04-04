@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: CRT_Small_MAT
-  m_Shader: {fileID: 4800000, guid: fd5c36de8bef24e43866c5effe93d6d1, type: 3}
+  m_Name: M_ParticleSim
+  m_Shader: {fileID: 4800000, guid: 4aec18f853675754fa5035835ed3723d, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -44,7 +44,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 8400000, guid: a25272231af8a2a4cb91b72fe09cb1e5, type: 2}
+        m_Texture: {fileID: 2800000, guid: c7287bdfc5090f6469f482764fc1d731, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
@@ -59,52 +59,29 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    - _WaveMesh:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
     - _BumpScale: 1
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
-    - _DisplayMode: 0
     - _DstBlend: 0
-    - _Frequency: 0.3
+    - _EnableEmission: 0
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
-    - _Lambda: 12
-    - _LambdaPx: 12
-    - _LeftPx: 0
-    - _LowerEdge: 1
+    - _MarkerSize: 0.513
     - _Metallic: 0
     - _Mode: 0
-    - _NumSources: 2
     - _OcclusionStrength: 1
-    - _OutputRaw: 1
     - _Parallax: 0.02
-    - _Phase: 0.8239988
-    - _RightPx: 2047
     - _Scale: 1
-    - _SlitCount: 2
-    - _SlitPitch: 78.57976
-    - _SlitPitchPx: 40
-    - _SlitWidePx: 12
-    - _SlitWidth: 11.20193
     - _SmoothnessTextureChannel: 0
-    - _SourcePixelSize: 1
-    - _SourceResolution: 0.76
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _UVSec: 0
-    - _UpperEdge: 1279
-    - _WaveStrength: 0.01
     - _ZWrite: 1
     m_Colors:
-    - _Color: {r: 1, g: 0.6556228, b: 0.4669811, a: 1}
-    - _ColorFlow: {r: 0.760479, g: 0, b: 1, a: 1}
-    - _ColorNeg: {r: 0, g: 0.3472424, b: 0.5471698, a: 1}
-    - _ColorVel: {r: 0.9270132, g: 0.93333334, b: 0.27843133, a: 1}
+    - _Color: {r: 0.6659298, g: 0, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _MeshSpacing: {r: 0.1, g: 0.1, b: 0.1, a: 0.1}
   m_BuildTextureStacks: []

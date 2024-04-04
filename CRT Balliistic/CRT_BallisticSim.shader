@@ -1,20 +1,21 @@
 ﻿Shader"SimulCat/Ballistic/CRT Compute"
 {
-    /*
-
-   */
     Properties
     {
+        _Color("Colour Wave", color) = (1, 1, 1, 1)
+        _ColorNeg("Colour Base", color) = (0, 0.3, 1, 0)
+        _OutputRaw("Generate Raw Output", float) = 1
+        _Brightness("Display Brightness", Range(0.05,1)) = 1
+
         _SlitCount("Num Sources",float) = 2
         _SlitPitch("Slit Pitch",float) = 448
         _SlitWidth("Slit Width", Range(1.0,40.0)) = 12.0
         _SamplesPerSlit("Samples per Slit", Range(1,255)) = 7
-        _ParticleK("Particle p*pi/h", float) = 0.26179939
+//        _ParticleK("Particle p*pi/h", float) = 0.26179939
         _ParticleP("Particle p", float) = 1
         _Scale("Simulation Scale",Range(1.0,10.0)) = 1
         _MomentumMap("Momentum Map", 2D ) = "black" {}
         _MapMaxP("Map max momentum", float ) = 1
-        _MapSum("Map sum probability", float ) = 1
     }
 
 CGINCLUDE
@@ -23,18 +24,21 @@ CGINCLUDE
 
     #define M(U) tex2D(_MomentumMap, float2(U))
     
+        float4 _Color;
+        float4 _ColorNeg;
+        float  _OutputRaw;
+        float  _Brightness;
 
         float _SlitCount;
         float _SlitPitch;
         float _SlitWidth;
         float _SamplesPerSlit;
-        float _ParticleK;
+ //       float _ParticleK;
         float _ParticleP;
         float _Scale;
         sampler2D _MomentumMap;
         float4 _MomentumMap_TexelSize;
         float _MapMaxP;
-        float _MapSum;
  //       sampler2D _ApertureTex2D;
  //       float _GratingWidth;
 /*
@@ -71,7 +75,7 @@ float applyGratingToPoint(uint xPix, uint yPix, uint seed)
     return result;
 }
 */
-
+/*
 
 float sampleDistribution(float2 pixelDeltaPos)//, float length)
 {
@@ -108,7 +112,7 @@ float sampleDistribution(float2 pixelDeltaPos)//, float length)
     //return invR * multiSlitProbSq * apertureProbSq;
     return multiSlitProbSq * apertureProbSq;
 }
-
+*/
 
 // Sample the distribution of cumulative probability
 float4 sampleDistribution(float momentum)
@@ -136,7 +140,7 @@ float sampleEdges (float xDelta, float yDelta, float slitHalf)
 
 float4 fragBallistic(v2f_customrendertexture i) : SV_Target
 {
-    float4 result = float4(0,0,0,0);
+    float result = 0;
     float2 pos = i.globalTexcoord.xy;
     int xPixel = (int)(floor(pos.x * _CustomRenderTextureWidth));
     int yPixel = (int)(floor(pos.y * _CustomRenderTextureHeight));
@@ -153,16 +157,19 @@ float4 fragBallistic(v2f_customrendertexture i) : SV_Target
         float2 delta = float2(xDelta,yDelta);
         float dist = (scaleWidth - length(delta))/scaleWidth;
         //result.g += dist; 
-        result.r += sampleEdges (xDelta, yDelta, halfAperture);
+        result += sampleEdges (xDelta, yDelta, halfAperture);
         apertureY -= _SlitPitch;
     }
-    return result;
+    if (_OutputRaw > 0.5)
+        return float4(result,0,0,1);
+    float3 col = lerp(_ColorNeg,_Color,result).rgb * _Brightness;
+
+    return float4(col,result+0.25);
 }
 
 
 float4 frag(v2f_customrendertexture i) : SV_Target
 {
-    float4 height = float4(0,0,0,1);
     float2 pos = i.globalTexcoord.xy;
     float4 output = float4(1, 1, 0,1);
     // Pixel Positions
@@ -202,8 +209,11 @@ float4 frag(v2f_customrendertexture i) : SV_Target
     float invCount = 0.1/sourceCount;
     particleRate *= invCount;
     pixelDistance *= invCount/_CustomRenderTextureWidth;
-    height.rgb = float3(particleRate,particleRate,pixelDistance);
-    return height;
+    if (_OutputRaw > 0.5)
+        output = float4(particleRate,particleRate,pixelDistance,1);
+    else
+        output = float4(lerp(_ColorNeg,_Color,particleRate).rgb,particleRate+.25);
+    return output;
 }
 
 ENDCG
@@ -216,7 +226,7 @@ ENDCG
             Name "Update"
             CGPROGRAM
             #pragma vertex CustomRenderTextureVertexShader
-            #pragma fragment frag
+            #pragma fragment fragBallistic
             ENDCG
         }
 
