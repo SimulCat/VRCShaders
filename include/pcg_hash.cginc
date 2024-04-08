@@ -16,7 +16,7 @@ uint pcg_hash(uint input)
     return (word >> 22u) ^ word;
 }
 
-// Random float from zero to max
+// Hash float from zero to max
 float RandomRange(float rangeMax, uint next)
 {
     float div;

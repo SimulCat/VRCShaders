@@ -12,7 +12,7 @@
         _SlitWidth("Slit Width", Range(1.0,40.0)) = 12.0
         _SamplesPerSlit("Samples per Slit", Range(1,255)) = 7
 //        _ParticleK("Particle p*pi/h", float) = 0.26179939
-        _ParticleP("Particle p", float) = 1
+        _ParticleP("Particle Momentum", float) = 1
         _Scale("Simulation Scale",Range(1.0,10.0)) = 1
         _MomentumMap("Momentum Map", 2D ) = "black" {}
         _MapMaxP("Map max momentum", float ) = 1
@@ -20,7 +20,7 @@
 
 CGINCLUDE
 
-#include "UnityCustomRenderTexture.cginc"
+    #include "UnityCustomRenderTexture.cginc"
 
     #define M(U) tex2D(_MomentumMap, float2(U))
     

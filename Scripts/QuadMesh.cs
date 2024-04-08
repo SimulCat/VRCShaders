@@ -29,7 +29,8 @@ public class QuadMesh : UdonSharpBehaviour
     float arrayRadius;
     [SerializeField]
     Vector3 arrayOrigin;
-
+    [SerializeField]
+    bool useTriangles = false;
     // Only Uncomment for verification in editor 
     //[SerializeField]
     private Vector3[] vertices;
@@ -38,7 +39,7 @@ public class QuadMesh : UdonSharpBehaviour
     //[SerializeField]
     int[] triangles;
     [SerializeField]
-    int numQuads;
+    int numDecals;
     [SerializeField]
     int numVertices;
     [SerializeField]
@@ -68,11 +69,11 @@ public class QuadMesh : UdonSharpBehaviour
         radiusSq = arrayRadius.x + (arraySpacing.x * 0.5f);
         radiusSq *=radiusSq;
 
-        numQuads = numGridPoints.x*numGridPoints.y*numGridPoints.z;
-        numVertices = numQuads * 4;
+        numDecals = numGridPoints.x*numGridPoints.y*numGridPoints.z;
+        numVertices = numDecals * (useTriangles ? 3 : 4);
         vertices = new Vector3[numVertices];
         uvs = new Vector2[numVertices];
-        triangles = new int[numQuads * 6];
+        triangles = new int[numDecals * (useTriangles ? 3: 6)];
 
         arrayOrigin = Vector3.zero;
         if (centerArrayOrigin)
@@ -83,13 +84,29 @@ public class QuadMesh : UdonSharpBehaviour
 
         numVertices = 0;
         numTriangles = 0;
-        float quadDim = Mathf.Min(arraySpacing.x, arraySpacing.y) * 0.5f;
-        Vector3 right = Vector3.right * quadDim;
-        Vector3 up = Vector3.up * quadDim;
-        Vector3 upright = up + right;
-        Vector3 upleft = up - right;
-        Vector3 downright = -up + right;
-        Vector3 downleft = -upright;
+        float quadDim = Mathf.Min(arraySpacing.x, arraySpacing.y);
+
+        Vector3 vxOffset0 = (Vector3.down + Vector3.right) * 0.5f;
+        Vector3 vxOffset1 = (Vector3.down + Vector3.left) * 0.5f;
+        Vector3 vxOffset2 = (Vector3.up   + Vector3.right) * 0.5f;
+        Vector3 vxOffset3 = (Vector3.up   + Vector3.left) * 0.5f; // Only for quad
+        if (useTriangles)
+        {
+            vxOffset0 = new Vector2(0.5f, -0.288675135f);
+            vxOffset1 = new Vector2(-0.5f, -0.288675135f);
+            vxOffset2 = new Vector2(0, 0.57735027f);
+        }
+
+        vxOffset0 *= quadDim;
+        vxOffset1 *= quadDim;
+        vxOffset2 *= quadDim;
+        vxOffset3 *= quadDim;
+
+        Vector2 uv0 = useTriangles ? new Vector2(-0.366025403f, 0) : Vector2.zero;
+        Vector2 uv1 = useTriangles ? new Vector2(1.366025403f, 0) : Vector2.right;
+        Vector2 uv2 = useTriangles ? new Vector2(0.5f, 1.5f) : Vector2.up;
+        Vector2 uv3 = Vector2.one;
+
         bool positionInRange;
         for (int nPlane = 0; nPlane < numGridPoints.z; nPlane++)
         {
@@ -115,21 +132,26 @@ public class QuadMesh : UdonSharpBehaviour
                         triangles[numTriangles++] = numVertices;
                         triangles[numTriangles++] = numVertices + 2;
                         triangles[numTriangles++] = numVertices + 1;
-                        triangles[numTriangles++] = numVertices + 2;
-                        triangles[numTriangles++] = numVertices + 3;
-                        triangles[numTriangles++] = numVertices + 1;
+                        if (!useTriangles)
+                        {
+                            triangles[numTriangles++] = numVertices + 2;
+                            triangles[numTriangles++] = numVertices + 3;
+                            triangles[numTriangles++] = numVertices + 1;
+                        }
+                        uvs[numVertices] = uv0;
+                        vertices[numVertices++] = quadPos + vxOffset0;
 
-                        uvs[numVertices] = Vector2.zero;
-                        vertices[numVertices++] = quadPos + downright;
+                        uvs[numVertices] = uv1;
+                        vertices[numVertices++] = quadPos + vxOffset1;
 
-                        uvs[numVertices] = Vector2.right;
-                        vertices[numVertices++] = quadPos + downleft;
+                        uvs[numVertices] = uv2;
+                        vertices[numVertices++] = quadPos + vxOffset2;
 
-                        uvs[numVertices] = Vector2.up;
-                        vertices[numVertices++] = quadPos + upright;
-
-                        uvs[numVertices] = Vector2.right + Vector2.up;
-                        vertices[numVertices++] = quadPos + upleft;
+                        if (!useTriangles)
+                        {
+                            uvs[numVertices] = uv3;
+                            vertices[numVertices++] = quadPos + vxOffset3;
+                        }
                     }
                     quadPos.x += arraySpacing.x;
                 }
@@ -139,7 +161,7 @@ public class QuadMesh : UdonSharpBehaviour
         }
         theMesh = mf.mesh;
         theMesh.Clear();
-        numQuads = numVertices / 4;
+        numDecals = numVertices / 4;
         int[] meshTris = new int[numTriangles];
         for (int i = 0; i < numTriangles; i++)
             meshTris[i] = triangles[i];
@@ -161,9 +183,9 @@ public class QuadMesh : UdonSharpBehaviour
         if (material != null)
         {
             Vector4 pointVec = new Vector4(numGridPoints.x,numGridPoints.y,numGridPoints.z,numGridPoints.x*numGridPoints.y*numGridPoints.z);
-            material.SetVector("_QuadSpacing", arraySpacing);
-            material.SetVector("_QuadDimension", pointVec);
-
+            material.SetVector("_ArraySpacing", arraySpacing);
+            material.SetVector("_ArrayDimension", pointVec);
+            //material.SetFloat("_CornerCount", useTriangles ? 3f : 4f);
             //material.SetFloat("_MarkerSize", value: 0.3f);
         }
         return true;

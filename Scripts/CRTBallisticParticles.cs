@@ -40,8 +40,8 @@ public class CRTBallisticParticles : UdonSharpBehaviour
     private float particleSpeed;
     [SerializeField]
     private bool gratingChanged = false;
-    [SerializeField]
-    private int pointsWide = 512;
+    //[SerializeField]
+   // private int pointsWide = 512;
 
     private float ParticleSpeed
     {
