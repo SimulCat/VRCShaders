@@ -95,12 +95,12 @@ Material:
     - _OutputRaw: 0
     - _Parallax: 0.02
     - _ParticleK: 0.2617994
-    - _ParticleP: 4.9681187
+    - _ParticleP: 3.1783516
     - _SamplesPerSlit: 64
     - _Scale: 1
-    - _SlitCount: 5
-    - _SlitPitch: 40.000004
-    - _SlitWidth: 8.000001
+    - _SlitCount: 2
+    - _SlitPitch: 80.00001
+    - _SlitWidth: 16.815228
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
@@ -110,7 +110,7 @@ Material:
     m_Colors:
     - _BeamVector: {r: 0, g: 0, b: 0, a: 0}
     - _CellDimensions: {r: 1, g: 1, b: 1, a: 1}
-    - _Color: {r: 0.3661528, g: 1, b: 0.2, a: 1}
+    - _Color: {r: 1, g: 0.65577257, b: 0.2, a: 1}
     - _ColorNeg: {r: 0.04286441, g: 0.020069422, b: 0.38679248, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []

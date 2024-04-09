@@ -561,9 +561,13 @@ public class BallisticScatter : UdonSharpBehaviour
             matParticleFlow = particleMeshRend.material;
         }
         ihaveParticleFlow = ValidMaterial(matParticleFlow, texName);
+        SlitCount = slitCount;
+        SlitWidth = slitWidth;
+        SlitPitch = slitPitch;
         ReviewOwnerShip();
         shaderBaseTime = Time.time;
         shaderPauseTime = Time.time;
         setParticlePlay(playParticles);
+
     }
 }

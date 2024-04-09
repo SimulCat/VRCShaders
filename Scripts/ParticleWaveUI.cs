@@ -261,13 +261,13 @@ public int SlitCount
             {
                 slitCount = value;
                 crtUpdateRequired = true;
-                if (iHaveParticleSim)
-                    particleSim.SetProgramVariable<int>("slitCount",slitCount);
-                if (iHaveWaveCRT)
-                    matWaveCRT.SetFloat("_SlitCount", slitCount);
             }
             if (lblSlitCount != null)
                 lblSlitCount.text = value.ToString();
+            if (iHaveParticleSim)
+                particleSim.SetProgramVariable<int>("slitCount", slitCount);
+            if (iHaveWaveCRT)
+                matWaveCRT.SetFloat("_SlitCount", slitCount);
             RequestSerialization();
         }
     }
@@ -281,13 +281,13 @@ public int SlitCount
             {
                 crtUpdateRequired = true;
                 slitWidth = value;
-                if (iHaveParticleSim)
-                    particleSim.SetProgramVariable<float>("slitWidth",slitWidth);
-                if (iHaveWaveCRT)
-                    matWaveCRT.SetFloat("_SlitWidth",slitWidth * waveDimScale);
             }
             if (iHaveWidthSlider && !widthSlider.PointerDown && widthSlider.CurrentValue != widthSlider.CurrentValue)
                 widthSlider.SetValue(value);
+            if (iHaveParticleSim)
+                particleSim.SetProgramVariable<float>("slitWidth", slitWidth);
+            if (iHaveWaveCRT)
+                matWaveCRT.SetFloat("_SlitWidth", slitWidth * waveDimScale);
             RequestSerialization();
         }
     }
@@ -300,16 +300,16 @@ public int SlitCount
             if (value != slitPitch)
             {
                 slitPitch = value;
-                if (iHaveParticleSim)
-                    particleSim.SetProgramVariable<float>("slitPitch",slitPitch);
-                if (iHaveWaveCRT)
-                    matWaveCRT.SetFloat("_SlitPitch", slitPitch * waveDimScale);
                 crtUpdateRequired = true;
             }
             if (iHavePitchSlider && !pitchSlider.PointerDown && slitPitch != pitchSlider.CurrentValue)
             {
                 pitchSlider.SetValue(value);
             }
+            if (iHaveParticleSim)
+                particleSim.SetProgramVariable<float>("slitPitch", slitPitch);
+            if (iHaveWaveCRT)
+                matWaveCRT.SetFloat("_SlitPitch", slitPitch * waveDimScale);
             RequestSerialization();
         }
     }

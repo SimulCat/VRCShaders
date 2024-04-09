@@ -74,7 +74,7 @@ Material:
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
-    - _Lambda: 8.051337
+    - _Lambda: 12.58514
     - _LambdaPx: 12
     - _LeftPx: 0
     - _LowerEdge: 1
@@ -87,11 +87,11 @@ Material:
     - _Phase: 0.8239988
     - _RightPx: 2047
     - _Scale: 1
-    - _SlitCount: 5
-    - _SlitPitch: 40
+    - _SlitCount: 2
+    - _SlitPitch: 80
     - _SlitPitchPx: 40
     - _SlitWidePx: 12
-    - _SlitWidth: 8
+    - _SlitWidth: 16.815226
     - _SmoothnessTextureChannel: 0
     - _SourcePixelSize: 1
     - _SourceResolution: 0.76
