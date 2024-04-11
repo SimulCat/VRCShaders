@@ -28,6 +28,23 @@ public class CRTWaveDemo : UdonSharpBehaviour
     bool iHaveTogAmp = false;
     [SerializeField] Toggle togProbability;
     bool iHaveTogProb = false;
+    [SerializeField] UdonSlider contrastSlider;
+
+    [SerializeField, UdonSynced, FieldChangeCallback(nameof(ContrastVal))]
+    public float contrastVal = 40f;
+
+    private float prevVisibility = -1;
+    private void reviewContrast()
+    {
+        if (matPanel == null)
+            return;
+        float targetViz = contrastVal / 100;
+        if (targetViz == prevVisibility)
+            return;
+        prevVisibility = targetViz;
+        matPanel.SetFloat("_Brightness", targetViz);
+    }
+
 
     [Header("Serialized for monitoring in Editor")]
     [SerializeField]
@@ -54,6 +71,20 @@ public class CRTWaveDemo : UdonSharpBehaviour
             }
         } 
     }
+
+    private float ContrastVal
+    {
+        get => contrastVal;
+        set
+        {
+            contrastVal = value;
+            if (contrastSlider != null && !contrastSlider.PointerDown && contrastSlider.CurrentValue != contrastVal)
+                contrastSlider.SetValue(contrastVal);
+            reviewContrast();
+            RequestSerialization();
+        }
+    }
+
     private VRCPlayerApi player;
     private bool iamOwner = false;
 
@@ -146,6 +177,11 @@ public class CRTWaveDemo : UdonSharpBehaviour
         }
     }
 
+    public void contrastPtr()
+    {
+        if (!iamOwner)
+            Networking.SetOwner(player,gameObject);
+    }
 
     // Display mode Toggles are all set to send custom event to this function
     public void togMode()
@@ -215,6 +251,7 @@ public class CRTWaveDemo : UdonSharpBehaviour
         if (waveMesh != null)
             matPanel = waveMesh.material;
         iHavePanelMaterial = matPanel != null;
+        ContrastVal = contrastVal;
         checkPanelType();
         DisplayMode = displayMode;
     }

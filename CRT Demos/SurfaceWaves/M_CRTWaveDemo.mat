@@ -81,6 +81,7 @@ Material:
     - _BUILTIN_QueueControl: 0
     - _BUILTIN_QueueOffset: 0
     - _BaseLight: 0.35
+    - _Brightness: 1
     - _BumpScale: 1
     - _ClipHeight: 0.3
     - _Cutoff: 0.5
@@ -104,9 +105,9 @@ Material:
     - _Parallax: 0.02
     - _Phase: 0
     - _Scale: 1
-    - _ScaleAmplitude: 31.8
+    - _ScaleAmplitude: 82.4
     - _ScaleColour: 9.2
-    - _ScaleEnergy: 29.3
+    - _ScaleEnergy: 43.5
     - _ScaleHeight: 0.19
     - _ShowCRT: 1
     - _ShowHeight: 0

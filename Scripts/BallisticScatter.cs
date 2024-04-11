@@ -7,21 +7,24 @@ using VRC.SDKBase;
 public class BallisticScatter : UdonSharpBehaviour
 {
     [Header("Simulation Components")]
-    [SerializeField]
-    CustomRenderTexture simCRT;
+    [SerializeField,Tooltip("CRT to generate probability density")]
+    CustomRenderTexture probabilityCRT;
     [SerializeField,Tooltip("Use same units as slit width and pitch")]
     Vector2 simSize = new Vector2(2.56f, 1.6f);
-    [SerializeField] float metresPerUnit = 1f;  
-    
+    [SerializeField] float metresPerUnit = 1f;
+    [SerializeField,UdonSynced,FieldChangeCallback(nameof(ShowProbability))] 
+    public bool showProbability = true;
+    [SerializeField, UdonSynced, FieldChangeCallback(nameof(ProbVisPercent))]
+    public float probVisPercent = 45f;
     [SerializeField]
     Vector2Int simPixels = new Vector2Int(1024, 640);
-    bool iHaveParticleCRT = false;
-    [SerializeField]
-    Material matSim = null;
+    bool iHaveProbability = false;
+    [SerializeField,Tooltip("Shown for editor reference, loaded at Start")]
+    Material matProbabilitySim = null;
     [SerializeField]
     string texName = "_MomentumMap";
     [SerializeField]
-    bool iHaveMatSim = false;
+    bool iHavematProbabilitySim = false;
     [SerializeField]
     MeshRenderer particleMeshRend = null;
     [SerializeField]
@@ -58,8 +61,57 @@ public class BallisticScatter : UdonSharpBehaviour
     [Header("UI Elements")]
     [SerializeField] Toggle togPlay;
     [SerializeField] Toggle togPause;
-    [SerializeField] Button btnReset;
     [SerializeField] Toggle togShowHide;
+    [SerializeField] Toggle togProbability;
+    [SerializeField] UdonSlider probVizSlider;
+
+    private float prevVisibility = -1;
+    private void reviewProbVisibility()
+    {
+        if (!iHavematProbabilitySim) 
+            return;
+        float targetViz = showProbability ? ProbVisPercent/100 : 0;
+        if (targetViz == prevVisibility)
+            return;
+        prevVisibility = targetViz;
+        matProbabilitySim.SetFloat("_Brightness", targetViz);
+        crtUpdateRequired = true;
+    }
+
+    private bool ShowProbability
+    {
+        get=> showProbability;
+        set
+        {
+            bool trig = value != showProbability;
+            showProbability = value;
+            if (togProbability != null && togProbability.isOn != value)
+                togProbability.isOn = value;
+            if (trig)
+            {
+                if (probVizSlider != null)
+                    probVizSlider.IsInteractible = showProbability;
+                reviewProbVisibility();
+            }
+            RequestSerialization();
+        }
+    }
+
+    private float ProbVisPercent
+    {
+        get=> probVisPercent;
+        set
+        {
+            bool trig = probVisPercent != value;
+            probVisPercent = value;
+            if (probVizSlider != null && !probVizSlider.PointerDown && probVizSlider.CurrentValue !=probVisPercent)
+                probVizSlider.SetValue(probVisPercent);
+            if (trig) 
+                reviewProbVisibility();
+            RequestSerialization();
+        }
+    }
+
 
     /* 
      * Udon Sync Stuff
@@ -160,7 +212,7 @@ public class BallisticScatter : UdonSharpBehaviour
         gratingUpdateRequired = isChanged;
         if (isChanged)
         {
-            if (iHaveMatSim) setGratingParams(matSim);
+            if (iHavematProbabilitySim) setGratingParams(matProbabilitySim);
             if (ihaveParticleFlow) setParticleParams(matParticleFlow);
         }
     }
@@ -186,8 +238,8 @@ public class BallisticScatter : UdonSharpBehaviour
             if (value != simScale)
                 crtUpdateRequired = true;
             simScale = value;
-            if (iHaveMatSim)
-                matSim.SetFloat("_Scale", simScale);
+            if (iHavematProbabilitySim)
+                matProbabilitySim.SetFloat("_Scale", simScale);
             if (ihaveParticleFlow)
                 matParticleFlow.SetFloat("_Scale", simScale);
         }
@@ -204,8 +256,8 @@ public class BallisticScatter : UdonSharpBehaviour
                 crtUpdateRequired = true;
             }
             slitCount = value;
-            if (iHaveMatSim)
-                matSim.SetFloat("_SlitCount", 1f*slitCount);
+            if (iHavematProbabilitySim)
+                matProbabilitySim.SetFloat("_SlitCount", 1f*slitCount);
             if (ihaveParticleFlow)
                 matParticleFlow.SetFloat("_SlitCount", 1f* slitCount);
         }
@@ -221,8 +273,8 @@ public class BallisticScatter : UdonSharpBehaviour
                 crtUpdateRequired = true;
             }
             slitWidth = value;
-            if (iHaveMatSim)
-                matSim.SetFloat("_SlitWidth", slitWidth * simPixelScale);
+            if (iHavematProbabilitySim)
+                matProbabilitySim.SetFloat("_SlitWidth", slitWidth * simPixelScale);
             if (ihaveParticleFlow)
                 matParticleFlow.SetFloat("_SlitWidth", slitWidth * metresPerUnit);
         }
@@ -239,8 +291,8 @@ public class BallisticScatter : UdonSharpBehaviour
                 crtUpdateRequired = true;
             }
             slitPitch = value;
-            if (iHaveMatSim)
-                matSim.SetFloat("_SlitPitch", slitPitch * simPixelScale);
+            if (iHavematProbabilitySim)
+                matProbabilitySim.SetFloat("_SlitPitch", slitPitch * simPixelScale);
             if (ihaveParticleFlow)
                 matParticleFlow.SetFloat("_SlitPitch", slitPitch * metresPerUnit);
 
@@ -313,9 +365,9 @@ public class BallisticScatter : UdonSharpBehaviour
             crtUpdateRequired |= value != particleMomentum;
             particleMomentum = value;
             //float particleP = particleMomentum / planckSim;
-            if (iHaveMatSim)
+            if (iHavematProbabilitySim)
             {
-                matSim.SetFloat("_ParticleP", particleMomentum);
+                matProbabilitySim.SetFloat("_ParticleP", particleMomentum);
             }
             if (ihaveParticleFlow)
             {
@@ -330,8 +382,8 @@ public class BallisticScatter : UdonSharpBehaviour
         set
         {
             displayColor = value;
-            if (iHaveParticleCRT)
-                matSim.SetColor("_Color", displayColor);
+            if (iHaveProbability)
+                matProbabilitySim.SetColor("_Color", displayColor);
             if (ihaveParticleFlow)
                 matParticleFlow.SetColor("_Color", displayColor);
         }
@@ -364,9 +416,9 @@ public class BallisticScatter : UdonSharpBehaviour
         }
         return multiSlitProbSq * apertureProbSq;
     }
-   [SerializeField]
+  // [SerializeField]
     private float[] gratingFourierSq;
-   [SerializeField]
+   //[SerializeField]
     private float[] probIntegral;
    //[SerializeField]
     private float[] weightedLookup;
@@ -444,7 +496,7 @@ public class BallisticScatter : UdonSharpBehaviour
 
         Color[] texData = new Color[pointsWide + pointsWide];
 
-        if (iHaveMatSim)
+        if (iHavematProbabilitySim)
         {
             var tex = new Texture2D(pointsWide * 2, 1, TextureFormat.RGBAFloat, 0, true);
 
@@ -467,13 +519,13 @@ public class BallisticScatter : UdonSharpBehaviour
             //float total = texData[pointsWide-1].g;
             //for (int i = 0;i < pointsWide; i++)
             //    texData[i].g /= total;
-            matSim.SetFloat("_MapMaxP", maxMomentum); // "Map max momentum", float ) = 1
-            matSim.SetFloat("_MapSum", probIntegral[pointsWide-1]); // "Map Summed probability", float ) = 1
+            matProbabilitySim.SetFloat("_MapMaxP", maxMomentum); // "Map max momentum", float ) = 1
+            matProbabilitySim.SetFloat("_MapSum", probIntegral[pointsWide-1]); // "Map Summed probability", float ) = 1
             tex.SetPixels(0, 0, pointsWide * 2, 1, texData, 0);
             tex.filterMode = FilterMode.Bilinear;
             tex.wrapMode = TextureWrapMode.Clamp;
             tex.Apply();
-            matSim.SetTexture(texName, tex);
+            matProbabilitySim.SetTexture(texName, tex);
         }
         if (ihaveParticleFlow)
         {
@@ -528,12 +580,33 @@ public class BallisticScatter : UdonSharpBehaviour
             PlayParticles = false;
     }
 
+    public void probVisPtr()
+    {
+        if (!iamOwner)
+            Networking.SetOwner(player,gameObject);
+        //Debug.Log("probVisPtr");
+    }
+    public void showProb()
+    {
+       // Debug.Log("showProb");
+        if ((togProbability != null) && togProbability.isOn != showProbability)
+        {
+            if (!iamOwner)
+                Networking.SetOwner(player,gameObject);
+            ShowProbability = !showProbability;
+        }
+    }
 
     /*
      * Update and Start
      */
+    private float updateTimer = 1;
     private void Update()
     {
+        updateTimer -= Time.deltaTime;
+        if (updateTimer > 0)
+            return;
+        updateTimer += 0.1f;
         if (gratingUpdateRequired)
         {
             CreateTextures();
@@ -543,19 +616,21 @@ public class BallisticScatter : UdonSharpBehaviour
         if (crtUpdateRequired)
         {
             crtUpdateRequired = false;
-            if (iHaveParticleCRT)
-                simCRT.Update(1);
+            if (iHaveProbability)
+                probabilityCRT.Update(1);
         }
         HideParticles = hideParticles;
     }
 
     void Start()
     {
-        iHaveParticleCRT = simCRT != null;
+        iHaveProbability = probabilityCRT != null;
         simPixelScale = metresPerUnit * simPixels.y / simSize.y;
-        if (iHaveParticleCRT)
-            matSim = simCRT.material;
-        iHaveMatSim = ValidMaterial(matSim, texName);
+        if (iHaveProbability)
+            matProbabilitySim = probabilityCRT.material;
+        iHavematProbabilitySim = ValidMaterial(matProbabilitySim, texName);
+        ProbVisPercent = probVisPercent;
+        ShowProbability = showProbability;
         if (particleMeshRend != null)
         {
             matParticleFlow = particleMeshRend.material;

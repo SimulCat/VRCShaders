@@ -13,6 +13,7 @@ Shader "SimulCat/CRT/Display Wave"
 
         _ScaleAmplitude("Scale Amplitude", Range(1, 120)) = 50
         _ScaleEnergy("Scale Energy", Range(1, 120)) = 50
+        _Brightness("Display Brightness", Range(0,2)) = 1
 
         _ColorNeg("Colour Base", color) = (0, 0.3, 1, 0)
         _Color("Colour Wave", color) = (1, 1, 0, 0)
@@ -60,6 +61,7 @@ Shader "SimulCat/CRT/Display Wave"
 
             float _ScaleAmplitude;
             float _ScaleEnergy;
+            float _Brightness;
 
             float _ShowCRT;
             float _ShowReal;
@@ -112,6 +114,7 @@ Shader "SimulCat/CRT/Display Wave"
                         value = sample.w * _ScaleEnergy * _ScaleEnergy;
                     else
                         value = sample.z * _ScaleAmplitude;
+                    value *= _Brightness;
                     col = lerp(_ColorNeg, _ColorFlow, value);
                     col.a = displaySquare ? value+0.33 : clamp(value, .25,1);
                     return col;
@@ -138,6 +141,7 @@ Shader "SimulCat/CRT/Display Wave"
                 }
                 else
                     value *= _ScaleAmplitude;
+                value *= _Brightness;
                 col = lerp(_ColorNeg, displayReal ? _Color : _ColorVel, value);
                 col.a = (displaySquare) ? value +0.33 : clamp(value + 1, 0.3, 1);
 

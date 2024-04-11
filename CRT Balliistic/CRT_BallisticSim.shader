@@ -5,7 +5,7 @@
         _Color("Colour Wave", color) = (1, 1, 1, 1)
         _ColorNeg("Colour Base", color) = (0, 0.3, 1, 0)
         _OutputRaw("Generate Raw Output", float) = 1
-        _Brightness("Display Brightness", Range(0.05,1)) = 1
+        _Brightness("Display Brightness", Range(0,2)) = 1
 
         _SlitCount("Num Sources",float) = 2
         _SlitPitch("Slit Pitch",float) = 448
@@ -162,9 +162,9 @@ float4 fragBallistic(v2f_customrendertexture i) : SV_Target
     }
     if (_OutputRaw > 0.5)
         return float4(result,0,0,1);
-    float3 col = lerp(_ColorNeg,_Color,result).rgb * _Brightness;
+    float3 col = lerp(_ColorNeg,_Color,result*_Brightness).rgb;
 
-    return float4(col,result+0.25);
+    return float4(col,result*_Brightness+0.2);
 }
 
 
