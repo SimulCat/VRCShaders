@@ -5,17 +5,20 @@
         _Color("Colour Wave", color) = (1, 1, 1, 1)
         _ColorNeg("Colour Base", color) = (0, 0.3, 1, 0)
         _OutputRaw("Generate Raw Output", float) = 1
-        _Brightness("Display Brightness", Range(0,2)) = 1
+        _Brightness("Display Brightness", Range(0,10)) = 1
 
         _SlitCount("Num Sources",float) = 2
         _SlitPitch("Slit Pitch",float) = 448
         _SlitWidth("Slit Width", Range(1.0,40.0)) = 12.0
+        _BeamWidth("Grating Width", float) = 1
+        _GratingOffset("Grating X Offset", float) = 0
         _SamplesPerSlit("Samples per Slit", Range(1,255)) = 7
 //        _ParticleK("Particle p*pi/h", float) = 0.26179939
         _ParticleP("Particle Momentum", float) = 1
         _Scale("Simulation Scale",Range(1.0,10.0)) = 1
         _MomentumMap("Momentum Map", 2D ) = "black" {}
         _MapMaxP("Map max momentum", float ) = 1
+        _MapMaxI("Map max integral", float ) = 1
     }
 
 CGINCLUDE
@@ -32,6 +35,8 @@ CGINCLUDE
         float _SlitCount;
         float _SlitPitch;
         float _SlitWidth;
+        float _BeamWidth;
+        float _GratingOffset;
         float _SamplesPerSlit;
  //       float _ParticleK;
         float _ParticleP;
@@ -39,8 +44,9 @@ CGINCLUDE
         sampler2D _MomentumMap;
         float4 _MomentumMap_TexelSize;
         float _MapMaxP;
+        float _MapMaxI;
  //       sampler2D _ApertureTex2D;
- //       float _GratingWidth;
+ //       float _BeamWidth;
 /*
 float hash12(float2 p)
 {
@@ -123,9 +129,8 @@ float4 sampleDistribution(float momentum)
 
 float sampleEdges (float xDelta, float yDelta, float slitHalf)
 {
-    if (xDelta < 1)
-        xDelta = 1;
-
+    int isAfterGrating = int(xDelta > 0);
+    xDelta = abs(xDelta);
 
     float thetaTop = atan2(yDelta - slitHalf,xDelta);
     float momentumTop = sin(thetaTop) * _ParticleP;
@@ -135,7 +140,7 @@ float sampleEdges (float xDelta, float yDelta, float slitHalf)
     float momentumLwr = sin(thetaLwr) * _ParticleP;
     float4 probLwr = sampleDistribution(momentumLwr);
 
-    return abs(probTop.y - probLwr.y)/_MapMaxP;
+    return isAfterGrating*(abs(probTop.y - probLwr.y)/_MapMaxI);
 }
 
 float4 fragBallistic(v2f_customrendertexture i) : SV_Target
@@ -144,22 +149,27 @@ float4 fragBallistic(v2f_customrendertexture i) : SV_Target
     float2 pos = i.globalTexcoord.xy;
     int xPixel = (int)(floor(pos.x * _CustomRenderTextureWidth));
     int yPixel = (int)(floor(pos.y * _CustomRenderTextureHeight));
-    int slitCount = round(_SlitCount);
-    float apertureY = (slitCount > 1 ? (slitCount - 1) * _SlitPitch : 0.0) *0.5;
-    float yScaled = (yPixel - _CustomRenderTextureHeight / 2.0) * _Scale;
-    float xDelta = xPixel * _Scale;
+    float yOffsetPx = yPixel - _CustomRenderTextureHeight / 2.0;
+    int slitCount = max(round(_SlitCount),1);
+    float apertureY = (slitCount - 1) * _SlitPitch *0.5;
+    float halfBeam = max(_BeamWidth,apertureY)*.5;
+
+    float yPos = yOffsetPx * _Scale;
+    float xDelta = (xPixel - _GratingOffset) * _Scale;
     float scaleWidth = (_CustomRenderTextureWidth * _Scale);
     float halfAperture = _SlitWidth * 0.5;
-
     for (int nAperture = 0; nAperture < slitCount; nAperture++)
     {
-        float yDelta = yScaled - apertureY;
+        float yDelta = yPos - apertureY;
         float2 delta = float2(xDelta,yDelta);
         float dist = (scaleWidth - length(delta))/scaleWidth;
         //result.g += dist; 
         result += sampleEdges (xDelta, yDelta, halfAperture);
         apertureY -= _SlitPitch;
     }
+    // Check before aperture
+    float before = (_GratingOffset > 0 && xDelta <= 0) ? 2.0 : 0;
+    result = result + before*(1.0 - smoothstep(halfBeam,halfBeam*1.3,abs(yPos)));
     if (_OutputRaw > 0.5)
         return float4(result,0,0,1);
     float3 col = lerp(_ColorNeg,_Color,result*_Brightness).rgb;
@@ -188,7 +198,7 @@ float4 frag(v2f_customrendertexture i) : SV_Target
 
     float sourceY = ((_SlitCount - 1) * _SlitPitch + _SlitWidth) * 0.5;
     float2 delta = float2(xPixel * _Scale,0.0);
-    float yScaled = (yPixel - _CustomRenderTextureHeight / 2.0) * _Scale;
+    float yPos = (yPixel - _CustomRenderTextureHeight / 2.0) * _Scale;
     float pixelDistance = 0;
     for (int nAperture = 0; nAperture < sourceCount; nAperture++)
     {
@@ -197,7 +207,7 @@ float4 frag(v2f_customrendertexture i) : SV_Target
         float apertureDistance = 0;
         for (int apertureStep = 0; apertureStep < samplesPerSlit; apertureStep++)
         {
-             delta.y = abs(yScaled-slitY);
+             delta.y = abs(yPos-slitY);
              apertureDistance += length(delta);
              apertureRate += sampleDistribution(delta);//,apertureDistance);
              slitY -= slitIncrement;

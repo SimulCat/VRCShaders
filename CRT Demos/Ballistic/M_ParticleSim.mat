@@ -70,6 +70,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _BaseTime: 0
+    - _BeamWidth: 1
     - _BumpScale: 1
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
@@ -78,8 +79,9 @@ Material:
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
+    - _GratingOffset: 0
     - _MapMaxP: 1
-    - _MarkerSize: 1.673
+    - _MarkerSize: 2
     - _MaxScale: 5
     - _MaxVelocity: 1
     - _Metallic: 0

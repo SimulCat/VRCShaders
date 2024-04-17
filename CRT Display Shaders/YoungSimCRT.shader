@@ -10,7 +10,7 @@
         _UpperEdge("Upper Edge",float) = 972
         _LowerEdge("Lower Edge",float) = 76
 
-        _SlitCount("Num Sources",float) = 2
+        _SlitCount("Number of Slits",float) = 2
         _SlitPitch("Slit Pitch",float) = 448
         _SlitWidth("Slit Width", Range(1.0,40.0)) = 12.0
         _Scale("Simulation Scale",Range(1.0,10.0)) = 1

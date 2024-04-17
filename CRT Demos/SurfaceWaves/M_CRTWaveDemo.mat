@@ -96,6 +96,7 @@ Material:
     - _GlossyReflections: 1
     - _HeightScale: 0.002
     - _K: 0.1
+    - _Lambda: 49.642857
     - _LambdaPx: 49.642857
     - _Metallic: 0.942
     - _Mode: 0
@@ -105,9 +106,9 @@ Material:
     - _Parallax: 0.02
     - _Phase: 0
     - _Scale: 1
-    - _ScaleAmplitude: 82.4
+    - _ScaleAmplitude: 23.4
     - _ScaleColour: 9.2
-    - _ScaleEnergy: 43.5
+    - _ScaleEnergy: 24.1
     - _ScaleHeight: 0.19
     - _ShowCRT: 1
     - _ShowHeight: 0
@@ -115,8 +116,11 @@ Material:
     - _ShowReal: 1
     - _ShowSquare: 1
     - _ShowVelocity: 1
+    - _SlitCount: 2
+    - _SlitPitch: 448
     - _SlitPitchPx: 448
     - _SlitWidePx: 40
+    - _SlitWidth: 12
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SquashAmount: 1
@@ -127,6 +131,8 @@ Material:
     - _UseVelocity: 0
     - _WaveStrength: 0.01
     - _ZWrite: 1
+    - _mmHigh: 1000
+    - _mmWide: 2000
     m_Colors:
     - _Color: {r: 1, g: 0.2980392, b: 0.25098038, a: 1}
     - _ColorBase: {r: 0.19999996, g: 0.29999998, b: 0.39999998, a: 1}

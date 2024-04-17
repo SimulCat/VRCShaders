@@ -11,6 +11,10 @@ Shader "SimulCat/Ballistic/Particle Dispersion"
         _SlitCount("Num Sources",float) = 2
         _SlitPitch("Slit Pitch",float) = 0.3
         _SlitWidth("Slit Width", float) = 0.05
+        _BeamWidth("Beam Width", float) = 1
+        _GratingOffset("Grating X Offset", float) = 0
+
+
         _ParticleP("Particle Momentum", float) = 1
         _MaxVelocity("MaxVelocity", float) = 5
         // Particle Decal Array
@@ -86,6 +90,8 @@ Shader "SimulCat/Ballistic/Particle Dispersion"
             float _SlitCount;
             float _SlitPitch;
             float _SlitWidth;
+            float _BeamWidth;
+            float _GratingOffset;
             float _ParticleP;
 
             float _MapMaxP;
@@ -135,21 +141,33 @@ Shader "SimulCat/Ballistic/Particle Dispersion"
                 float div = 0x7FFFFF;
                 hsh01 = hsh01/div;
                 
-                int slitCount = round(_SlitCount);
-                float slitCenter = (slitCount - 1)*_SlitPitch*0.5;
+                int slitCount = max(round(_SlitCount),1);
+
+                float slitPitchScaled = _SlitPitch/_Scale;
+                float slitWidthScaled = _SlitWidth/_Scale;
+                float gratingWidthScaled = (slitCount-1)*slitPitchScaled + slitWidthScaled;
+                float beamWidth = max (_BeamWidth/_Scale,(gratingWidthScaled + slitWidthScaled));
                 
+                // Set slitCenter to left-most position
+                float leftSlitCenter = -(slitCount - 1)*slitPitchScaled*0.5;
+
+                // Shift slit centre to a randomly chosen slit number 
                 int nSlit = (idHash >> 8) % slitCount;
-                slitCenter -= nSlit * _SlitPitch;
-                float startHash = RandomRange(1.0,idHash ^ 0xAFAFAF);
-                float slitPosY =  (slitCenter + (startHash-0.5) * _SlitWidth)/_Scale;
+                float slitCenter = leftSlitCenter + (nSlit * slitPitchScaled);
+                float leftEdge = leftSlitCenter - slitWidthScaled*0.5;
+
+                // Fresh hash of the particle to pick a start position
+                float startHash = RandomRange(1.0,idHash ^ 0xAFAFAF)-0.5;
+                float startPosY =  (_GratingOffset > 0.0001) ? (beamWidth * startHash) : slitCenter + (startHash * slitWidthScaled);
+                float normPos = frac((startPosY-leftEdge)/slitPitchScaled)*slitPitchScaled;
+                // check if particle y pos is valid;
+                bool gratingValid = (startPosY >= leftEdge) && (startPosY <= (-leftEdge)) && (normPos <= slitWidthScaled);
+                //(0.0 > (frac((rightEdge - startPosY)/slitPitchScaled)*slitPitchScaled + slitWidthScaled));
+
 
                 uint cornerID = v.id%3;
                 float3 centerOffset;
-                /*
-                      vxOffset0 = new Vector2(0.5f, -0.288675135f);
-                      vxOffset1 = new Vector2(-0.5f, -0.288675135f);
-                        vxOffset2 = new Vector2(0, 0.57735027f);
-                */
+
                 switch(cornerID)
                 {
                     case 2:
@@ -168,9 +186,9 @@ Shader "SimulCat/Ballistic/Particle Dispersion"
 
                 float markerSize =  _MarkerSize/_Scale;
 
-                float2 gridOffset = (_ArrayDimension.xy * _ArraySpacing.xy);
-                float maxDiagonalDistance = length(gridOffset);
-                gridOffset *= 0.5; // Align centre
+                float2 localGridCentre = (_ArrayDimension.xy * _ArraySpacing.xy);
+                float maxDiagonalDistance = length(localGridCentre);
+                localGridCentre *= 0.5; // Align centre
                 float particleVelocity = _MaxVelocity*(_ParticleP/_MapMaxP);
 
                 // Now particle scattering and position
@@ -180,15 +198,19 @@ Shader "SimulCat/Ballistic/Particle Dispersion"
                 float cycle = ((_Play * _Time.y + (1-_Play)*_PauseTime)-_BaseTime)/cycleTime + hsh01;
                 uint epoch = floor(cycle);
 
-                float cycleDistanceFrac = frac(cycle)*maxDiagonalDistance;
+                float trackDistance = frac(cycle)*maxDiagonalDistance;
+                float gratingDistance = _GratingOffset/_Scale;
+                float postGratingDist = max(0.0,trackDistance-gratingDistance);
+                float preGratingDist = min(gratingDistance,trackDistance);
+                //float 
 
-                float2 startPos = float2(-gridOffset.x,slitPosY);
+                float2 startPos = float2(preGratingDist-localGridCentre.x ,startPosY);
 
                 float momentumHash = RandomRange(2, idHash ^ (epoch<<5));
                 float3 sample = sampleMomentum(_ParticleP,momentumHash-1.0);
-                float2 particlePos = startPos + sample.xy*cycleDistanceFrac;
-
-                int  posIsInside = floor(sample.z)*int((abs(particlePos.x) < gridOffset.x) && (abs(particlePos.y) <= gridOffset.y));
+                float2 particlePos = startPos + sample.xy*postGratingDist;
+                gratingValid = gratingValid || (trackDistance <= gratingDistance);
+                int  posIsInside = (int)(gratingValid)*floor(sample.z)*int((abs(particlePos.x) < localGridCentre.x) && (abs(particlePos.y) <= localGridCentre.y));
                
                 // Check inside bounding box
                 particlePos = posIsInside*particlePos + (1-posIsInside)*quadCenterInMesh.xy;

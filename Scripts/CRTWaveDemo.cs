@@ -16,6 +16,8 @@ public class CRTWaveDemo : UdonSharpBehaviour
     [SerializeField, UdonSynced, FieldChangeCallback(nameof(DisplayMode))]
     public int displayMode;
 
+    [SerializeField] private float frequency;
+
     [SerializeField] Toggle togReal;
     bool iHaveTogReal = false;
     [SerializeField] Toggle togImaginary;
@@ -28,7 +30,13 @@ public class CRTWaveDemo : UdonSharpBehaviour
     bool iHaveTogAmp = false;
     [SerializeField] Toggle togProbability;
     bool iHaveTogProb = false;
+    [SerializeField] Toggle togPlay;
+    [SerializeField] Toggle togPause;
+    [SerializeField, UdonSynced, FieldChangeCallback(nameof(PlaySim))] bool playSim;
+
+
     [SerializeField] UdonSlider contrastSlider;
+
 
     [SerializeField, UdonSynced, FieldChangeCallback(nameof(ContrastVal))]
     public float contrastVal = 40f;
@@ -38,7 +46,7 @@ public class CRTWaveDemo : UdonSharpBehaviour
     {
         if (matPanel == null)
             return;
-        float targetViz = contrastVal / 100;
+        float targetViz = contrastVal / 50;
         if (targetViz == prevVisibility)
             return;
         prevVisibility = targetViz;
@@ -52,9 +60,9 @@ public class CRTWaveDemo : UdonSharpBehaviour
     [SerializeField]
     private bool useDisplayMode = false;
     [SerializeField]
-    private bool useDisplayStates = false;
+    private bool useFrequency = false;
     [SerializeField]
-    private bool iHavePanelMaterial = false;
+    private bool useDisplayStates = false;
 
     [SerializeField]
     private Color flowColour = Color.magenta;
@@ -70,6 +78,41 @@ public class CRTWaveDemo : UdonSharpBehaviour
                 matPanel.SetColor("_ColorFlow", flowColour);
             }
         } 
+    }
+
+    public float Frequency
+    {
+        get => frequency;
+        set
+        {
+            frequency = value;
+            UpdateWaveFrequency();
+            //RequestSerialization();
+        }
+    }
+    private void UpdateWaveFrequency()
+    {
+        if (matPanel != null && useFrequency)
+            matPanel.SetFloat("_Frequency", playSim ? frequency : 0f);
+    }
+
+    private bool PlaySim
+    {
+        get => playSim;
+        set
+        {
+            bool changed = playSim != value;
+            playSim = value;
+            UpdateWaveFrequency();
+            if (changed)
+            {
+                if (togPlay != null && !togPlay.isOn && playSim)
+                    togPlay.isOn = true;
+                if (togPause != null && !togPause.isOn && !playSim)
+                    togPause.isOn = true;
+            }
+            RequestSerialization();
+        }
     }
 
     private float ContrastVal
@@ -184,6 +227,29 @@ public class CRTWaveDemo : UdonSharpBehaviour
     }
 
     // Display mode Toggles are all set to send custom event to this function
+    public void onPlayPhi()
+    {
+        if (togPlay == null || !togPlay.isOn)
+            return;
+        if (!playSim)
+        {
+            if (!iamOwner)
+                Networking.SetOwner(player, gameObject);
+            PlaySim = true;
+        }
+    }
+
+    public void onPausePhi()
+    {
+        if (togPause == null || !togPause.isOn)
+            return;
+        if (playSim)
+        {
+            if (!iamOwner)
+                Networking.SetOwner(player, gameObject);
+            PlaySim = false;
+        }
+    }
     public void togMode()
     {
         if (!iamOwner)
@@ -223,17 +289,19 @@ public class CRTWaveDemo : UdonSharpBehaviour
 
     private void checkPanelType()
     {
-        if (!iHavePanelMaterial)
+        if (matPanel == null)
         {
             useDisplayMode = false;
             useDisplayStates = false;
+            useFrequency = false;
             Debug.LogWarning("CRTWaveDemo: No Wave Display Material");
             return;
         }
         useDisplayStates = matPanel.HasProperty("_ShowReal");
         //Debug.Log("CRTWaveDemo: useDisplayStates" + useDisplayStates.ToString());
         useDisplayMode = matPanel.HasProperty("_DisplayMode");
-        //Debug.Log("CRTWaveDemo: useDisplayMode" + useDisplayMode.ToString());
+        useFrequency = matPanel.HasProperty("_Frequency");
+        Debug.Log("CRTWaveDemo: useFrequency" + useFrequency.ToString());
     }
 
     void Start()
@@ -247,12 +315,14 @@ public class CRTWaveDemo : UdonSharpBehaviour
         iHaveToImPwr = togImPwr != null;
         iHaveTogAmp = togAmplitude != null;
         iHaveTogProb = togProbability != null;
-
         if (waveMesh != null)
             matPanel = waveMesh.material;
-        iHavePanelMaterial = matPanel != null;
         ContrastVal = contrastVal;
         checkPanelType();
+        if (togPlay != null)
+            PlaySim = togPlay.isOn;
         DisplayMode = displayMode;
+        if (useFrequency)
+            frequency = matPanel.GetFloat("_Frequency");
     }
 }
