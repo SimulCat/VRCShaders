@@ -260,7 +260,7 @@ public int SlitCount
                 crtUpdateRequired = true;
                 slitWidth = value;
             }
-            if (iHaveWidthSlider && !widthSlider.PointerDown && widthSlider.CurrentValue != widthSlider.CurrentValue)
+            if (iHaveWidthSlider && !widthSlider.PointerDown)
                 widthSlider.SetValue(value);
             if (iHaveParticleSim)
                 particleSim.SetProgramVariable<float>("slitWidth", slitWidth * controlScale);
@@ -280,7 +280,7 @@ public int SlitCount
                 slitPitch = value;
                 crtUpdateRequired = true;
             }
-            if (iHavePitchSlider && !pitchSlider.PointerDown && slitPitch != pitchSlider.CurrentValue)
+            if (iHavePitchSlider && !pitchSlider.PointerDown)
             {
                 pitchSlider.SetValue(value);
             }
@@ -306,7 +306,7 @@ public int SlitCount
                 particleSim.SetProgramVariable<float>("simScale",simScale);
             if (iHaveWaveCRT)
                 matWaveCRT.SetFloat("_Scale", simScale);
-            if (iHaveScaleSlider && !scaleSlider.PointerDown && scaleSlider.CurrentValue != simScale)
+            if (iHaveScaleSlider && !scaleSlider.PointerDown)
                 scaleSlider.SetValue(simScale);
             RequestSerialization();
         }
@@ -330,7 +330,7 @@ public int SlitCount
         set
         {
             lambda = Mathf.Clamp(value, minLambda,maxLambda);
-            if (iHaveLambdaSlider && !lambdaSlider.PointerDown && lambdaSlider.CurrentValue != momentum)
+            if (iHaveLambdaSlider && !lambdaSlider.PointerDown)
                 lambdaSlider.SetValue(lambda);
             SetColour();
             updateLambda();
@@ -358,7 +358,7 @@ public int SlitCount
         timeCount -= Time.deltaTime;
         if (timeCount > 0)
             return;
-        timeCount += 0.5f;
+        timeCount += 0.0333f;
         if (!crtUpdateRequired)
             return;
         crtUpdateRequired = false;

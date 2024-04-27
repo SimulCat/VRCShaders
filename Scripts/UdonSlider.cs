@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using VRC.SDKBase;
 using VRC.Udon;
+using static UnityEngine.Rendering.DebugUI;
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 [RequireComponent(typeof(Slider))]
@@ -38,7 +39,8 @@ public class UdonSlider : UdonSharpBehaviour
     private float minValue = 0;
 
     private float reportedValue = 0.0f;
-    private bool isInteractible;
+    [SerializeField]
+    private bool interactible = true;
     
     private bool pointerDown = false;
     public bool PointerDown
@@ -46,35 +48,34 @@ public class UdonSlider : UdonSharpBehaviour
         get => pointerDown;
     }
    
-    public bool IsInteractible
+    public bool Interactible
     {
         get
         {
-            isInteractible = mySlider.interactable;
-            return isInteractible;
+            return interactible;
         }
         set
         {
-            isInteractible = value;
-            mySlider.interactable = value;
+            interactible = value;
+            if (mySlider != null)
+                mySlider.interactable = value;
         }
     }
 
     public void SetValue(float value)
     {
-        if (mySlider == null)
-            mySlider = GetComponent<Slider>();
+        if (mySlider != null)
+            mySlider.SetValueWithoutNotify(value);
         reportedValue = value;
-        currentValue = value;
-        mySlider.value = value;
-        Updatelabel();
+        CurrentValue = value;
     }
+
     public void SetLimits(float min, float max)
     {
-        if (mySlider == null)
-            mySlider = GetComponent<Slider>();
         minValue = min;
         maxValue = max;
+        if (mySlider == null)
+            return;
         mySlider.minValue = minValue;
         mySlider.maxValue = maxValue;
     }
@@ -99,12 +100,13 @@ public class UdonSlider : UdonSharpBehaviour
         set
         {
             sliderUnit = value;
-            CurrentValue = currentValue;
+            Updatelabel();
         }
     }
     private void Updatelabel()
     {
-        if (!iHaveLabel) return;
+        if (sliderLabel == null)
+            return;
         if (hideLabel)
         {
             sliderLabel.text = "";
@@ -121,12 +123,9 @@ public class UdonSlider : UdonSharpBehaviour
     public float CurrentValue
     {
         get => currentValue;
-        set
+        private set
         {
             currentValue = value;
-            float sliderValue = currentValue;
-            if (mySlider.value != sliderValue)
-                mySlider.value = sliderValue;
             if (reportedValue != currentValue)
             {
                 reportedValue = currentValue;
@@ -146,10 +145,9 @@ public class UdonSlider : UdonSharpBehaviour
         get => maxValue;
         set
         {
-            if (mySlider == null)
-                mySlider = gameObject.GetComponent<Slider>();
             maxValue = value;
-            mySlider.maxValue = maxValue;
+            if (mySlider != null)
+                mySlider.maxValue = maxValue;
         }
     }
 
@@ -158,15 +156,15 @@ public class UdonSlider : UdonSharpBehaviour
         get => minValue;
         set
         {
-            if (mySlider == null)
-                mySlider = gameObject.GetComponent<Slider>();
             minValue = value;
-            mySlider.minValue = minValue;
+            if (mySlider != null)
+                mySlider.minValue = minValue;
         }
     }
 
     public void onValue()
     {
+        //Debug.Log(gameObject.name + ":UdonSlider"+mySlider.value);
         CurrentValue = mySlider.value;
     }
 
@@ -181,7 +179,6 @@ public class UdonSlider : UdonSharpBehaviour
         pointerDown = false;
     }
 
-    private bool iHaveLabel = false;
     private bool iHaveTitle = false;
     private bool iHaveClientVar = false;
     private bool iHaveClientPtr = false;
@@ -189,12 +186,13 @@ public class UdonSlider : UdonSharpBehaviour
     {
         mySlider = GetComponent<Slider>();
         iHaveTitle = sliderTitle != null;
-        iHaveLabel = sliderLabel != null;
         iHaveClientVar = (SliderClient != null) && (!string.IsNullOrEmpty(clientVariableName));
         iHaveClientPtr = (SliderClient != null) && (!string.IsNullOrEmpty(clientPtrEvent));
-        if (!iHaveLabel)
+        if (sliderLabel == null)
             hideLabel = true;
-        isInteractible = mySlider.interactable;
-        onValue();
+        mySlider.interactable = interactible;
+        mySlider.minValue = minValue;
+        mySlider.maxValue = maxValue;
+        mySlider.SetValueWithoutNotify(currentValue);
     }
 }

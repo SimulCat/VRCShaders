@@ -7,7 +7,7 @@ using VRC.Udon;
 public class QuadMesh : UdonSharpBehaviour
 {
     [Tooltip("Width/Height/Depth in model space")] public Vector3 meshDimensions = Vector3.one;
-    [SerializeField, Tooltip("Uncheck for circular/sphere point distribution")] public bool fillRectangle = false;
+    [SerializeField, Tooltip("Uncheck for circular/sphere point distribution")] public bool isRectangular = false;
     [SerializeField, Tooltip("Center array around mesh origin")] public bool centerArrayOrigin = true;
     [Tooltip("# quads across")] public Vector3Int pointsAcross = new Vector3Int(16,16,16);
     [Tooltip("Snap points to origin (adds 1 point when origin at model center & even #points across)")] 
@@ -21,8 +21,6 @@ public class QuadMesh : UdonSharpBehaviour
     // Serialize for debug
  //   [SerializeField]
     float radiusSq;
-    [SerializeField]
-    private Vector3Int maxRes = new Vector3Int(3, 3, 3);
     [SerializeField]
     Vector3 arraySpacing;
     [SerializeField]
@@ -116,7 +114,7 @@ public class QuadMesh : UdonSharpBehaviour
                 quadPos.x = arrayOrigin.x;
                 for (int nCol = 0; nCol < numGridPoints.x; nCol++)
                 {
-                    if (fillRectangle)
+                    if (isRectangular)
                     {
                         positionInRange = true;
                     }
@@ -182,17 +180,19 @@ public class QuadMesh : UdonSharpBehaviour
         uvs = null;
         if (material != null)
         {
-            Vector4 pointVec = new Vector4(numGridPoints.x,numGridPoints.y,numGridPoints.z,numGridPoints.x*numGridPoints.y*numGridPoints.z);
             material.SetVector("_ArraySpacing", arraySpacing);
-            material.SetVector("_ArrayDimension", pointVec);
+            if (material.HasProperty("_ArrayDimension"))
+            {
+                Vector4 pointVec = new Vector4(numGridPoints.x, numGridPoints.y, numGridPoints.z, numGridPoints.x * numGridPoints.y * numGridPoints.z);
+                material.SetVector("_ArrayDimension", pointVec);
+            }
             //material.SetFloat("_CornerCount", useTriangles ? 3f : 4f);
-            //material.SetFloat("_MarkerSize", value: 0.3f);
+            //material.SetFloat("_MarkerScale", value: 0.3f);
         }
         return true;
     }
     void Start()
     {
-
         mf = GetComponent<MeshFilter>();
         MeshRenderer mr = GetComponent<MeshRenderer>();
         if (mr != null)

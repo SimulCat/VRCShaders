@@ -129,7 +129,7 @@ float4 sampleDistribution(float momentum)
 
 float sampleEdges (float xDelta, float yDelta, float slitHalf)
 {
-    int isAfterGrating = int(xDelta > 0);
+    int isAfterGrating = int(xDelta >= 0);
     xDelta = abs(xDelta);
 
     float thetaTop = atan2(yDelta - slitHalf,xDelta);

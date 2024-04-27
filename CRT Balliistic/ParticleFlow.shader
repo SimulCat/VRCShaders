@@ -18,10 +18,10 @@ Shader "SimulCat/Ballistic/Particle Dispersion"
         _ParticleP("Particle Momentum", float) = 1
         _MaxVelocity("MaxVelocity", float) = 5
         // Particle Decal Array
-        _ArraySpacing("Triangle Array Spacing", Vector) = (0.1,0.1,0.1,0)
+        _ArraySpacing("Array Spacing", Vector) = (0.1,0.1,0.1,0)
         // x,y,z count of array w= total.
-        _ArrayDimension("Triangle Array Dimension", Vector) = (128,80,1,10240)
-        _MarkerSize ("Marker Size", Range(0.01,2)) = 1
+        _ArrayDimension("Array Dimension", Vector) = (128,80,1,10240)
+        _MarkerScale ("Marker Scale", Range(0.01,2)) = 1
         _Scale("Scale Demo",Float) = 1
         _MaxScale("Scale Max",Float) = 5
         // Play Control
@@ -100,7 +100,7 @@ Shader "SimulCat/Ballistic/Particle Dispersion"
 
             float4 _ArraySpacing;
             float4 _ArrayDimension;
-            float _MarkerSize;
+            float _MarkerScale;
             float _Scale;
             float _MaxScale;
 
@@ -184,9 +184,9 @@ Shader "SimulCat/Ballistic/Particle Dispersion"
                 float3 vertexOffset = centerOffset*_ArraySpacing;
                 float3 quadCenterInMesh = v.vertex - vertexOffset;
 
-                float markerSize =  _MarkerSize/_Scale;
+                float markerScale =  _MarkerScale/_Scale;
 
-                float2 localGridCentre = (_ArrayDimension.xy * _ArraySpacing.xy);
+                float2 localGridCentre = ((_ArrayDimension.xy - float2(1,1)) * _ArraySpacing.xy);
                 float maxDiagonalDistance = length(localGridCentre);
                 localGridCentre *= 0.5; // Align centre
                 float particleVelocity = _MaxVelocity*(_ParticleP/_MapMaxP);
@@ -202,10 +202,8 @@ Shader "SimulCat/Ballistic/Particle Dispersion"
                 float gratingDistance = _GratingOffset/_Scale;
                 float postGratingDist = max(0.0,trackDistance-gratingDistance);
                 float preGratingDist = min(gratingDistance,trackDistance);
-                //float 
-
-                float2 startPos = float2(preGratingDist-localGridCentre.x ,startPosY);
-
+                //float markerRadius = _ArraySpacing.x*0.5*markerScale;
+                float2 startPos = float2(preGratingDist-(localGridCentre.x),startPosY);
                 float momentumHash = RandomRange(2, idHash ^ (epoch<<5));
                 float3 sample = sampleMomentum(_ParticleP,momentumHash-1.0);
                 float2 particlePos = startPos + sample.xy*postGratingDist;
@@ -215,15 +213,15 @@ Shader "SimulCat/Ballistic/Particle Dispersion"
                 // Check inside bounding box
                 particlePos = posIsInside*particlePos + (1-posIsInside)*quadCenterInMesh.xy;
 
-                float3 quadCenterInDemo = float3 (particlePos,quadCenterInMesh.z);
+                float3 quadCentreInModel = float3 (particlePos,quadCenterInMesh.z);
 
 
-                quadCenterInDemo = posIsInside * quadCenterInDemo + (1-posIsInside)*quadCenterInMesh; 
-                vertexOffset *= markerSize; // Scale the quad corner offset to world, now we billboard
+                quadCentreInModel = posIsInside * quadCentreInModel + (1-posIsInside)*quadCenterInMesh; 
+                vertexOffset *= markerScale;                    // Scale the quad corner offset to world, now we billboard
+                v.vertex.xyz=quadCentreInModel+vertexOffset;
 
-
-                float4 camModelCentre = float4(quadCenterInDemo,1.0);
-                float4 camVertexOffset = float4(vertexOffset,1);
+                float4 camModelCentre = float4(quadCentreInModel,1.0);
+                float4 camVertexOffset = float4(vertexOffset,0);
                 // Three steps in one line
                 //      1) Inner step is to use UNITY_MATRIX_MV to get the camera-oriented coordinate of the centre of the billboard.
                 //         Here, the xy coords of the billboarded vertex are always aligned to the camera XY so...
@@ -231,7 +229,10 @@ Shader "SimulCat/Ballistic/Particle Dispersion"
                 //      3) Transform the result by the Projection matrix (UNITY_MATRIX_P) and we now have the billboarded vertex in clip space.
 
                 o.vertex = mul(UNITY_MATRIX_P,mul(UNITY_MATRIX_MV, camModelCentre) + camVertexOffset);
-                
+                /*
+                Standard code
+                o.vertex = UnityObjectToClipPos (v.vertex);
+                */
                 o.color = float4(_Color.rgb,-.5 + posIsInside * 1.5);
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 UNITY_TRANSFER_FOG(o,o.vertex);

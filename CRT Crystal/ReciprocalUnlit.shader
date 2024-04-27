@@ -176,7 +176,7 @@ Shader "SimulCat/Crystal/ReciprocalUnlit"
                 float cosineBeamDirection = -dot(normReflect, _BeamVector.xyz);
                 float projectedMaxP = _MaxMinP.x*cosineBeamDirection;
                 float4 col = float4(0.3,0.3,0.3,0.4);
-                float markerSize =  _DecalScale;
+                float markerScale =  _DecalScale;
                 float reactionPx2 = reflectP+reflectP;
                 if (projectedMaxP >= reactionPx2)
                 {
@@ -184,14 +184,15 @@ Shader "SimulCat/Crystal/ReciprocalUnlit"
                 }                
                 else
                 {
-                    markerSize *= 0.25;
+                    markerScale *= 0.25;
                 }
+                v.vertex=float4((quadCenterInLattice+vertexOffset),0.);
                 quadCenterInLattice *= _Scale;
 
-                vertexOffset *= markerSize; // Scale the quad corner offset to world, now we billboard
+                vertexOffset *= markerScale; // Scale the quad corner offset to world, now we billboard
                 float objScale = ObjectScale;
                 float4 camModelCentre = float4((quadCenterInLattice * objScale),1.0);
-                float4 camVertexOffset = float4(vertexOffset * objScale,1);
+                float4 camVertexOffset = float4(vertexOffset * objScale,0.0);
                 // Three steps in one line
                 //      1) Inner step is to use UNITY_MATRIX_MV to get the camera-oriented coordinate of the centre of the billboard.
                 //         Here, the xy coords of the billboarded vertex are always aligned to the camera XY so...

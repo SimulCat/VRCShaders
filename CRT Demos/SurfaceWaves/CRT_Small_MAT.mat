@@ -86,12 +86,12 @@ Material:
     - _Parallax: 0.02
     - _Phase: 0.8239988
     - _RightPx: 2047
-    - _Scale: 1
+    - _Scale: 5
     - _SlitCount: 2
     - _SlitPitch: 40.000004
     - _SlitPitchPx: 40
     - _SlitWidePx: 12
-    - _SlitWidth: 8.000001
+    - _SlitWidth: 10.000001
     - _SmoothnessTextureChannel: 0
     - _SourcePixelSize: 1
     - _SourceResolution: 1.02

@@ -121,7 +121,7 @@ public class CRTWaveDemo : UdonSharpBehaviour
         set
         {
             contrastVal = value;
-            if (contrastSlider != null && !contrastSlider.PointerDown && contrastSlider.CurrentValue != contrastVal)
+            if (contrastSlider != null && !contrastSlider.PointerDown)
                 contrastSlider.SetValue(contrastVal);
             reviewContrast();
             RequestSerialization();

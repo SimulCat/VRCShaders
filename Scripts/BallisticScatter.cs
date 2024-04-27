@@ -53,7 +53,12 @@ public class BallisticScatter : UdonSharpBehaviour
     public Color displayColor = Color.cyan;
     [SerializeField,FieldChangeCallback(nameof(MaxParticleK))]
     public float maxParticleK = 10;
+    [SerializeField, FieldChangeCallback(nameof(MinParticleK))]
+    public float minParticleK = 1;
+    [SerializeField] bool setColour = false;
+
     public float MaxParticleK { get=>maxParticleK; set => maxParticleK = value; }
+    public float MinParticleK { get => minParticleK; set => minParticleK = value; }
     [SerializeField,FieldChangeCallback(nameof(ParticleK))]
     private float particleK = 1;    
     private VRCPlayerApi player;
@@ -84,16 +89,14 @@ public class BallisticScatter : UdonSharpBehaviour
         get=> showProbability;
         set
         {
-            bool trig = value != showProbability;
+            bool chg = showProbability != value;
             showProbability = value;
             if (togProbability != null && togProbability.isOn != value)
                 togProbability.isOn = value;
-            if (trig)
-            {
-                if (probVizSlider != null)
-                    probVizSlider.IsInteractible = showProbability;
+            if (probVizSlider != null)
+                probVizSlider.Interactible = showProbability;
+            if (chg)
                 reviewProbVisibility();
-            }
             RequestSerialization();
         }
     }
@@ -103,12 +106,11 @@ public class BallisticScatter : UdonSharpBehaviour
         get=> probVisPercent;
         set
         {
-            bool trig = probVisPercent != value;
+            //Debug.Log("ProbvizPct :"+ value);
             probVisPercent = value;
-            if (probVizSlider != null && !probVizSlider.PointerDown && probVizSlider.CurrentValue !=probVisPercent)
+            if (probVizSlider != null && !probVizSlider.PointerDown)
                 probVizSlider.SetValue(probVisPercent);
-            if (trig) 
-                reviewProbVisibility();
+            reviewProbVisibility();
             RequestSerialization();
         }
     }
@@ -245,7 +247,7 @@ public class BallisticScatter : UdonSharpBehaviour
         set
         {
             gratingOffset = value;
-            Debug.Log("GratingOffset=" + value.ToString());
+            //Debug.Log("GratingOffset=" + value.ToString());
             if (iHavematProbabilitySim)
                 matProbabilitySim.SetFloat("_GratingOffset", gratingOffset*simPixelScale);
             if (ihaveParticleFlow)
@@ -333,11 +335,6 @@ public class BallisticScatter : UdonSharpBehaviour
         }
     }
 
-    public Color lerpColour(float frac)
-    {
-        return spectrumColour(Mathf.Lerp(700, 400, frac));
-    }
-
     public Color spectrumColour(float wavelength, float gamma = 0.8f)
     {
         Color result = Color.white;
@@ -390,6 +387,16 @@ public class BallisticScatter : UdonSharpBehaviour
         return result;
     }
 
+    private void SetColour()
+    {
+        float frac = Mathf.InverseLerp(minParticleK, maxParticleK, particleK);
+        Color dColour = spectrumColour(Mathf.Lerp(700, 400, frac));
+        dColour.r = Mathf.Clamp(dColour.r, 0.2f, 2f);
+        dColour.g = Mathf.Clamp(dColour.g, 0.2f, 2f);
+        dColour.b = Mathf.Clamp(dColour.b, 0.2f, 2f);
+        DisplayColor = dColour;
+    }
+
 
     public float ParticleK
     {
@@ -403,6 +410,8 @@ public class BallisticScatter : UdonSharpBehaviour
                 matProbabilitySim.SetFloat("_ParticleP", particleK);
             if (ihaveParticleFlow)
                 matParticleFlow.SetFloat("_ParticleP", particleK);
+            if (setColour)
+                SetColour();
         }
     }
 
@@ -614,21 +623,21 @@ public class BallisticScatter : UdonSharpBehaviour
         }
     }
 
-    public void probVisPtr()
+    public void onProbPtr()
     {
         if (!iamOwner)
             Networking.SetOwner(player,gameObject);
-        //Debug.Log("probVisPtr");
+        Debug.Log("onProbPtr");
     }
     public void showProb()
     {
-       // Debug.Log("showProb");
+        if (!iamOwner)
+            Networking.SetOwner(player, gameObject);
         if ((togProbability != null) && togProbability.isOn != showProbability)
         {
-            if (!iamOwner)
-                Networking.SetOwner(player,gameObject);
             ShowProbability = !showProbability;
         }
+        Debug.Log("togProb");
     }
 
     /*
@@ -659,12 +668,13 @@ public class BallisticScatter : UdonSharpBehaviour
 
     void Start()
     {
+        //Debug.Log("BScatter Start");
+        ReviewOwnerShip();
         iHaveProbability = probabilityCRT != null;
         simPixelScale = simPixels.y / simSize.y;
         if (iHaveProbability)
             matProbabilitySim = probabilityCRT.material;
         iHavematProbabilitySim = ValidMaterial(matProbabilitySim, texName);
-        ProbVisPercent = probVisPercent;
         ShowProbability = showProbability;
         if (particleMeshRend != null)
         {
@@ -674,12 +684,13 @@ public class BallisticScatter : UdonSharpBehaviour
         SlitCount = slitCount;
         SlitWidth = slitWidth;
         SlitPitch = slitPitch;
+        SimScale = simScale;
         ProbVisPercent = probVisPercent;
         GratingOffset = gratingOffset;
         ParticleK = particleK;
-        ReviewOwnerShip();
         shaderBaseTime = Time.time;
         shaderPauseTime = Time.time;
         setParticlePlay(particlePlayState);
+        //Debug.Log("BScatter Started");
     }
 }
