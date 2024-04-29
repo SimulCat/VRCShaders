@@ -57,7 +57,15 @@ public class BallisticScatter : UdonSharpBehaviour
     public float minParticleK = 1;
     [SerializeField] bool setColour = false;
 
-    public float MaxParticleK { get=>maxParticleK; set => maxParticleK = value; }
+    public float MaxParticleK 
+    {   get=>maxParticleK; 
+        set 
+        { 
+            maxParticleK = value; 
+            if (setColour)
+                SetColour(); 
+        } 
+    }
     public float MinParticleK { get => minParticleK; set => minParticleK = value; }
     [SerializeField,FieldChangeCallback(nameof(ParticleK))]
     private float particleK = 1;    

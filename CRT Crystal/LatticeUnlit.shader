@@ -1,21 +1,18 @@
-Shader "SimuCat/Crystal/ReciprocalEwald"
+Shader "SimuCat/Crystal/LatticeUnlit"
 {
 
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
+        _Color("Pos Ion Colour",Color) = (0,.7,1.,1.)
+        _ColorN("Neg Ion Colour ",Color) = (1,.7,0,1.)
         _LatticeSpacing("Lattice Spacing", Vector) = (0.1,0.1,0.1,0.1)
         _ArraySpacing("Array Spacing", Vector) = (1.0,1.0,1.0,1.0)
+
         _DecalScale ("Marker Size", Range(0.03,10)) = 2.5
-        _BeamVector ("Local Beam Vector", Vector) = (1,0,0,0)
-        _MaxMinP("Max / Min Momentum", Vector) = (1,0,0,0)
         _LatticeType("0=Cubic, 1=Ionic, 2=Face Center, 3=Body Center", Float) = 0
         _Scale("Scale Lattice",Float) = 0.25
     }
-
-   CGINCLUDE
-		#include "../include/spectrum_zucconi.cginc"
-	ENDCG
 
     SubShader
     {
@@ -63,17 +60,18 @@ Shader "SimuCat/Crystal/ReciprocalEwald"
 
             sampler2D _MainTex;
             float4 _MainTex_ST;
+            float4 _Color;
+            float4 _ColorN;
+
             float4 _LatticeSpacing; // Crystal/Reciprocal Lattice Spacing
             float4 _ArraySpacing; // Initial Quad Mesh Spacing
-
-            float4 _BeamVector;
             float _DecalScale;
-            float4 _MaxMinP;
+
             float _LatticeType;
             float _Scale;
             
             // Cubic Cell reciprocal lattice points start at corner (all three even)
-           int isReciprocalPoint(int nX, int nY, int nZ, float latticeType)
+           int2 checkLatticePoint(int nX, int nY, int nZ, float latticeType)
             {
                 int sum = abs(nX) & 1;
                 sum += abs(nY) & 1;
@@ -96,13 +94,14 @@ Shader "SimuCat/Crystal/ReciprocalEwald"
                 }
                 return 0;
                 */
-                int cubic = (int)(latticeType < 2 || latticeType > 3);
+                int cubic = (int)(latticeType < 1 || latticeType > 3);
+                int ionic = (int)(latticeType == 1);
                 int face = (int)(latticeType == 2);
                 int body = (int)(latticeType == 3);
                 int zero = (int)(sum == 0);
-                int two = (int)(sum == 2);
+                int one = (int)(sum == 1);
                 int three = (int)(sum == 3);
-                return cubic*zero + face*(zero + two) + body*(zero + three);
+                return int2(ionic + cubic*three + face*(three + one) + body*(zero + three), three);
             }
 
             v2f vert (appdata v)
@@ -135,7 +134,7 @@ Shader "SimuCat/Crystal/ReciprocalEwald"
                 }
 
                 float3 vertexOffset = centerOffset*_ArraySpacing;
-/* Quad
+/*
                 float3 halfSpacing = (_ArraySpacing.xyz)*0.5;
                 switch(cornerID)
                 {
@@ -154,28 +153,15 @@ Shader "SimuCat/Crystal/ReciprocalEwald"
                 }
                 float3 vertexOffset = centerOffset*halfSpacing;
                 */
-                float3 decalCenterInMesh = v.vertex - vertexOffset;
+                float3 quadCenterInMesh = v.vertex - vertexOffset;
                 
-                int3 indices = int3(round(decalCenterInMesh/_ArraySpacing));
+                int3 indices = int3(round(quadCenterInMesh/_ArraySpacing));
                 // Now Scale to lattice
                 float3 quadCenterInLattice = indices * _LatticeSpacing;
 
 
-                float reactionImpulse = length(quadCenterInLattice);
-                float validP = -1. + 2.*(int)(reactionImpulse <= _MaxMinP.x*2.05); // 2.05 to add a smidgen more than 2
-
-                // Now project the X-Ray beam with respect to the lattice point
-                float3 normReflect = normalize(reactionImpulse > 0.00001 ? quadCenterInLattice : _BeamVector);
-                // Check relationship to beam vector (Cosine of lattice vector vs beam)
-                float cosineBeamDirection = -dot(normReflect, _BeamVector.xyz);
-                float projectedBeamMaxP = _MaxMinP.x*cosineBeamDirection;
-                float4 col = float4(0.3,0.3,0.3,0.4);
                 float markerScale =  _DecalScale;
-                float reactionHalf = reactionImpulse *0.5;
-                if (projectedBeamMaxP >= reactionHalf)
-                    col.xyz = spectral_frac(1.0 - reactionHalf/projectedBeamMaxP)*1.25;
-                else
-                    markerScale *= 0.4;
+
                 v.vertex=float4((quadCenterInLattice+vertexOffset),0.);
                 quadCenterInLattice *= _Scale;
 
@@ -191,8 +177,10 @@ Shader "SimuCat/Crystal/ReciprocalEwald"
 
                 o.vertex = mul(UNITY_MATRIX_P,mul(UNITY_MATRIX_MV, camModelCentre) + camVertexOffset);
 
-                float a = -0.001 + isReciprocalPoint(indices.x,indices.y,indices.z,_LatticeType);
-                a *= validP;
+                int2 pointType = checkLatticePoint(indices.x,indices.y,indices.z,_LatticeType);
+                float4 col = _Color * pointType.y + _ColorN * (1-pointType.y);
+
+                float a = -0.0001 + pointType.x;
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 o.color = float4(col.xyz,1)*a;
                 UNITY_TRANSFER_FOG(o,o.vertex);

@@ -6,7 +6,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using VRC.SDKBase;
 using VRC.Udon;
-using static UnityEngine.Rendering.DebugUI;
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 [RequireComponent(typeof(Slider))]

@@ -86,7 +86,7 @@ Material:
     - _Parallax: 0.02
     - _Phase: 0.8239988
     - _RightPx: 2047
-    - _Scale: 5
+    - _Scale: 1
     - _SlitCount: 2
     - _SlitPitch: 40.000004
     - _SlitPitchPx: 40
