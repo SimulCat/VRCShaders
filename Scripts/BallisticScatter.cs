@@ -436,7 +436,7 @@ public class BallisticScatter : UdonSharpBehaviour
         }
     }
 
-    public bool ValidMaterial(Material theMaterial, string thePropertyName)
+    private bool hasMaterialWithProperty(Material theMaterial, string thePropertyName)
     {
         return (theMaterial != null) && theMaterial.HasProperty(thePropertyName); 
     }
@@ -682,13 +682,13 @@ public class BallisticScatter : UdonSharpBehaviour
         simPixelScale = simPixels.y / simSize.y;
         if (iHaveProbability)
             matProbabilitySim = probabilityCRT.material;
-        iHavematProbabilitySim = ValidMaterial(matProbabilitySim, texName);
+        iHavematProbabilitySim = hasMaterialWithProperty(matProbabilitySim, texName);
         ShowProbability = showProbability;
         if (particleMeshRend != null)
         {
             matParticleFlow = particleMeshRend.material;
         }
-        ihaveParticleFlow = ValidMaterial(matParticleFlow, texName);
+        ihaveParticleFlow = hasMaterialWithProperty(matParticleFlow, texName);
         SlitCount = slitCount;
         SlitWidth = slitWidth;
         SlitPitch = slitPitch;

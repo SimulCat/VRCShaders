@@ -9,7 +9,8 @@ Shader "SimuCat/Crystal/ReciprocalEwald"
         _DecalScale ("Marker Size", Range(0.03,10)) = 2.5
         _BeamVector ("Local Beam Vector", Vector) = (1,0,0,0)
         _MaxMinP("Max / Min Momentum", Vector) = (1,0,0,0)
-        _LatticeType("0=Cubic, 1=Ionic, 2=Face Center, 3=Body Center", Float) = 0
+        _LatticeType("Cell Type 0=Simple, 1=Ionic, 2=Face Centred, 3=Body Centred", Float) = 0
+        _IsReciprocal("Cell Display 0=Xtal,1=Reciprocal",Float) = 1
         _Scale("Scale Lattice",Float) = 0.25
     }
 
@@ -70,39 +71,26 @@ Shader "SimuCat/Crystal/ReciprocalEwald"
             float _DecalScale;
             float4 _MaxMinP;
             float _LatticeType;
+            float _IsReciprocal;
             float _Scale;
             
             // Cubic Cell reciprocal lattice points start at corner (all three even)
-           int isReciprocalPoint(int nX, int nY, int nZ, float latticeType)
+           int isLatticePoint(int nX, int nY, int nZ, float latticeType)
             {
-                int sum = abs(nX) & 1;
-                sum += abs(nY) & 1;
-                sum += abs(nZ) & 1;
-                /*
-                if (sum == 0) // on Corner
-                    return 1;
-                switch (latticeType)
-                {
-                    case 0:
-                    case 1:
-                        return 0;
-                        break;
-                    case 2:
-                        return (int)(sum==2);
-                        break;
-                    case 3:
-                        return (int)(sum==3);
-                        break;
-                }
-                return 0;
-                */
-                int cubic = (int)(latticeType < 2 || latticeType > 3);
+                int isReciprocal = (int)(_IsReciprocal > 0.5);
+                int sum = abs(nX-isReciprocal) & 1;
+                sum += abs(nY-isReciprocal) & 1;
+                sum += abs(nZ-isReciprocal) & 1;
+
+
+                int cubic = (int)(latticeType < 1 || latticeType > 3);
+                int ionic = (int)(latticeType == 1);
                 int face = (int)(latticeType == 2);
                 int body = (int)(latticeType == 3);
                 int zero = (int)(sum == 0);
-                int two = (int)(sum == 2);
+                int one = (int)(sum == 1);
                 int three = (int)(sum == 3);
-                return cubic*zero + face*(zero + two) + body*(zero + three);
+                return ionic + cubic*three + face*(three + one) + body*(three + zero);
             }
 
             v2f vert (appdata v)
@@ -191,7 +179,7 @@ Shader "SimuCat/Crystal/ReciprocalEwald"
 
                 o.vertex = mul(UNITY_MATRIX_P,mul(UNITY_MATRIX_MV, camModelCentre) + camVertexOffset);
 
-                float a = -0.001 + isReciprocalPoint(indices.x,indices.y,indices.z,_LatticeType);
+                float a = -0.001 + isLatticePoint(indices.x,indices.y,indices.z,_LatticeType);
                 a *= validP;
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 o.color = float4(col.xyz,1)*a;

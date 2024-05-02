@@ -64,7 +64,7 @@ public class QuadMesh : UdonSharpBehaviour
                                 (numGridPoints.y <= 1) ? meshDimensions.y : (meshDimensions.y / (numGridPoints.y - 1)),
                                 (numGridPoints.z <= 1) ? meshDimensions.z : (meshDimensions.z/(numGridPoints.z -1)));
 
-        radiusSq = arrayRadius.x + (arraySpacing.x * 0.5f);
+        radiusSq = arrayRadius.x + (arraySpacing.x * 0.1f);
         radiusSq *=radiusSq;
 
         numDecals = numGridPoints.x*numGridPoints.y*numGridPoints.z;

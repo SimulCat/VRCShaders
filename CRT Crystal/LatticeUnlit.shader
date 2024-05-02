@@ -10,7 +10,8 @@ Shader "SimuCat/Crystal/LatticeUnlit"
         _ArraySpacing("Array Spacing", Vector) = (1.0,1.0,1.0,1.0)
 
         _DecalScale ("Marker Size", Range(0.03,10)) = 2.5
-        _LatticeType("0=Cubic, 1=Ionic, 2=Face Center, 3=Body Center", Float) = 0
+        _LatticeType("Unit Cell: 0=Simple, 1=Ionic, 2=Face Centred, 3=Body Centred", Float) = 0
+        _IsReciprocal("Show as: 0=Crystal Cell, 1=Reciprocal Cell", Float) = 0
         _Scale("Scale Lattice",Float) = 0.25
     }
 
@@ -68,15 +69,17 @@ Shader "SimuCat/Crystal/LatticeUnlit"
             float _DecalScale;
 
             float _LatticeType;
+            float _IsReciprocal; // Display format of cell Lattice or Reciprocal 0=normal != 0 = reciprocal
             float _Scale;
             
             // Cubic Cell reciprocal lattice points start at corner (all three even)
            int2 checkLatticePoint(int nX, int nY, int nZ, float latticeType)
             {
-                int sum = abs(nX) & 1;
-                sum += abs(nY) & 1;
-                sum += abs(nZ) & 1;
-                /*
+                int nType = (int)(_IsReciprocal > 0.5);
+                int sum = (abs(nX) - nType) & 1;
+                    sum += (abs(nY) - nType) & 1;
+                    sum += (abs(nZ) - nType) & 1;
+                /* Adapted from C#
                 if (sum == 0) // on Corner
                     return 1;
                 switch (latticeType)
@@ -100,8 +103,9 @@ Shader "SimuCat/Crystal/LatticeUnlit"
                 int body = (int)(latticeType == 3);
                 int zero = (int)(sum == 0);
                 int one = (int)(sum == 1);
+                int two = (int)(sum == 2);
                 int three = (int)(sum == 3);
-                return int2(ionic + cubic*three + face*(three + one) + body*(zero + three), three);
+                return int2(ionic + cubic*three + face*(three + one) + body*(zero + three), three + ionic*one);
             }
 
             v2f vert (appdata v)

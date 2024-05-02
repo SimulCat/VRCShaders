@@ -7,15 +7,13 @@ using VRC.Udon;
 public class ReciprocalView : UdonSharpBehaviour
 {
     [SerializeField]
-    MeshRenderer meshReciprocal;
+    MeshRenderer meshEwald;
     [SerializeField]
     MeshRenderer meshCrystal;
     [SerializeField]
-    Material matReciprocal;
+    Material matEwald;
     [SerializeField]
     Material matCrystal;
-    private VRCPlayerApi player;
-    private bool iamOwner = false;
 
     [Header("UI Controls and Settings")]
 
@@ -38,13 +36,15 @@ public class ReciprocalView : UdonSharpBehaviour
 
     [Header("Just for feedback in editor")]
     [SerializeField]
-    Transform reciprocalXfrm;
+    Transform ewaldXfrm;
     [SerializeField]
     Transform crystalXfrm;
+    private VRCPlayerApi player;
+    private bool iamOwner = false;
 
 
 
-    bool iHaveRecipMaterial;
+    bool iHaveEwald;
     bool iHaveXtalMaterial;
 
     /// <summary>
@@ -59,8 +59,8 @@ public class ReciprocalView : UdonSharpBehaviour
             if (iHaveRotationControl && !rotationControl.PointerDown)
                 rotationControl.SetValue(crystalTheta);
             Quaternion newRotation = Quaternion.Euler(Vector3.up * crystalTheta);
-            if (reciprocalXfrm != null)
-                reciprocalXfrm.localRotation = newRotation;
+            if (ewaldXfrm != null)
+                ewaldXfrm.localRotation = newRotation;
             if (crystalXfrm != null)
                 crystalXfrm.localRotation = newRotation;
             setCrystalBeam();
@@ -110,10 +110,10 @@ public class ReciprocalView : UdonSharpBehaviour
     /// 
     private void setCrystalBeam()
     {
-        if (!iHaveRecipMaterial) return;
-        Vector3 beamVector = reciprocalXfrm.InverseTransformDirection(worldBeamVector);
-        matReciprocal.SetVector("_MaxMinP", beamMaxMinMomentum);
-        matReciprocal.SetVector("_BeamVector", transform.InverseTransformDirection(beamVector));
+        if (!iHaveEwald) return;
+        Vector3 beamVector = ewaldXfrm.InverseTransformDirection(worldBeamVector);
+        matEwald.SetVector("_MaxMinP", beamMaxMinMomentum);
+        matEwald.SetVector("_BeamVector", transform.InverseTransformDirection(beamVector));
     }
 
     bool beamVecUpdated = true;
@@ -153,11 +153,11 @@ public class ReciprocalView : UdonSharpBehaviour
     void Start()
     {
         ReviewOwnerShip();
-        if (meshReciprocal != null)
+        if (meshEwald != null)
         {
-            reciprocalXfrm = meshReciprocal.transform;
-            if (matReciprocal == null)
-                matReciprocal = meshReciprocal.material;
+            ewaldXfrm = meshEwald.transform;
+            if (matEwald == null)
+                matEwald = meshEwald.material;
         }
         if (meshCrystal != null)
         {
@@ -166,7 +166,7 @@ public class ReciprocalView : UdonSharpBehaviour
                 matCrystal = meshCrystal.material;
         }
         //Transform crystalXfrm;
-        iHaveRecipMaterial = matReciprocal != null;
+        iHaveEwald = matEwald != null;
         iHaveXtalMaterial = matCrystal != null;
         iHaveBeamAngle = beamAngleSlider != null;
         iHaveRotationControl = rotationControl != null;

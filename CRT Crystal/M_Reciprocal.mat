@@ -66,8 +66,9 @@ Material:
     m_Ints: []
     m_Floats:
     - _BumpScale: 1
+    - _CellFormat: 0
     - _Cutoff: 0.5
-    - _DecalScale: 0.2
+    - _DecalScale: 0.3
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _Frequency: 0
@@ -84,7 +85,7 @@ Material:
     - _OcclusionStrength: 1
     - _Parallax: 0.02
     - _ParticleImpulse: 0
-    - _Scale: 1
+    - _Scale: 0.3
     - _ScaleAmplitude: 50
     - _ScaleEnergy: 50
     - _ShowCRT: 1
