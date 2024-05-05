@@ -533,6 +533,7 @@ public class BallisticScatter : UdonSharpBehaviour
             weightedLookup[i] = val * norm;///lim;
         }
     }
+
     public bool CreateTextures()
     {
         simPixelScale = simPixels.y / simSize.y;

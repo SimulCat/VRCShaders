@@ -73,7 +73,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _BeamWidth: 216.25
+    - _BeamWidth: 66.25
     - _Brightness: 5
     - _BumpScale: 1
     - _CellType: 0
@@ -98,10 +98,10 @@ Material:
     - _OutputRaw: 0
     - _Parallax: 0.02
     - _ParticleK: 0.2617994
-    - _ParticleP: 13.530848
+    - _ParticleP: 11.938354
     - _SamplesPerSlit: 24.2
     - _Scale: 1
-    - _SlitCount: 5
+    - _SlitCount: 2
     - _SlitPitch: 50
     - _SlitWidth: 12.5
     - _SmoothnessTextureChannel: 0
@@ -113,7 +113,7 @@ Material:
     m_Colors:
     - _BeamVector: {r: 0, g: 0, b: 0, a: 0}
     - _CellDimensions: {r: 1, g: 1, b: 1, a: 1}
-    - _Color: {r: 1, g: 0.71659666, b: 0.2, a: 1}
+    - _Color: {r: 1, g: 0.2, b: 0.2, a: 1}
     - _ColorNeg: {r: 0.27542007, g: 0, b: 0.3207547, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []
