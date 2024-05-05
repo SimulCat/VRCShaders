@@ -74,7 +74,7 @@ Material:
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
-    - _Lambda: 33.50546
+    - _Lambda: 12.000001
     - _LambdaPx: 12
     - _LeftPx: 0
     - _LowerEdge: 1

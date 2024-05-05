@@ -6,7 +6,6 @@ Shader "SimuCat/Ballistic/Particle Dispersion"
         _Color("Particle Colour", color) = (1, 1, 1, 1)
         _MomentumMap("Momentum Map", 2D ) = "black" {}
         _MapMaxP("Map max momentum", float ) = 1
-        _PulseLookup("Gaussian Pulse Lookup",2D) = "grey" {}
 
         _SlitCount("Num Sources",float) = 2
         _SlitPitch("Slit Pitch",float) = 0.3
@@ -28,7 +27,6 @@ Shader "SimuCat/Ballistic/Particle Dispersion"
         _BaseTime("Base Time Offset", Float)= 0
         _PauseTime("Freeze time",Float) = 0
         _Play("Play Animation", Float) = 1
-
     }
 
     SubShader
@@ -83,10 +81,7 @@ Shader "SimuCat/Ballistic/Particle Dispersion"
 
             sampler2D _MomentumMap;
             float4 _MomentumMap_ST;
-
-            sampler2D _PulseLookup;
-            float4 _PulseLookup_ST;
-            
+          
             float _SlitCount;
             float _SlitPitch;
             float _SlitWidth;
@@ -193,9 +188,9 @@ Shader "SimuCat/Ballistic/Particle Dispersion"
 
                 // Now particle scattering and position
                 
-                float cycleTime = _Scale*maxDiagonalDistance/particleVelocity;
+                float cyclePeriod = _Scale*maxDiagonalDistance/particleVelocity;
                 
-                float cycle = ((_Play * _Time.y + (1-_Play)*_PauseTime)-_BaseTime)/cycleTime + hsh01;
+                float cycle = ((_Play * _Time.y + (1-_Play)*_PauseTime)-_BaseTime)/cyclePeriod; // + hsh01;
                 uint epoch = floor(cycle);
 
                 float trackDistance = frac(cycle)*maxDiagonalDistance;
