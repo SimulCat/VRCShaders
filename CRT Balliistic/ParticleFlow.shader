@@ -6,7 +6,6 @@ Shader "SimuCat/Ballistic/Particle Dispersion"
         _Color("Particle Colour", color) = (1, 1, 1, 1)
         _MomentumMap("Momentum Map", 2D ) = "black" {}
         _MapMaxP("Map max momentum", float ) = 1
-        _PulseLookup("Gaussian Pulse Lookup",2D) = "grey" {}
 
         _SlitCount("Num Sources",float) = 2
         _SlitPitch("Slit Pitch",float) = 0.3
@@ -17,6 +16,8 @@ Shader "SimuCat/Ballistic/Particle Dispersion"
 
         _ParticleP("Particle Momentum", float) = 1
         _MaxVelocity("MaxVelocity", float) = 5
+        _SpeedRange("Speed Range fraction",Range(0.0,0.2)) = 0
+        _PulseWidth("Pulse Width",float) = 0
         // Particle Decal Array
         _ArraySpacing("Array Spacing", Vector) = (0.1,0.1,0.1,0)
         // x,y,z count of array w= total.
@@ -28,7 +29,6 @@ Shader "SimuCat/Ballistic/Particle Dispersion"
         _BaseTime("Base Time Offset", Float)= 0
         _PauseTime("Freeze time",Float) = 0
         _Play("Play Animation", Float) = 1
-
     }
 
     SubShader
@@ -83,10 +83,7 @@ Shader "SimuCat/Ballistic/Particle Dispersion"
 
             sampler2D _MomentumMap;
             float4 _MomentumMap_ST;
-
-            sampler2D _PulseLookup;
-            float4 _PulseLookup_ST;
-            
+          
             float _SlitCount;
             float _SlitPitch;
             float _SlitWidth;
@@ -96,6 +93,8 @@ Shader "SimuCat/Ballistic/Particle Dispersion"
 
             float _MapMaxP;
             float _MaxVelocity;
+            float _PulseWidth;
+            float _SpeedRange;
             float _MapSum;
 
             float4 _ArraySpacing;
@@ -122,12 +121,9 @@ Shader "SimuCat/Ballistic/Particle Dispersion"
             }
 
             // 2/Pi
-            #define twoDivPi 0.63661977236758
-
-            float rndPulse(float val)
-            {
-                return asin(clamp(val,-1.,1.))*twoDivPi;
-            }
+            #define twoDivPi 0.636619772367
+            // 4/Pi
+            #define invPi 0.318309886183
 
             v2f vert (appdata v)
             {
@@ -139,7 +135,8 @@ Shader "SimuCat/Ballistic/Particle Dispersion"
                 //uint idHashFlip = idHash ^ 0x7FFFF;
                 float hsh01 = (float)(idHash & 0x7FFFFF);
                 float div = 0x7FFFFF;
-                hsh01 = hsh01/div;
+                hsh01 = (hsh01/div);
+                float hshPlusMinus = (hsh01*2.0)-1.0;
                 
                 int slitCount = max(round(_SlitCount),1);
 
@@ -158,6 +155,7 @@ Shader "SimuCat/Ballistic/Particle Dispersion"
 
                 // Fresh hash of the particle to pick a start position
                 float startHash = RandomRange(1.0,idHash ^ 0xAFAFAF)-0.5;
+                float speedHash = RandomRange(2.0,idHash >> 3)-1.0;
                 float startPosY =  (_GratingOffset > 0.0001) ? (beamWidth * startHash) : slitCenter + (startHash * slitWidthScaled);
                 float normPos = frac((startPosY-leftEdge)/slitPitchScaled)*slitPitchScaled;
                 // check if particle y pos is valid;
@@ -193,19 +191,26 @@ Shader "SimuCat/Ballistic/Particle Dispersion"
 
                 // Now particle scattering and position
                 
-                float cycleTime = _Scale*maxDiagonalDistance/particleVelocity;
-                
-                float cycle = ((_Play * _Time.y + (1-_Play)*_PauseTime)-_BaseTime)/cycleTime + hsh01;
-                uint epoch = floor(cycle);
+                int hasPulse = (int)(_PulseWidth > 0);
+                int continuous = (int)hasPulse == 0;
+                float pulseDuration = hasPulse * _PulseWidth;
+                float voffset = 1 + (_SpeedRange * invPi * asin(speedHash));
+                float vScale = particleVelocity/_Scale;
+                float cyclePeriod = (maxDiagonalDistance/vScale) + pulseDuration;
 
-                float trackDistance = frac(cycle)*maxDiagonalDistance;
+                // Divid time by period to get fraction of the cycle.
+                float cycles = ((_Play * _Time.y + (1-_Play)*_PauseTime)-_BaseTime)/cyclePeriod;
+                uint epoch = floor(cycles);
+                float cycleTime = frac(cycles + continuous*hsh01)*cyclePeriod - pulseDuration;
+                float timeOffset =  pulseDuration * invPi * asin(hshPlusMinus);
+                float trackDistance = (cycleTime + timeOffset)*vScale*voffset;
                 float gratingDistance = _GratingOffset/_Scale;
                 float postGratingDist = max(0.0,trackDistance-gratingDistance);
                 float preGratingDist = min(gratingDistance,trackDistance);
                 //float markerRadius = _ArraySpacing.x*0.5*markerScale;
                 float2 startPos = float2(preGratingDist-(localGridCentre.x),startPosY);
                 float momentumHash = RandomRange(2, idHash ^ (epoch<<5));
-                float3 sample = sampleMomentum(_ParticleP,momentumHash-1.0);
+                float3 sample = sampleMomentum(_ParticleP*voffset,momentumHash-1.0);
                 float2 particlePos = startPos + sample.xy*postGratingDist;
                 gratingValid = gratingValid || (trackDistance <= gratingDistance);
                 int  posIsInside = (int)(gratingValid)*floor(sample.z)*int((abs(particlePos.x) < localGridCentre.x) && (abs(particlePos.y) <= localGridCentre.y));

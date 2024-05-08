@@ -44,7 +44,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 2e0df7ca3c27f324a8c322971699bf3e, type: 3}
+        m_Texture: {fileID: 2800000, guid: c7287bdfc5090f6469f482764fc1d731, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
@@ -92,6 +92,7 @@ Material:
     - _ParticleP: 1
     - _PauseTime: 0
     - _Play: 1
+    - _PulseWidth: 0.15
     - _Scale: 1
     - _SlitCount: 2
     - _SlitPitch: 0.3

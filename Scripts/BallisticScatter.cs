@@ -13,6 +13,8 @@ public class BallisticScatter : UdonSharpBehaviour
     Vector2 simSize = new Vector2(2.56f, 1.6f);
     [SerializeField,UdonSynced,FieldChangeCallback(nameof(ShowProbability))] 
     public bool showProbability = true;
+    [SerializeField, UdonSynced, FieldChangeCallback(nameof(PulseParticles))]
+    public bool pulseParticles = false;
     [SerializeField, UdonSynced, FieldChangeCallback(nameof(ProbVisPercent))]
     public float probVisPercent = 45f;
     [SerializeField]
@@ -47,6 +49,11 @@ public class BallisticScatter : UdonSharpBehaviour
     public float slitPitch = 45f;        // "Slit Pitch" millimetre
     [SerializeField,FieldChangeCallback(nameof(SlitWidth))]
     public float slitWidth = 12f;        // "Slit Width" millimetres
+    [SerializeField, FieldChangeCallback(nameof(PulseWidth))]
+    public float pulseWidth = 1f;        // particle Pulse width
+    [SerializeField, Range(0,20),FieldChangeCallback(nameof(SpeedRange))]
+    public float speedRange = 10f;        // Speed Range Percent
+
     [SerializeField, Range(1, 5), FieldChangeCallback(nameof(SimScale))]
     public float simScale;
     [SerializeField,FieldChangeCallback(nameof(DisplayColor))]
@@ -77,7 +84,10 @@ public class BallisticScatter : UdonSharpBehaviour
     [SerializeField] Toggle togPause;
     [SerializeField] Toggle togShowHide;
     [SerializeField] Toggle togProbability;
+    [SerializeField] Toggle togPulseParticles;
     [SerializeField] UdonSlider probVizSlider;
+    [SerializeField] UdonSlider pulseWidthSlider;
+    [SerializeField] UdonSlider speedRangeSlider;
 
     private float prevVisibility = -1;
     private void reviewProbVisibility()
@@ -92,6 +102,16 @@ public class BallisticScatter : UdonSharpBehaviour
         crtUpdateRequired = true;
     }
 
+    private void reviewPulse()
+    {
+        if (!ihaveParticleFlow)
+            return;
+        float width = pulseParticles ? pulseWidth : -1f;
+        matParticleFlow.SetFloat("_PulseWidth", width);
+        if (togPulseParticles != null && togPulseParticles.isOn != pulseParticles)
+            togPulseParticles.isOn = pulseParticles;
+
+    }
     private bool ShowProbability
     {
         get=> showProbability;
@@ -105,6 +125,21 @@ public class BallisticScatter : UdonSharpBehaviour
                 probVizSlider.Interactible = showProbability;
             if (chg)
                 reviewProbVisibility();
+            RequestSerialization();
+        }
+    }
+
+    private bool PulseParticles
+    {
+        get => pulseParticles;
+        set
+        {
+            bool chg = pulseParticles != value;
+            pulseParticles = value;
+            if (togPulseParticles != null && togPulseParticles.isOn != value)
+                togPulseParticles.isOn = value;
+            if (chg) 
+                reviewPulse();
             RequestSerialization();
         }
     }
@@ -321,6 +356,35 @@ public class BallisticScatter : UdonSharpBehaviour
             if (ihaveParticleFlow)
                 matParticleFlow.SetFloat("_SlitWidth", slitWidth);
             UpdatebeamWidth();
+        }
+    }
+
+    public float PulseWidth
+    {
+        get => pulseWidth;
+        set
+        {
+            bool chg = value != pulseWidth;
+            pulseWidth = value;
+            if (pulseWidthSlider != null && !pulseWidthSlider.PointerDown)
+                pulseWidthSlider.SetValue(pulseWidth);
+            if (chg)
+                reviewPulse();
+            RequestSerialization();
+        }
+    }
+
+    public float SpeedRange
+    {
+        get => speedRange;
+        set
+        {
+           speedRange = Mathf.Clamp(value,0,20);
+            if (speedRangeSlider != null && !speedRangeSlider.PointerDown)
+                speedRangeSlider.SetValue(speedRange);
+            if (ihaveParticleFlow)
+                matParticleFlow.SetFloat("_SpeedRange", value / 100f);
+            RequestSerialization();
         }
     }
 
@@ -638,17 +702,37 @@ public class BallisticScatter : UdonSharpBehaviour
             Networking.SetOwner(player,gameObject);
         Debug.Log("onProbPtr");
     }
+
+    public void rangePtr()
+    {
+        if (!iamOwner)
+            Networking.SetOwner(player, gameObject);
+        Debug.Log("rangePtr");
+    }
+
+    public void pulsePtr()
+    {
+        if (!iamOwner)
+            Networking.SetOwner(player, gameObject);
+        Debug.Log("pulsePtr");
+    }
+
     public void showProb()
     {
         if (!iamOwner)
             Networking.SetOwner(player, gameObject);
         if ((togProbability != null) && togProbability.isOn != showProbability)
-        {
             ShowProbability = !showProbability;
-        }
-        Debug.Log("togProb");
+        //Debug.Log("togProb");
     }
 
+    public void togPulse()
+    {
+        if (!iamOwner)
+            Networking.SetOwner(player,gameObject);
+        if (togPulseParticles != null && togPulseParticles.isOn != pulseParticles)
+            PulseParticles = !pulseParticles;
+    }
     /*
      * Update and Start
      */
@@ -694,6 +778,8 @@ public class BallisticScatter : UdonSharpBehaviour
         SlitWidth = slitWidth;
         SlitPitch = slitPitch;
         SimScale = simScale;
+        SpeedRange = speedRange;
+        PulseWidth = pulseWidth;
         ProbVisPercent = probVisPercent;
         GratingOffset = gratingOffset;
         ParticleK = particleK;
