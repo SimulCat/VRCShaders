@@ -779,7 +779,9 @@ public class BallisticScatter : UdonSharpBehaviour
         SlitPitch = slitPitch;
         SimScale = simScale;
         SpeedRange = speedRange;
+        PulseParticles = pulseParticles;
         PulseWidth = pulseWidth;
+        reviewPulse();
         ProbVisPercent = probVisPercent;
         GratingOffset = gratingOffset;
         ParticleK = particleK;

@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: M_Reciprocal
-  m_Shader: {fileID: 4800000, guid: 8825a62d4fa450b45b641048d50115fb, type: 3}
+  m_Name: M_EwaldLive
+  m_Shader: {fileID: 4800000, guid: 4a6cf62fac2221743969e1bf80f82746, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -48,7 +48,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: c7287bdfc5090f6469f482764fc1d731, type: 3}
+        m_Texture: {fileID: 2800000, guid: 2e0df7ca3c27f324a8c322971699bf3e, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
@@ -66,17 +66,18 @@ Material:
     m_Ints: []
     m_Floats:
     - _BumpScale: 1
-    - _CellFormat: 0
+    - _CellFormat: 1
     - _Cutoff: 0.5
-    - _DecalScale: 0.6
+    - _DecalScale: 2
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _Frequency: 0
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
-    - _IsReciprocal: 0
+    - _IsReciprocal: 1
     - _LatticeType: 0
+    - _MarkerScale: 2
     - _MarkerSize: 1
     - _MaxImpulse: 10
     - _MaxP: 0.9
@@ -86,7 +87,7 @@ Material:
     - _OcclusionStrength: 1
     - _Parallax: 0.02
     - _ParticleImpulse: 0
-    - _Scale: 0.2
+    - _Scale: 1
     - _ScaleAmplitude: 50
     - _ScaleEnergy: 50
     - _ShowCRT: 1
@@ -103,14 +104,13 @@ Material:
     - _ArraySpacing: {r: 1, g: 1, b: 1, a: 1}
     - _BeamVector: {r: 1, g: 0, b: 0, a: 0}
     - _CellSize: {r: 1, g: 1, b: 1, a: 1}
-    - _Color: {r: 0, g: 0.49818873, b: 1, a: 1}
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _ColorFlow: {r: 1, g: 0.29999998, b: 0, a: 0}
-    - _ColorN: {r: 1, g: 0.7, b: 0, a: 1}
     - _ColorNeg: {r: 0, g: 0.29999998, b: 1, a: 0}
     - _ColorVel: {r: 0, g: 0.29999998, b: 1, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _IdleColour: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-    - _LatticeSpacing: {r: 0.75, g: 0.75, b: 0.75, a: 0.75}
-    - _MaxMinP: {r: 33, g: 3, b: 0, a: 0}
-    - _MeshSpacing: {r: 0.25, g: 0.25, b: 0.25, a: 0.25}
+    - _LatticeSpacing: {r: 0.9412032, g: 0.9412032, b: 0.9412032, a: 0.9412032}
+    - _MaxMinP: {r: 22, g: 2, b: 0, a: 0}
+    - _MeshSpacing: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
