@@ -18,6 +18,7 @@ Shader "SimuCat/Ballistic/Particle Dispersion"
         _MaxVelocity("MaxVelocity", float) = 5
         _SpeedRange("Speed Range fraction",Range(0.0,0.2)) = 0
         _PulseWidth("Pulse Width",float) = 0
+        _PulseWidthMax("Max Pulse Width",float) = 1.5
         // Particle Decal Array
         _ArraySpacing("Array Spacing", Vector) = (0.1,0.1,0.1,0)
         // x,y,z count of array w= total.
@@ -94,6 +95,7 @@ Shader "SimuCat/Ballistic/Particle Dispersion"
             float _MapMaxP;
             float _MaxVelocity;
             float _PulseWidth;
+            float _PulseWidthMax;
             float _SpeedRange;
             float _MapSum;
 
@@ -194,14 +196,15 @@ Shader "SimuCat/Ballistic/Particle Dispersion"
                 int hasPulse = (int)(_PulseWidth > 0);
                 int continuous = (int)hasPulse == 0;
                 float pulseDuration = hasPulse * _PulseWidth;
+                float pulseMax = hasPulse * _PulseWidthMax;
                 float voffset = 1 + (_SpeedRange * invPi * asin(speedHash));
                 float vScale = particleVelocity/_Scale;
-                float cyclePeriod = (maxDiagonalDistance/vScale) + pulseDuration;
+                float cyclePeriod = (maxDiagonalDistance/vScale) + pulseMax;
 
                 // Divid time by period to get fraction of the cycle.
                 float cycles = ((_Play * _Time.y + (1-_Play)*_PauseTime)-_BaseTime)/cyclePeriod;
                 uint epoch = floor(cycles);
-                float cycleTime = frac(cycles + continuous*hsh01)*cyclePeriod - pulseDuration;
+                float cycleTime = frac(cycles + continuous*hsh01)*cyclePeriod - pulseMax;
                 float timeOffset =  pulseDuration * invPi * asin(hshPlusMinus);
                 float trackDistance = (cycleTime + timeOffset)*vScale*voffset;
                 float gratingDistance = _GratingOffset/_Scale;

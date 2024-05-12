@@ -13,8 +13,6 @@ public class BallisticScatter : UdonSharpBehaviour
     Vector2 simSize = new Vector2(2.56f, 1.6f);
     [SerializeField,UdonSynced,FieldChangeCallback(nameof(ShowProbability))] 
     public bool showProbability = true;
-    [SerializeField, UdonSynced, FieldChangeCallback(nameof(PulseParticles))]
-    public bool pulseParticles = false;
     [SerializeField, UdonSynced, FieldChangeCallback(nameof(ProbVisPercent))]
     public float probVisPercent = 45f;
     [SerializeField]
@@ -49,7 +47,10 @@ public class BallisticScatter : UdonSharpBehaviour
     public float slitPitch = 45f;        // "Slit Pitch" millimetre
     [SerializeField,FieldChangeCallback(nameof(SlitWidth))]
     public float slitWidth = 12f;        // "Slit Width" millimetres
-    [SerializeField, FieldChangeCallback(nameof(PulseWidth))]
+// Pulsed particles and speed range
+    [SerializeField, UdonSynced, FieldChangeCallback(nameof(PulseParticles))]
+    public bool pulseParticles = false;
+    [SerializeField, Range(0.01f, 1.5f), FieldChangeCallback(nameof(PulseWidth))]
     public float pulseWidth = 1f;        // particle Pulse width
     [SerializeField, Range(0,20),FieldChangeCallback(nameof(SpeedRange))]
     public float speedRange = 10f;        // Speed Range Percent
@@ -364,6 +365,7 @@ public class BallisticScatter : UdonSharpBehaviour
         get => pulseWidth;
         set
         {
+            value = Mathf.Clamp(value, 0.1f, 2f);
             bool chg = value != pulseWidth;
             pulseWidth = value;
             if (pulseWidthSlider != null && !pulseWidthSlider.PointerDown)
@@ -780,6 +782,8 @@ public class BallisticScatter : UdonSharpBehaviour
         SimScale = simScale;
         SpeedRange = speedRange;
         PulseParticles = pulseParticles;
+        if (pulseWidthSlider != null)
+            pulseWidthSlider.SetLimits(0.1f, 1.5f);
         PulseWidth = pulseWidth;
         reviewPulse();
         ProbVisPercent = probVisPercent;
