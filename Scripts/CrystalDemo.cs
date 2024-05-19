@@ -55,13 +55,13 @@ public class CrystalDemo : UdonSharpBehaviour
     [SerializeField, FieldChangeCallback(nameof(BeamMaxMinMomentum))]
     private Vector2 beamMaxMinMomentum = new Vector2(30, 5);
     [SerializeField, UdonSynced, FieldChangeCallback(nameof(UnitCellCubic))] bool unitCellCubic = false;
-    [SerializeField, UdonSynced, FieldChangeCallback(nameof(CellX))] float cellX = 3.2f;
-    [SerializeField, UdonSynced, FieldChangeCallback(nameof(CellY))] float cellY = 3.2f;
-    [SerializeField, UdonSynced, FieldChangeCallback(nameof(CellZ))] float cellZ = 3.2f;
+    [SerializeField, FieldChangeCallback(nameof(CellX))] float cellX = 3.2f;
+    [SerializeField, FieldChangeCallback(nameof(CellY))] float cellY = 3.2f;
+    [SerializeField, FieldChangeCallback(nameof(CellZ))] float cellZ = 3.2f;
 
     [Header("State Variables")]
-    [SerializeField, UdonSynced, FieldChangeCallback(nameof(CrystalTheta))] private float crystalTheta = 0;
-    [SerializeField, UdonSynced, FieldChangeCallback(nameof(BeamAngle))] private float beamAngle = 0;
+    [SerializeField, FieldChangeCallback(nameof(CrystalTheta))] private float crystalTheta = 0;
+    [SerializeField, FieldChangeCallback(nameof(BeamAngle))] private float beamAngle = 0;
 
     [Header("Unit Cell Parameters")]
     [SerializeField]
@@ -123,7 +123,6 @@ public class CrystalDemo : UdonSharpBehaviour
         Vector4 Dims = new Vector4(cellDimsAngstroms.x, cellDimsAngstroms.y, cellDimsAngstroms.z, 0);
         if (iHaveCrystal)
         {
-            Dims *= 0.1f;
             matCrystal.SetVector("_LatticeSpacing", Dims);
             float xtaltype = XtalType;
            // Debug.Log("Crystal Type Set:" + xtaltype.ToString());
@@ -259,10 +258,7 @@ public class CrystalDemo : UdonSharpBehaviour
         set
         {
             cellX = value;
-            if (iHaveControlX && !angstromSliderX.PointerDown) 
-                angstromSliderX.SetValue(cellX);
             UpdatePitch();
-            RequestSerialization();
         }
     }
     private float CellY
@@ -271,10 +267,7 @@ public class CrystalDemo : UdonSharpBehaviour
         set
         {
             cellY = value;
-            if (iHaveControlY && !angstromSliderY.PointerDown)
-                angstromSliderY.SetValue(cellY);
             UpdatePitch();
-            RequestSerialization();
         }
     }
     private float CellZ
@@ -283,10 +276,7 @@ public class CrystalDemo : UdonSharpBehaviour
         set
         {
             cellZ = value;
-            if (iHaveControlZ && !angstromSliderZ.PointerDown)
-                angstromSliderZ.SetValue(cellZ);
             UpdatePitch();
-            RequestSerialization();
         }
     }
 
@@ -359,11 +349,8 @@ public class CrystalDemo : UdonSharpBehaviour
         set
         {
             beamAngle = Mathf.Clamp(value, -90, 90);
-            if (iHaveBeamAngle && !beamAngleSlider.PointerDown)
-                beamAngleSlider.SetValue(beamAngle);
             float beamRadians = beamAngle * Mathf.Deg2Rad;
             WorldBeamVector = new Vector3(Mathf.Cos(beamRadians), -Mathf.Sin(beamRadians), 0);
-            RequestSerialization();
         }
     }
 
@@ -377,8 +364,6 @@ public class CrystalDemo : UdonSharpBehaviour
         set
         {
             crystalTheta = Mathf.Clamp(value, -90, 90);
-            if (iHaveRotationControl && !rotationControl.PointerDown)
-                rotationControl.SetValue(crystalTheta);
             Quaternion newRotation = Quaternion.Euler(Vector3.up * crystalTheta);
             if (iHaveReciprocal)
                 reciprocalXfrm.localRotation = newRotation;
@@ -387,7 +372,6 @@ public class CrystalDemo : UdonSharpBehaviour
             if (iHaveEwald)
                 ewaldXfrm.localRotation = newRotation;
             setCrystalBeam();
-            RequestSerialization();
         }
     }
 
@@ -496,12 +480,22 @@ public class CrystalDemo : UdonSharpBehaviour
         iHaveRotationControl = rotationControl != null;
 
         CellX = cellX;
+        if (iHaveControlX)
+            angstromSliderX.SetValue(cellX);
         CellY = cellY;
+        if (iHaveControlY)
+            angstromSliderY.SetValue(cellY);
         CellZ = cellZ;
+        if (iHaveControlZ)
+            angstromSliderX.SetValue(cellZ);
 
         CrystalType = crystalType;
         BeamAngle = beamAngle;
+        if (iHaveBeamAngle)
+            beamAngleSlider.SetValue(beamAngle);
         CrystalTheta = crystalTheta;
+        if (iHaveRotationControl)
+            rotationControl.SetValue(crystalTheta);
         UnitCellCubic = unitCellCubic;
         started = true;
         updateLattice(crystalType);

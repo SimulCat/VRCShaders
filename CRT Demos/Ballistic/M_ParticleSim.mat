@@ -91,14 +91,16 @@ Material:
     - _Parallax: 0.02
     - _ParticleP: 1
     - _PauseTime: 0
-    - _Play: 1
+    - _Play: 0
     - _PulseWidth: 0.15
+    - _PulseWidthMax: 1.5
     - _Scale: 1
     - _SlitCount: 2
     - _SlitPitch: 0.3
     - _SlitWidth: 0.05
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
+    - _SpeedRange: 0
     - _SrcBlend: 1
     - _UVSec: 0
     - _ZWrite: 1

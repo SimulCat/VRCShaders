@@ -26,8 +26,8 @@ public class ReciprocalView : UdonSharpBehaviour
     bool iHaveRotationControl = false;
 
     [Header("State Variables")]
-    [SerializeField, UdonSynced, FieldChangeCallback(nameof(CrystalTheta))] private float crystalTheta = 0;
-    [SerializeField, UdonSynced, FieldChangeCallback(nameof(BeamAngle))] private float beamAngle = 0;
+    [SerializeField, FieldChangeCallback(nameof(CrystalTheta))] private float crystalTheta = 0;
+    [SerializeField, FieldChangeCallback(nameof(BeamAngle))] private float beamAngle = 0;
 
     [SerializeField, FieldChangeCallback(nameof(WorldBeamVector))]
     private Vector3 worldBeamVector = Vector3.right;
@@ -56,15 +56,12 @@ public class ReciprocalView : UdonSharpBehaviour
         set
         {
             crystalTheta = Mathf.Clamp(value,-90,90);
-            if (iHaveRotationControl && !rotationControl.PointerDown)
-                rotationControl.SetValue(crystalTheta);
             Quaternion newRotation = Quaternion.Euler(Vector3.up * crystalTheta);
             if (ewaldXfrm != null)
                 ewaldXfrm.localRotation = newRotation;
             if (crystalXfrm != null)
                 crystalXfrm.localRotation = newRotation;
             setCrystalBeam();
-            RequestSerialization();
         } 
     }
 
@@ -74,11 +71,8 @@ public class ReciprocalView : UdonSharpBehaviour
         set
         {
             beamAngle = Mathf.Clamp(value, -90, 90);
-            if (iHaveBeamAngle && !beamAngleSlider.PointerDown)
-                beamAngleSlider.SetValue(beamAngle);
             float beamRadians = beamAngle*Mathf.Deg2Rad;
             WorldBeamVector = new Vector3(Mathf.Cos(beamRadians),-Mathf.Sin(beamRadians),0); 
-            RequestSerialization();
         }
     }
 
@@ -170,11 +164,11 @@ public class ReciprocalView : UdonSharpBehaviour
         iHaveXtalMaterial = matCrystal != null;
         iHaveBeamAngle = beamAngleSlider != null;
         iHaveRotationControl = rotationControl != null;
+        CrystalTheta = crystalTheta;
         if (iHaveRotationControl)
             rotationControl.SetValue(crystalTheta);
+        BeamAngle = beamAngle;
         if (iHaveBeamAngle)
             beamAngleSlider.SetValue(beamAngle);
-        BeamAngle = beamAngle;
-        CrystalTheta = crystalTheta;
     }
 }

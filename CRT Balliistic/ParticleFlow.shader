@@ -203,7 +203,6 @@ Shader "SimuCat/Ballistic/Particle Dispersion"
 
                 // Divid time by period to get fraction of the cycle.
                 float cycles = ((_Play * _Time.y + (1-_Play)*_PauseTime)-_BaseTime)/cyclePeriod;
-                uint epoch = floor(cycles);
                 float cycleTime = frac(cycles + continuous*hsh01)*cyclePeriod - pulseMax;
                 float timeOffset =  pulseDuration * invPi * asin(hshPlusMinus);
                 float trackDistance = (cycleTime + timeOffset)*vScale*voffset;
@@ -212,7 +211,7 @@ Shader "SimuCat/Ballistic/Particle Dispersion"
                 float preGratingDist = min(gratingDistance,trackDistance);
                 //float markerRadius = _ArraySpacing.x*0.5*markerScale;
                 float2 startPos = float2(preGratingDist-(localGridCentre.x),startPosY);
-                float momentumHash = RandomRange(2, idHash ^ (epoch<<5));
+                float momentumHash = RandomRange(2, idHash);
                 float3 sample = sampleMomentum(_ParticleP*voffset,momentumHash-1.0);
                 float2 particlePos = startPos + sample.xy*postGratingDist;
                 gratingValid = gratingValid || (trackDistance <= gratingDistance);

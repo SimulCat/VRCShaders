@@ -31,16 +31,16 @@ public class ParticleWaveUI : UdonSharpBehaviour
     private float controlScale = 0.001f;
     [SerializeField, UdonSynced, FieldChangeCallback(nameof(SlitCount))]
     private int slitCount;
-    [SerializeField, UdonSynced, FieldChangeCallback(nameof(SlitWidth))]
+    [SerializeField, FieldChangeCallback(nameof(SlitWidth))]
     private float slitWidth;
-    [SerializeField, UdonSynced, FieldChangeCallback(nameof(SlitPitch))]
+    [SerializeField, FieldChangeCallback(nameof(SlitPitch))]
     private float slitPitch;
-    [SerializeField, Range(1, 5),UdonSynced, FieldChangeCallback(nameof(SimScale))]
+    [SerializeField, Range(1, 5), FieldChangeCallback(nameof(SimScale))]
     private float simScale;
     [SerializeField]
     private float momentum;
-    [SerializeField, UdonSynced, FieldChangeCallback(nameof(Lambda))]
-    float lambda;
+    [SerializeField, FieldChangeCallback(nameof(Lambda))]
+    private float lambda;
 
     [SerializeField]
     private bool crtUpdateRequired;
@@ -54,13 +54,13 @@ public class ParticleWaveUI : UdonSharpBehaviour
     [SerializeField]
     UdonSlider lambdaSlider;
     [SerializeField]
+    UdonSlider scaleSlider;
+    [SerializeField]
     TextMeshProUGUI lblMomentum;
     [SerializeField]
     float waveSpeed = 10;
     [SerializeField]
     TextMeshProUGUI lblLambda;
-    [SerializeField]
-    UdonSlider scaleSlider;
     [SerializeField]
     TextMeshProUGUI lblSlitCount;
     [Header("Particle Properties")]
@@ -202,13 +202,6 @@ public class ParticleWaveUI : UdonSharpBehaviour
         SlitCount = slitCount - 1;
     }
 
-    public void slidePtr()
-    {
-        if (!iamOwner)
-            Networking.SetOwner(player, gameObject);
-        Debug.Log("DualUI SlidePtr Event");
-    }
-
     private void initSimulations()
     {
         if (iHaveParticleSim)
@@ -260,8 +253,6 @@ public int SlitCount
                 crtUpdateRequired = true;
                 slitWidth = value;
             }
-            if (iHaveWidthSlider && !widthSlider.PointerDown)
-                widthSlider.SetValue(value);
             if (iHaveParticleSim)
                 particleSim.SetProgramVariable<float>("slitWidth", slitWidth * controlScale);
             if (iHaveWaveCRT)
@@ -280,15 +271,10 @@ public int SlitCount
                 slitPitch = value;
                 crtUpdateRequired = true;
             }
-            if (iHavePitchSlider && !pitchSlider.PointerDown)
-            {
-                pitchSlider.SetValue(value);
-            }
             if (iHaveParticleSim)
                 particleSim.SetProgramVariable<float>("slitPitch", slitPitch * controlScale);
             if (iHaveWaveCRT)
                 matWaveCRT.SetFloat("_SlitPitch", slitPitch * waveMeshScale);
-            RequestSerialization();
         }
     }
 
@@ -306,8 +292,6 @@ public int SlitCount
                 particleSim.SetProgramVariable<float>("simScale",simScale);
             if (iHaveWaveCRT)
                 matWaveCRT.SetFloat("_Scale", simScale);
-            if (iHaveScaleSlider && !scaleSlider.PointerDown)
-                scaleSlider.SetValue(simScale);
             RequestSerialization();
         }
     }
@@ -330,8 +314,6 @@ public int SlitCount
         set
         {
             lambda = Mathf.Clamp(value, minLambda,maxLambda);
-            if (iHaveLambdaSlider && !lambdaSlider.PointerDown)
-                lambdaSlider.SetValue(lambda);
             SetColour();
             updateLambda();
             updateMomentum();
@@ -393,9 +375,29 @@ public int SlitCount
         MinLambda = iHaveLambdaSlider ? lambdaSlider.MinValue : minLambda;
         initSimulations();
         SlitCount = slitCount;
+        if (iHaveWidthSlider)
+        {
+            widthSlider.SetLimits(5, 50);
+            widthSlider.SetValue(slitWidth);
+        }
         SlitWidth = slitWidth;
+        if (iHavePitchSlider)
+        {
+            pitchSlider.SetLimits(40, 200);
+            pitchSlider.SetValue(slitPitch);
+        }
         SlitPitch = slitPitch;
+        if (iHaveLambdaSlider)
+        {
+            lambdaSlider.SetLimits(minLambda, maxLambda);
+            lambdaSlider.SetValue(lambda);
+        }
         Lambda = lambda;
+        if (iHaveScaleSlider)
+        {
+            scaleSlider.SetLimits(1, 5);
+            scaleSlider.SetValue(simScale);
+        }
         SimScale = simScale;
         SetColour();
     }

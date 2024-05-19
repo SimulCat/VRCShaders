@@ -67,7 +67,7 @@ Material:
     m_Floats:
     - _BumpScale: 1
     - _Cutoff: 0.5
-    - _DecalScale: 0.4
+    - _DecalScale: 0.33
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _Frequency: 0
@@ -85,7 +85,7 @@ Material:
     - _OcclusionStrength: 1
     - _Parallax: 0.02
     - _ParticleImpulse: 0
-    - _Scale: 0.2
+    - _Scale: 0.125
     - _ScaleAmplitude: 50
     - _ScaleEnergy: 50
     - _ShowCRT: 1

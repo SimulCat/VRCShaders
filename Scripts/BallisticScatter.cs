@@ -13,23 +13,19 @@ public class BallisticScatter : UdonSharpBehaviour
     Vector2 simSize = new Vector2(2.56f, 1.6f);
     [SerializeField,UdonSynced,FieldChangeCallback(nameof(ShowProbability))] 
     public bool showProbability = true;
-    [SerializeField, UdonSynced, FieldChangeCallback(nameof(ProbVisPercent))]
+    [SerializeField, FieldChangeCallback(nameof(ProbVisPercent))]
     public float probVisPercent = 45f;
     [SerializeField]
     Vector2Int simPixels = new Vector2Int(1024, 640);
-    bool iHaveProbability = false;
+    
     [SerializeField,Tooltip("Shown for editor reference, loaded at Start")]
     Material matProbabilitySim = null;
     [SerializeField]
     string texName = "_MomentumMap";
     [SerializeField]
-    bool iHavematProbabilitySim = false;
-    [SerializeField]
     MeshRenderer particleMeshRend = null;
     [SerializeField]
     Material matParticleFlow = null;
-    [SerializeField]
-    bool ihaveParticleFlow = false;
 
     [Header("Scattering Configuration")]
     
@@ -52,7 +48,7 @@ public class BallisticScatter : UdonSharpBehaviour
     public bool pulseParticles = false;
     [SerializeField, Range(0.01f, 1.5f), FieldChangeCallback(nameof(PulseWidth))]
     public float pulseWidth = 1f;        // particle Pulse width
-    [SerializeField, Range(0,20),FieldChangeCallback(nameof(SpeedRange))]
+    [SerializeField, Range(0,25), FieldChangeCallback(nameof(SpeedRange))]
     public float speedRange = 10f;        // Speed Range Percent
 
     [SerializeField, Range(1, 5), FieldChangeCallback(nameof(SimScale))]
@@ -76,9 +72,7 @@ public class BallisticScatter : UdonSharpBehaviour
     }
     public float MinParticleK { get => minParticleK; set => minParticleK = value; }
     [SerializeField,FieldChangeCallback(nameof(ParticleK))]
-    private float particleK = 1;    
-    private VRCPlayerApi player;
-    private bool iamOwner = false;
+    private float particleK = 1;
 
     [Header("UI Elements")]
     [SerializeField] Toggle togPlay;
@@ -89,6 +83,23 @@ public class BallisticScatter : UdonSharpBehaviour
     [SerializeField] UdonSlider probVizSlider;
     [SerializeField] UdonSlider pulseWidthSlider;
     [SerializeField] UdonSlider speedRangeSlider;
+
+    //[Header("For tracking in Editor")]
+    //[SerializeField]
+    bool ihaveParticleFlow = false;
+    //[SerializeField]
+    bool iHaveProbability = false;
+    //[SerializeField]
+    bool iHavematProbabilitySim = false;
+    //[SerializeField]
+    private float shaderPauseTime = 0;
+    //[SerializeField]
+    private float shaderBaseTime = 0;
+    //[SerializeField]
+    private bool shaderPlaying = false;
+    private VRCPlayerApi player;
+    private bool iamOwner = false;
+
 
     private float prevVisibility = -1;
     private void reviewProbVisibility()
@@ -152,8 +163,6 @@ public class BallisticScatter : UdonSharpBehaviour
         {
             //Debug.Log("ProbvizPct :"+ value);
             probVisPercent = value;
-            if (probVizSlider != null && !probVizSlider.PointerDown)
-                probVizSlider.SetValue(probVisPercent);
             reviewProbVisibility();
             RequestSerialization();
         }
@@ -203,7 +212,7 @@ public class BallisticScatter : UdonSharpBehaviour
         set
         {
             particlePlayState = value;
-            setParticlePlay(value);
+            setParticlePlay(particlePlayState);
             updatePlayPauseStop();
             RequestSerialization();
         }
@@ -233,9 +242,16 @@ public class BallisticScatter : UdonSharpBehaviour
         mat.SetFloat("_GratingOffset", gratingOffset);
     }
 
-    private float shaderPauseTime = 0;
-    private float shaderBaseTime = 0;
-    private bool shaderPlaying = false;
+    private void initParticlePlay()
+    {
+        shaderBaseTime = 0;
+        shaderPauseTime = 0;
+        matParticleFlow.SetFloat("_PauseTime", 0f);
+        matParticleFlow.SetFloat("_BaseTime", shaderBaseTime);
+        matParticleFlow.SetFloat("_Play", 1f);
+        shaderPlaying = true;
+        //Debug.Log("Init");
+    }
     private void setParticlePlay(int playState)
     {
         if (!ihaveParticleFlow)
@@ -246,19 +262,21 @@ public class BallisticScatter : UdonSharpBehaviour
             case 1:
                 if (!shaderPlaying)
                 {
-                    shaderBaseTime = Time.time - shaderPauseTime;
+                    shaderBaseTime += Time.timeSinceLevelLoad - shaderPauseTime;
                     matParticleFlow.SetFloat("_BaseTime", shaderBaseTime);
                     matParticleFlow.SetFloat("_Play", 1f);
                     shaderPlaying = true;
+                    //Debug.Log("Play");
                 }
                 break;
             case 0:
                 if (shaderPlaying)
                 {
-                    shaderPauseTime = Time.time;
+                    shaderPauseTime = Time.timeSinceLevelLoad;
                     matParticleFlow.SetFloat("_PauseTime", shaderPauseTime);
                     matParticleFlow.SetFloat("_Play", 0f);
                     shaderPlaying = false;
+                    //Debug.Log("Pause");
                 }
                 break;
             default: 
@@ -368,11 +386,8 @@ public class BallisticScatter : UdonSharpBehaviour
             value = Mathf.Clamp(value, 0.1f, 2f);
             bool chg = value != pulseWidth;
             pulseWidth = value;
-            if (pulseWidthSlider != null && !pulseWidthSlider.PointerDown)
-                pulseWidthSlider.SetValue(pulseWidth);
             if (chg)
                 reviewPulse();
-            RequestSerialization();
         }
     }
 
@@ -381,12 +396,9 @@ public class BallisticScatter : UdonSharpBehaviour
         get => speedRange;
         set
         {
-           speedRange = Mathf.Clamp(value,0,20);
-            if (speedRangeSlider != null && !speedRangeSlider.PointerDown)
-                speedRangeSlider.SetValue(speedRange);
+           speedRange = Mathf.Clamp(value,0,25);
             if (ihaveParticleFlow)
                 matParticleFlow.SetFloat("_SpeedRange", value / 100f);
-            RequestSerialization();
         }
     }
 
@@ -698,27 +710,6 @@ public class BallisticScatter : UdonSharpBehaviour
         }
     }
 
-    public void onProbPtr()
-    {
-        if (!iamOwner)
-            Networking.SetOwner(player,gameObject);
-        Debug.Log("onProbPtr");
-    }
-
-    public void rangePtr()
-    {
-        if (!iamOwner)
-            Networking.SetOwner(player, gameObject);
-        Debug.Log("rangePtr");
-    }
-
-    public void pulsePtr()
-    {
-        if (!iamOwner)
-            Networking.SetOwner(player, gameObject);
-        Debug.Log("pulsePtr");
-    }
-
     public void showProb()
     {
         if (!iamOwner)
@@ -739,11 +730,17 @@ public class BallisticScatter : UdonSharpBehaviour
      * Update and Start
      */
     private float updateTimer = 1;
+    private bool init = false;
     private void Update()
     {
         updateTimer -= Time.deltaTime;
         if (updateTimer > 0)
             return;
+        if (!init)
+        {
+            init = true;
+            initParticlePlay();
+        }
         if (gratingUpdateRequired)
         {
             CreateTextures();
@@ -780,18 +777,25 @@ public class BallisticScatter : UdonSharpBehaviour
         SlitWidth = slitWidth;
         SlitPitch = slitPitch;
         SimScale = simScale;
+        if (speedRangeSlider != null)
+        {
+            speedRangeSlider.SetLimits(0, 25);
+            speedRangeSlider.SetValue(speedRange);
+        }
         SpeedRange = speedRange;
         PulseParticles = pulseParticles;
         if (pulseWidthSlider != null)
+        {
             pulseWidthSlider.SetLimits(0.1f, 1.5f);
+            pulseWidthSlider.SetValue(pulseWidth);
+        }
         PulseWidth = pulseWidth;
-        reviewPulse();
+        if (probVizSlider != null)
+            probVizSlider.SetValue(probVisPercent);
         ProbVisPercent = probVisPercent;
+        reviewPulse();
         GratingOffset = gratingOffset;
         ParticleK = particleK;
-        shaderBaseTime = Time.time;
-        shaderPauseTime = Time.time;
-        setParticlePlay(particlePlayState);
         //Debug.Log("BScatter Started");
     }
 }

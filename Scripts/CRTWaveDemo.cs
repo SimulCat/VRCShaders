@@ -38,7 +38,7 @@ public class CRTWaveDemo : UdonSharpBehaviour
     [SerializeField] UdonSlider contrastSlider;
 
 
-    [SerializeField, UdonSynced, FieldChangeCallback(nameof(ContrastVal))]
+    [SerializeField, FieldChangeCallback(nameof(ContrastVal))]
     public float contrastVal = 40f;
 
     private float prevVisibility = -1;
@@ -87,7 +87,6 @@ public class CRTWaveDemo : UdonSharpBehaviour
         {
             frequency = value;
             UpdateWaveFrequency();
-            //RequestSerialization();
         }
     }
     private void UpdateWaveFrequency()
@@ -121,10 +120,7 @@ public class CRTWaveDemo : UdonSharpBehaviour
         set
         {
             contrastVal = value;
-            if (contrastSlider != null && !contrastSlider.PointerDown)
-                contrastSlider.SetValue(contrastVal);
             reviewContrast();
-            RequestSerialization();
         }
     }
 
@@ -318,6 +314,8 @@ public class CRTWaveDemo : UdonSharpBehaviour
         if (waveMesh != null)
             matPanel = waveMesh.material;
         ContrastVal = contrastVal;
+        if (contrastSlider != null)
+            contrastSlider.SetValue(contrastVal);
         checkPanelType();
         if (togPlay != null)
             PlaySim = togPlay.isOn;
