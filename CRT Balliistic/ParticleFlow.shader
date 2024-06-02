@@ -23,7 +23,7 @@ Shader "SimuCat/Ballistic/Particle Dispersion"
         _ArraySpacing("Array Spacing", Vector) = (0.1,0.1,0.1,0)
         // x,y,z count of array w= total.
         _ArrayDimension("Array Dimension", Vector) = (128,80,1,10240)
-        _MarkerScale ("Marker Scale", Range(0.01,2)) = 1
+        _MarkerScale ("Marker Scale", Range(0.01,5)) = 1
         _Scale("Scale Demo",Float) = 1
         _MaxScale("Scale Max",Float) = 5
         // Play Control

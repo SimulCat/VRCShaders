@@ -51,7 +51,7 @@ public class BallisticScatter : UdonSharpBehaviour
     [SerializeField, Range(0,25), FieldChangeCallback(nameof(SpeedRange))]
     public float speedRange = 10f;        // Speed Range Percent
 
-    [SerializeField, Range(1, 5), FieldChangeCallback(nameof(SimScale))]
+    [SerializeField, Range(1, 10), FieldChangeCallback(nameof(SimScale))]
     public float simScale;
     [SerializeField,FieldChangeCallback(nameof(DisplayColor))]
     public Color displayColor = Color.cyan;
@@ -134,7 +134,7 @@ public class BallisticScatter : UdonSharpBehaviour
             if (togProbability != null && togProbability.isOn != value)
                 togProbability.isOn = value;
             if (probVizSlider != null)
-                probVizSlider.Interactible = showProbability;
+                probVizSlider.Interactable = showProbability;
             if (chg)
                 reviewProbVisibility();
             RequestSerialization();
@@ -777,22 +777,22 @@ public class BallisticScatter : UdonSharpBehaviour
         SlitWidth = slitWidth;
         SlitPitch = slitPitch;
         SimScale = simScale;
+        SpeedRange = speedRange;
         if (speedRangeSlider != null)
         {
             speedRangeSlider.SetLimits(0, 25);
             speedRangeSlider.SetValue(speedRange);
         }
-        SpeedRange = speedRange;
         PulseParticles = pulseParticles;
+        PulseWidth = pulseWidth;
         if (pulseWidthSlider != null)
         {
             pulseWidthSlider.SetLimits(0.1f, 1.5f);
             pulseWidthSlider.SetValue(pulseWidth);
         }
-        PulseWidth = pulseWidth;
+        ProbVisPercent = probVisPercent;
         if (probVizSlider != null)
             probVizSlider.SetValue(probVisPercent);
-        ProbVisPercent = probVisPercent;
         reviewPulse();
         GratingOffset = gratingOffset;
         ParticleK = particleK;

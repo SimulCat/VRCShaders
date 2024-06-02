@@ -17,7 +17,7 @@ public class UdonSlider : UdonSharpBehaviour
     [SerializeField]
     private TextMeshProUGUI sliderTitle;
     [SerializeField,Tooltip("Apply damping by setting above zero")]
-    private float dampingTime = 0f;
+    private float smoothRate = 2f;
     [SerializeField]
     private bool hideLabel = false;
     [SerializeField]
@@ -32,22 +32,25 @@ public class UdonSlider : UdonSharpBehaviour
     string clientVariableName = "SliderValueVar";
     [SerializeField]
     string clientPtrEvent = "slidePtr";
-    private float currentValue;
+    private float reportedValue;
     [SerializeField, UdonSynced, FieldChangeCallback(nameof(SyncedValue))]
     private float syncedValue;
+    private float targetValue;
     [SerializeField]
     private float maxValue = 1;
     [SerializeField]
     private float minValue = 0;
 
     [SerializeField]
-    private bool interactible = true;
+    private bool interactable = true;
+    [SerializeField]
+    bool useDebug = false;
     // UdonSync stuff
     private VRCPlayerApi player;
     private bool locallyOwned = false;
     private bool started = false;
-    const float smoothThreshold = 0.001f;
-
+    const float thresholdScale = 0.002f;
+    float smoothThreshold = 0.003f;
     public override void OnOwnershipTransferred(VRCPlayerApi player)
     {
         locallyOwned = Networking.IsOwner(this.gameObject);
@@ -59,15 +62,15 @@ public class UdonSlider : UdonSharpBehaviour
         get => pointerIsDown;
     }
    
-    public bool Interactible
+    public bool Interactable
     {
         get
         {
-            return interactible;
+            return interactable;
         }
         set
         {
-            interactible = value;
+            interactable = value;
             if (mySlider != null)
                 mySlider.interactable = value;
         }
@@ -78,7 +81,7 @@ public class UdonSlider : UdonSharpBehaviour
         if (!started)
         {
             syncedValue = value;
-            currentValue = value;
+            reportedValue = value;
             return;
         }
         if (locallyOwned)
@@ -87,10 +90,18 @@ public class UdonSlider : UdonSharpBehaviour
         }
     }
 
+    private void updateThreshold()
+    {
+        smoothThreshold = thresholdScale * Mathf.Max(0.01f, Mathf.Abs(maxValue - minValue));
+    }
+
     public void SetLimits(float min, float max)
     {
+        if (mySlider == null)
+            mySlider = GetComponent<Slider>();
         minValue = min;
         maxValue = max;
+        updateThreshold();
         if (!started)
             return;
         mySlider.minValue = minValue;
@@ -133,64 +144,66 @@ public class UdonSlider : UdonSharpBehaviour
             sliderLabel.text = string.Format("{0:0.0}{1}", displayValue, sliderUnit);
     }
 
+    public float MaxValue
+    {
+        get => maxValue;
+    }
+    public float MinValue
+    {
+        get => minValue;
+    }
+
+    private void SetSmoothingTarget(float value)
+    {
+        syncedValue = value;
+        targetValue = value;
+        if (smoothRate <= 0 && reportedValue != syncedValue)
+            ReportedValue = syncedValue;
+        Updatelabel();
+    }
     public float SyncedValue
     {
         get => syncedValue;
         set
         {
-            syncedValue = value;
+            if (useDebug)
+                Debug.Log("Slider: S" + value.ToString());
             if (!pointerIsDown)
-                mySlider.SetValueWithoutNotify(syncedValue);
-            if (dampingTime <= 0)
-                CurrentValue = syncedValue;
-            Updatelabel();
-            if (started)
-                RequestSerialization();
-        }
-    }
-
-    public float CurrentValue
-    {
-        get => currentValue;
-        private set
-        {
-            currentValue = value;
-            if (iHaveClientVar)
             {
-                if (unitsInteger)
-                    SliderClient.SetProgramVariable<int>(clientVariableName, Mathf.RoundToInt(currentValue));
-                else
-                    SliderClient.SetProgramVariable<Single>(clientVariableName, currentValue);
+                SetSmoothingTarget(value);
+                mySlider.SetValueWithoutNotify(syncedValue);
             }
         }
     }
-    public float MaxValue
+
+    public float ReportedValue
     {
-        get => maxValue;
-        set
+        get => reportedValue;
+        private set
         {
-            maxValue = value;
-            if (mySlider != null)
-                mySlider.maxValue = maxValue;
+            reportedValue = value;
+            if (iHaveClientVar)
+            {
+                if (unitsInteger)
+                    SliderClient.SetProgramVariable<int>(clientVariableName, Mathf.RoundToInt(reportedValue));
+                else
+                    SliderClient.SetProgramVariable<Single>(clientVariableName, reportedValue);
+            }
         }
     }
-
-    public float MinValue
-    {
-        get => minValue;
-        set
-        {
-            minValue = value;
-            if (mySlider != null)
-                mySlider.minValue = minValue;
-        }
-    }
-
     public void onValue()
     {
-        if (pointerIsDown)
+        if (!locallyOwned)
+            Networking.SetOwner(player, gameObject);
+        if (started)
         {
-            SyncedValue = mySlider.value;
+            SetSmoothingTarget(mySlider.value);
+            RequestSerialization();
+        }
+        else
+        {
+            mySlider = GetComponent<Slider>();
+            syncedValue = mySlider.value;
         }
     }
 
@@ -198,7 +211,6 @@ public class UdonSlider : UdonSharpBehaviour
     {
         if (!locallyOwned)
             Networking.SetOwner(player, gameObject);
-
         pointerIsDown = true;
         if (iHaveClientPtr)
             SliderClient.SendCustomEvent(clientPtrEvent);
@@ -212,12 +224,12 @@ public class UdonSlider : UdonSharpBehaviour
 
     public void Update()
     {
-        if (dampingTime <= 0f  || currentValue == syncedValue)
+        if (smoothRate <= 0f  || reportedValue == targetValue)
             return;
-        if (Mathf.Abs(1f - syncedValue / currentValue) > smoothThreshold)
-            CurrentValue = Mathf.SmoothDamp(currentValue, syncedValue, ref smthVel, dampingTime);
+        if (Mathf.Abs(reportedValue - targetValue) > smoothThreshold)
+            ReportedValue = Mathf.SmoothDamp(reportedValue, targetValue, ref smthVel, 0.02f*smoothRate);
         else
-            CurrentValue = syncedValue;
+            ReportedValue = syncedValue;
     }
 
     private bool iHaveClientVar = false;
@@ -234,11 +246,13 @@ public class UdonSlider : UdonSharpBehaviour
         if (sliderLabel != null && hideLabel)
             sliderLabel.text = "";
 
-        mySlider.interactable = interactible;
+        mySlider.interactable = interactable;
         mySlider.minValue = minValue;
         mySlider.maxValue = maxValue;
-        currentValue = syncedValue;
+        reportedValue = syncedValue;
+        targetValue = syncedValue;
         SyncedValue = syncedValue;
+        updateThreshold();
         started = true;
     }
 }
