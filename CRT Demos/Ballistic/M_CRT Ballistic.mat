@@ -73,8 +73,8 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _BeamWidth: 79.25
-    - _Brightness: 0
+    - _BeamWidth: 66.25
+    - _Brightness: 5
     - _BumpScale: 1
     - _CellType: 0
     - _Cutoff: 0.5
@@ -83,11 +83,11 @@ Material:
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
-    - _GratingOffset: 72.49999
+    - _GratingOffset: 0
     - _GratingWidth: 58.000004
     - _MapLength: 0
-    - _MapMaxI: 255
-    - _MapMaxP: 36.57143
+    - _MapMaxI: 255.00002
+    - _MapMaxP: 49.999996
     - _MapSum: 255
     - _MaxP: 1
     - _Metallic: 0
@@ -98,12 +98,12 @@ Material:
     - _OutputRaw: 0
     - _Parallax: 0.02
     - _ParticleK: 0.2617994
-    - _ParticleP: 29.257143
+    - _ParticleP: 45.45454
     - _SamplesPerSlit: 24.2
-    - _Scale: 1
+    - _Scale: 2.5
     - _SlitCount: 2
     - _SlitPitch: 50
-    - _SlitWidth: 22.5
+    - _SlitWidth: 12.5
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
@@ -113,7 +113,7 @@ Material:
     m_Colors:
     - _BeamVector: {r: 0, g: 0, b: 0, a: 0}
     - _CellDimensions: {r: 1, g: 1, b: 1, a: 1}
-    - _Color: {r: 0.2, g: 1, b: 0.99999875, a: 1}
+    - _Color: {r: 0.41818237, g: 0.2, b: 0.682936, a: 1}
     - _ColorNeg: {r: 0.27542007, g: 0, b: 0.3207547, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []

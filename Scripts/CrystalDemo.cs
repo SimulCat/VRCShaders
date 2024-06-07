@@ -40,13 +40,13 @@ public class CrystalDemo : UdonSharpBehaviour
     public Toggle selectCubic;
 
     [SerializeField]
-    UdonSlider angstromSliderX;
+    SyncedSlider angstromSliderX;
     bool iHaveControlX;
     [SerializeField]
-    UdonSlider angstromSliderY;
+    SyncedSlider angstromSliderY;
     bool iHaveControlY;
     [SerializeField]
-    UdonSlider angstromSliderZ;
+    SyncedSlider angstromSliderZ;
     bool iHaveControlZ;
 
     [Header("Settings")]
@@ -111,9 +111,6 @@ public class CrystalDemo : UdonSharpBehaviour
     {
         if ( !started)
             return;
-        {
-            
-        }
         Vector3 newDims = unitCellCubic ? new Vector3(CellX, CellX, CellX) : new Vector3(CellX, CellY, CellZ);
         if (cellDimsAngstroms != newDims)
         {

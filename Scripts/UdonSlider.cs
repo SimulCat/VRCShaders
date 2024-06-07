@@ -43,8 +43,6 @@ public class UdonSlider : UdonSharpBehaviour
 
     [SerializeField]
     private bool interactable = true;
-    [SerializeField]
-    bool useDebug = false;
     // UdonSync stuff
     private VRCPlayerApi player;
     private bool locallyOwned = false;
@@ -86,7 +84,11 @@ public class UdonSlider : UdonSharpBehaviour
         }
         if (locallyOwned)
         {
-            SyncedValue = value;
+            mySlider.SetValueWithoutNotify(value);
+            SetSmoothingTarget(value);
+            if (reportedValue != syncedValue)
+                ReportedValue = syncedValue; 
+            RequestSerialization();
         }
     }
 
@@ -166,8 +168,6 @@ public class UdonSlider : UdonSharpBehaviour
         get => syncedValue;
         set
         {
-            if (useDebug)
-                Debug.Log("Slider: S" + value.ToString());
             if (!pointerIsDown)
             {
                 SetSmoothingTarget(value);
@@ -211,6 +211,8 @@ public class UdonSlider : UdonSharpBehaviour
     {
         if (!locallyOwned)
             Networking.SetOwner(player, gameObject);
+        if (pointerIsDown) 
+            return;
         pointerIsDown = true;
         if (iHaveClientPtr)
             SliderClient.SendCustomEvent(clientPtrEvent);
@@ -229,7 +231,7 @@ public class UdonSlider : UdonSharpBehaviour
         if (Mathf.Abs(reportedValue - targetValue) > smoothThreshold)
             ReportedValue = Mathf.SmoothDamp(reportedValue, targetValue, ref smthVel, 0.02f*smoothRate);
         else
-            ReportedValue = syncedValue;
+            ReportedValue = targetValue;
     }
 
     private bool iHaveClientVar = false;
@@ -253,6 +255,7 @@ public class UdonSlider : UdonSharpBehaviour
         targetValue = syncedValue;
         SyncedValue = syncedValue;
         updateThreshold();
+        RequestSerialization();
         started = true;
     }
 }

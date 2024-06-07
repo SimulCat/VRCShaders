@@ -65,7 +65,7 @@ public class ParticleWaveUI : UdonSharpBehaviour
     TextMeshProUGUI lblSlitCount;
     [Header("Particle Properties")]
 
-    [SerializeField,UdonSynced,FieldChangeCallback(nameof(MinLambda))]
+    [SerializeField,FieldChangeCallback(nameof(MinLambda))]
     private float minLambda = 20;
     [SerializeField]
     private float maxLambda = 100;
@@ -304,7 +304,6 @@ public int SlitCount
             minLambda = Mathf.Max(value, 10); // !! Hard coded to 10mm
             if (iHaveParticleSim)
                 particleSim.SetProgramVariable<float>("maxParticleK", 1 / (minLambda*controlScale));
-            RequestSerialization();
         }
     }
 
