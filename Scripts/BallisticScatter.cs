@@ -48,7 +48,7 @@ public class BallisticScatter : UdonSharpBehaviour
     public bool pulseParticles = false;
     [SerializeField, Range(0.01f, 1.5f), FieldChangeCallback(nameof(PulseWidth))]
     public float pulseWidth = 1f;        // particle Pulse width
-    [SerializeField, Range(0,25), FieldChangeCallback(nameof(SpeedRange))]
+    [SerializeField, Range(0,50), FieldChangeCallback(nameof(SpeedRange))]
     public float speedRange = 10f;        // Speed Range Percent
 
     [SerializeField, Range(1, 10), FieldChangeCallback(nameof(SimScale))]
@@ -396,7 +396,7 @@ public class BallisticScatter : UdonSharpBehaviour
         get => speedRange;
         set
         {
-           speedRange = Mathf.Clamp(value,0,25);
+           speedRange = Mathf.Clamp(value,0,50);
             if (ihaveParticleFlow)
                 matParticleFlow.SetFloat("_SpeedRange", value / 100f);
         }
@@ -780,7 +780,7 @@ public class BallisticScatter : UdonSharpBehaviour
         SpeedRange = speedRange;
         if (speedRangeSlider != null)
         {
-            speedRangeSlider.SetLimits(0, 25);
+            speedRangeSlider.SetLimits(0, 50);
             speedRangeSlider.SetValue(speedRange);
         }
         PulseParticles = pulseParticles;

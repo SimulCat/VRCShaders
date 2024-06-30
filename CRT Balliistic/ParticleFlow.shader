@@ -16,7 +16,7 @@ Shader "SimuCat/Ballistic/Particle Dispersion"
 
         _ParticleP("Particle Momentum", float) = 1
         _MaxVelocity("MaxVelocity", float) = 5
-        _SpeedRange("Speed Range fraction",Range(0.0,0.2)) = 0
+        _SpeedRange("Speed Range fraction",Range(0.0,0.5)) = 0
         _PulseWidth("Pulse Width",float) = 0
         _PulseWidthMax("Max Pulse Width",float) = 1.5
         // Particle Decal Array
