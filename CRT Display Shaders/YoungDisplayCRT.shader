@@ -8,6 +8,10 @@ Shader"SimulCat/Young/CRT Display"
 
        _DisplayMode("Display Mode", float) = 0
 
+       _ScaleAmplitude("Scale Amplitude", Range(0.1, 10)) = 5
+       _ScaleEnergy("Scale Energy", Range(0.1, 10)) = 5
+       _Brightness("Display Brightness", Range(0.0,1.0)) = 1
+
         _LeftPx("Left Edge",float) = 50
         _RightPx("Right Edge",float) = 1964
         _UpperEdge("Upper Edge",float) = 972
@@ -66,6 +70,10 @@ Shader"SimulCat/Young/CRT Display"
 
 
             float _DisplayMode;
+            float _ScaleAmplitude;
+            float _ScaleEnergy;
+
+            float _Brightness;
             
             float4 _Color;
             float4 _ColorNeg;
@@ -88,24 +96,56 @@ Shader"SimulCat/Young/CRT Display"
 
             fixed4 frag(v2f i) : SV_Target
             {
-                fixed4 col = _ColorNeg;
+                fixed4 col = _ColorNeg * _Brightness;
+
                 if (_DisplayMode < 0)
                 {
                     fixed4 sample = tex2D(_IdleTex, i.uv);
                     col.rgb = sample.rgb * _IdleColour;
-                    col.a = sample.r * _IdleColour.a;
+                    col.a = sample.r * _IdleColour.a * _Brightness;
                     return col;
                 }
-                int displayMode = round(_DisplayMode);
-                            // sample the texture
+
                 float4 sample = tex2D(_MainTex, i.uv);
                 float2 pos = i.uv;
                 float2 phasor = sample.xy;
                 float amplitude = sample.z;
                 float ampSq = sample.w;
                 float value = 0;
+
+                int xPixel = (int)(floor(pos.x * _MainTex_TexelSize.z));
+                int yPixel = (int)(floor(pos.y * _MainTex_TexelSize.w));
+
+
+                if ((xPixel < _LeftPx) || (xPixel > _RightPx) || (yPixel < _LowerEdge) || (yPixel > _UpperEdge))
+                {
+                    col = _ColorNeg;
+                    col.a = 0.33 * _Brightness;
+                    return col;
+                }
+
+                int displayMode = round(_DisplayMode);
+                bool displaySquare = displayMode == 1 || displayMode == 3 || displayMode == 5;
+                bool displayReal =   displayMode < 2 || displayMode > 3;
+                bool displayIm =  displayMode >= 2;                         
+
+                            // sample the texture
+
+
+                if (displayIm && displayReal)
+                {
+                    if (displaySquare)
+                        value = sample.w * _ScaleEnergy * _ScaleEnergy;
+                    else
+                        value = sample.z * _ScaleAmplitude;
+                    value *= _Brightness;
+                    col = lerp(_ColorNeg, _ColorFlow, value);
+                    col.a = _Brightness * (displaySquare ? value+0.33 : clamp(value, .25,1));
+                    return col;
+                }
+
                 // If showing phase, rotate phase vector, no need to recalculate pattern, this allows CRT to calculate once, then leave alone;
-                if (displayMode < 4 && _Frequency > 0)
+                if (_Frequency > 0)
                 {
                     float tphi = (1 - frac(_Frequency * _Time.y)) * Tau;
                     float sinPhi = sin(tphi);
@@ -113,59 +153,19 @@ Shader"SimulCat/Young/CRT Display"
                     phasor.x = sample.x * cosPhi - sample.y * sinPhi;
                     phasor.y = sample.x * sinPhi + sample.y * cosPhi;
                 }
-                int xPixel = (int)(floor(pos.x * _MainTex_TexelSize.z));
-                int yPixel = (int)(floor(pos.y * _MainTex_TexelSize.w));
 
-                if ((xPixel < _LeftPx) || (xPixel > _RightPx) || (yPixel < _LowerEdge) || (yPixel > _UpperEdge))
+                value = displayReal ? phasor.x : phasor.y;
+                if (displaySquare)
                 {
-                    col = _ColorNeg;
-                    col.a = 0.33;
-                    return col;
+                    value *= _ScaleEnergy;
+                    value *= value;
                 }
+                else
+                    value *= _ScaleAmplitude;
 
-                switch (displayMode)
-                {
-                    case 0: // Just x component
-                        value = phasor.x;
-                        col = lerp(_ColorNeg, _Color, value);
-                        col.a = clamp(value+1, 0.3,1);
-                        return col;
-
-                    case 1: // x component squared
-                        value = phasor.x * phasor.x;
-                        col = lerp(_ColorNeg, _Color, value);
-                        col.a = value+0.33;
-                        return col;
-
-                    case 2: // Vertical velocity
-                        value = phasor.y;
-                        col = lerp(_ColorNeg, _ColorVel, value);
-                        col.a = clamp(value+1,0.3,1);
-                        return col;
-
-                    case 3: // Surface kinetic energy from speed of mass rise/fall
-                        value = phasor.y * phasor.y;
-                        col = lerp(_ColorNeg, _ColorVel, value);
-                        col.a = value+0.33;
-                        return col;
-
-                    case 4: // Combined Amplitude (phasor length)
-                        value = amplitude*1.5;
-                        col = lerp(_ColorNeg, _ColorFlow, value);
-                        col.a = clamp(value, .25,1);
-                        return col;
-                    case 5: // Combined Amplitude Squared (Momentum/ Energy transport)
-                        value = ampSq*1.5;
-                        col = lerp(_ColorNeg, _ColorFlow, value);
-                        col.a = value+0.33;
-                        return col;
-
-                    default:
-                        col = _ColorNeg;
-                        col.a = 0.4;
-                        return col;
-                        break;
-                }
+                value *= _Brightness;
+                col = lerp(_ColorNeg, displayReal ? _Color : _ColorVel, value);
+                col.a = _Brightness * ((displaySquare) ? value +0.33 : clamp(value + 1, 0.3, 1));
                 return col;
             }
             ENDCG

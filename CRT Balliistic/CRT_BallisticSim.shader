@@ -12,6 +12,7 @@
         _SlitWidth("Slit Width", Range(1.0,40.0)) = 12.0
         _BeamWidth("Grating Width", float) = 1
         _GratingOffset("Grating X Offset", float) = 0
+        _ShowBeam("Show Beam", float) = 1
         _SamplesPerSlit("Samples per Slit", Range(1,255)) = 7
 //        _ParticleK("Particle p*pi/h", float) = 0.26179939
         _ParticleP("Particle Momentum", float) = 1
@@ -37,6 +38,7 @@ CGINCLUDE
         float _SlitWidth;
         float _BeamWidth;
         float _GratingOffset;
+        float _ShowBeam;
         float _SamplesPerSlit;
  //       float _ParticleK;
         float _ParticleP;
@@ -168,7 +170,7 @@ float4 fragBallistic(v2f_customrendertexture i) : SV_Target
         apertureY -= _SlitPitch;
     }
     // Check before aperture
-    float before = (_GratingOffset > 0 && xDelta <= 0) ? 2.0 : 0;
+    float before = _ShowBeam * ((_GratingOffset > 0 && xDelta <= 0) ? 2.0 : 0);
     result = result + before*(1.0 - smoothstep(halfBeam,halfBeam*1.3,abs(yPos)));
     if (_OutputRaw > 0.5)
         return float4(result,0,0,1);

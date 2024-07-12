@@ -26,6 +26,9 @@ public class BallisticScatter : UdonSharpBehaviour
     MeshRenderer particleMeshRend = null;
     [SerializeField]
     Material matParticleFlow = null;
+    [SerializeField, FieldChangeCallback(nameof(Visibility))]
+    private float visibility = 1;
+
 
     [Header("Scattering Configuration")]
     
@@ -60,6 +63,20 @@ public class BallisticScatter : UdonSharpBehaviour
     [SerializeField, FieldChangeCallback(nameof(MinParticleK))]
     public float minParticleK = 1;
     [SerializeField] bool setColour = false;
+
+    private float Visibility
+    {
+        get => visibility;
+        set
+        {
+            visibility = Mathf.Clamp01(value);
+            if (matParticleFlow != null)
+            {
+                matParticleFlow.SetFloat("_Visibility", visibility);
+            }
+            reviewProbVisibility();
+        }
+    }
 
     public float MaxParticleK 
     {   get=>maxParticleK; 
@@ -106,7 +123,7 @@ public class BallisticScatter : UdonSharpBehaviour
     {
         if (!iHavematProbabilitySim) 
             return;
-        float targetViz = showProbability ? ProbVisPercent/10 : 0;
+        float targetViz = visibility * (showProbability ? ProbVisPercent/10 : 0);
         if (targetViz == prevVisibility)
             return;
         prevVisibility = targetViz;
@@ -790,6 +807,7 @@ public class BallisticScatter : UdonSharpBehaviour
             pulseWidthSlider.SetLimits(0.1f, 1.5f);
             pulseWidthSlider.SetValue(pulseWidth);
         }
+        Visibility = visibility;
         ProbVisPercent = probVisPercent;
         if (probVizSlider != null)
             probVizSlider.SetValue(probVisPercent);

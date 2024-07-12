@@ -87,6 +87,10 @@ public class SyncedTween : UdonSharpBehaviour
             linkedVariableName = gameObject.name;
         localPlayer = Networking.LocalPlayer;
         locallyOwned = Networking.IsOwner(gameObject);
-        SyncedState = syncedState;
+        if (stateToggle != null)
+            SyncedState = stateToggle.isOn;
+        else
+            SyncedState = syncedState;
+        animationTime = syncedState ? 1f : 0f;
     }
 }

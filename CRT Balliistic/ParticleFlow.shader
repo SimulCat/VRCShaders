@@ -4,6 +4,7 @@ Shader "SimuCat/Ballistic/Particle Dispersion"
     {
         _MainTex ("Particle Texture", 2D) = "white" {}
         _Color("Particle Colour", color) = (1, 1, 1, 1)
+        _Visibility("Visibility",Range(0.0,1.0)) = 1.0
         _MomentumMap("Momentum Map", 2D ) = "black" {}
         _MapMaxP("Map max momentum", float ) = 1
 
@@ -12,7 +13,6 @@ Shader "SimuCat/Ballistic/Particle Dispersion"
         _SlitWidth("Slit Width", float) = 0.05
         _BeamWidth("Beam Width", float) = 1
         _GratingOffset("Grating X Offset", float) = 0
-
 
         _ParticleP("Particle Momentum", float) = 1
         _MaxVelocity("MaxVelocity", float) = 5
@@ -81,6 +81,7 @@ Shader "SimuCat/Ballistic/Particle Dispersion"
             sampler2D _MainTex;
             float4 _MainTex_ST;
             float4 _Color;
+            float _Visibility;
 
             sampler2D _MomentumMap;
             float4 _MomentumMap_ST;
@@ -256,7 +257,8 @@ Shader "SimuCat/Ballistic/Particle Dispersion"
 					clip(-1);
 					col = 0;
 				}
-                UNITY_APPLY_FOG(i.fogCoord, col);
+                col *= _Visibility;
+                //UNITY_APPLY_FOG(i.fogCoord, col);
                 return col;
             }
             ENDCG
