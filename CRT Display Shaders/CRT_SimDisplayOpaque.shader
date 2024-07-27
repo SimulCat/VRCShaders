@@ -1,4 +1,4 @@
-Shader "SimulCat/CRT/Display"
+Shader "SimuCat/CRT/Display"
 {
     Properties
     {

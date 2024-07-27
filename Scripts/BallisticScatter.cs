@@ -654,14 +654,14 @@ public class BallisticScatter : UdonSharpBehaviour
                 texData[pointsWide + i] = new Color(sample, integral, impulse, 1f);
                 texData[pointsWide - i] = new Color(sample, -integral, -impulse, 1f);
             }
+            matProbabilitySim.SetFloat("_MapMaxP", maxParticleK); // "Map max momentum", float ) = 1
+            matProbabilitySim.SetFloat("_MapMaxI", probIntegral[pointsWide - 1]); // "Map Summed probability", float ) = 1
             texData[0] = new Color(0, -probIntegral[pointsWide-1], -1, 1f);
 
             // Normalize
             //float total = texData[pointsWide-1].g;
             //for (int i = 0;i < pointsWide; i++)
             //    texData[i].g /= total;
-            matProbabilitySim.SetFloat("_MapMaxP", maxParticleK); // "Map max momentum", float ) = 1
-            matProbabilitySim.SetFloat("_MapMaxI", probIntegral[pointsWide-1]); // "Map Summed probability", float ) = 1
             tex.SetPixels(0, 0, pointsWide * 2, 1, texData, 0);
             tex.filterMode = FilterMode.Bilinear;
             tex.wrapMode = TextureWrapMode.Clamp;

@@ -23,7 +23,7 @@ Shader "SimuCat/Ballistic/Particle Dispersion"
         _ArraySpacing("Array Spacing", Vector) = (0.1,0.1,0.1,0)
         // x,y,z count of array w= total.
         _ArrayDimension("Array Dimension", Vector) = (128,80,1,10240)
-        _MarkerScale ("Marker Scale", Range(0.01,5)) = 1
+        _MarkerScale ("Marker Scale", Range(0.01,10)) = 1
         _Scale("Scale Demo",Float) = 1
         _MaxScale("Scale Max",Float) = 5
         // Play Control
@@ -159,7 +159,7 @@ Shader "SimuCat/Ballistic/Particle Dispersion"
                 // Fresh hash of the particle to pick a start position
                 float startHash = RandomRange(1.0,idHash ^ 0xAFAFAF)-0.5;
                 float speedHash = RandomRange(2.0,idHash >> 3)-1.0;
-                float startPosY =  (_GratingOffset > 0.0001) ? (beamWidth * startHash) : slitCenter + (startHash * slitWidthScaled);
+                float startPosY =  (_GratingOffset > 0.00001) ? (beamWidth * startHash) : slitCenter + (startHash * slitWidthScaled);
                 float normPos = frac((startPosY-leftEdge)/slitPitchScaled)*slitPitchScaled;
                 // check if particle y pos is valid;
                 bool gratingValid = (startPosY >= leftEdge) && (startPosY <= (-leftEdge)) && (normPos <= slitWidthScaled);

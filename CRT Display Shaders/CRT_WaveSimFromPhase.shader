@@ -1,4 +1,4 @@
-﻿Shader"SimulCat/CRT/Simulate Waves"
+﻿Shader"SimuCat/CRT/Simulate Waves"
 {
     /*
     A CRT to my mind is a cross between a regular shader and a compute shader.

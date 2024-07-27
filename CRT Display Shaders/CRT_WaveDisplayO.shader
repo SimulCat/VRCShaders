@@ -1,4 +1,4 @@
-Shader"SimulCat/CRT/Display Wave Opaque"
+Shader"SimuCat/CRT/Display Wave Opaque"
 {
     Properties
     {

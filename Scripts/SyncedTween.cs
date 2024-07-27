@@ -11,12 +11,15 @@ public class SyncedTween : UdonSharpBehaviour
 {
     [Header("Assignment during implementation")]
     [SerializeField] UdonBehaviour[] linkedBehaviors;
+    [SerializeField] UdonBehaviour[] inverseBehaviors;
     [SerializeField] string linkedVariableName;
 
     [SerializeField, Tooltip("Animation Curve")]
     AnimationCurve tweenCurve = AnimationCurve.EaseInOut(0.0f, 0.0f, 1.0f, 1.0f);
     [SerializeField]
     private Toggle stateToggle;
+    [SerializeField]
+    private Toggle offToggle;
     [SerializeField]
     float easing = 0.75f;
 
@@ -34,8 +37,19 @@ public class SyncedTween : UdonSharpBehaviour
         {
             isPlaying |= value != syncedState;
             syncedState = value;
-            if (stateToggle != null && stateToggle.isOn != syncedState)
-                    stateToggle.isOn = syncedState;
+            if (!locallyOwned)
+            {
+                if (syncedState)
+                {
+                    if (stateToggle != null && !stateToggle.isOn)
+                        stateToggle.isOn = true;
+                }
+                else
+                {
+                    if (offToggle != null && !offToggle.isOn)
+                        offToggle.isOn = true;
+                }
+            }
             RequestSerialization();
         }
     }
@@ -46,6 +60,11 @@ public class SyncedTween : UdonSharpBehaviour
         foreach (UdonBehaviour receiver in linkedBehaviors)
         {
             receiver.SetProgramVariable<float>(linkedVariableName, value);
+        }
+        float inv = Mathf.Clamp01(1f-value);
+        foreach (UdonBehaviour receiver in inverseBehaviors)
+        {
+            receiver.SetProgramVariable<float>(linkedVariableName, inv);
         }
     }
 

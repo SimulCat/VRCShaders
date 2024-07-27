@@ -1,4 +1,4 @@
-Shader "SimulCat/Wave Surface/From Phase CRT"
+Shader "SimuCat/Wave Surface/From Phase CRT"
 {
     Properties
     {
@@ -13,7 +13,6 @@ Shader "SimulCat/Wave Surface/From Phase CRT"
         _ShowReal("Show Real", float) = 1
         _ShowImaginary("Show Imaginary", float) = 0
         _ShowSquare("Show Square", float) = 0
-
 
         _Glossiness ("Smoothness", Range(0,1)) = 0.5
         _Metallic ("Metallic", Range(0,1)) = 0.0
