@@ -39,15 +39,14 @@ public class SyncedTween : UdonSharpBehaviour
             syncedState = value;
             if (!locallyOwned)
             {
-                if (syncedState)
+                if (syncedState || offToggle == null)
                 {
-                    if (stateToggle != null && !stateToggle.isOn)
-                        stateToggle.isOn = true;
+                    if (stateToggle != null)
+                        stateToggle.SetIsOnWithoutNotify(syncedState);
                 }
                 else
                 {
-                    if (offToggle != null && !offToggle.isOn)
-                        offToggle.isOn = true;
+                    offToggle.SetIsOnWithoutNotify(true);
                 }
             }
             RequestSerialization();

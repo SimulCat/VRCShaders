@@ -138,7 +138,7 @@ public class BallisticScatter : UdonSharpBehaviour
         float width = pulseParticles ? pulseWidth : -1f;
         matParticleFlow.SetFloat("_PulseWidth", width);
         if (togPulseParticles != null && togPulseParticles.isOn != pulseParticles)
-            togPulseParticles.isOn = pulseParticles;
+            togPulseParticles.SetIsOnWithoutNotify(pulseParticles);
 
     }
     private bool ShowProbability
@@ -148,8 +148,8 @@ public class BallisticScatter : UdonSharpBehaviour
         {
             bool chg = showProbability != value;
             showProbability = value;
-            if (togProbability != null && togProbability.isOn != value)
-                togProbability.isOn = value;
+            if (togProbability != null && togProbability.isOn != showProbability)
+                togProbability.SetIsOnWithoutNotify(showProbability);
             if (probVizSlider != null)
                 probVizSlider.Interactable = showProbability;
             if (chg)
@@ -166,7 +166,7 @@ public class BallisticScatter : UdonSharpBehaviour
             bool chg = pulseParticles != value;
             pulseParticles = value;
             if (togPulseParticles != null && togPulseParticles.isOn != value)
-                togPulseParticles.isOn = value;
+                togPulseParticles.SetIsOnWithoutNotify(pulseParticles);
             if (chg) 
                 reviewPulse();
             RequestSerialization();
@@ -209,15 +209,15 @@ public class BallisticScatter : UdonSharpBehaviour
         { 
             case 0:
                 if (togPause != null && !togPause.isOn)
-                    togPause.isOn = true;
+                    togPause.SetIsOnWithoutNotify(true);
                 break;
             case 1:
                 if (togPlay != null && !togPlay.isOn)
-                    togPlay.isOn = true;
+                    togPlay.SetIsOnWithoutNotify(true);
                 break;
             default:
                 if (togShowHide != null && !togShowHide.isOn)
-                    togShowHide.isOn = true;
+                    togShowHide.SetIsOnWithoutNotify(true);
                 break;
         }
     }
