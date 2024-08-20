@@ -1,9 +1,5 @@
 Shader "Lines/Pristine Grid"
 {
-    /*
-    From: https://medium.com/@bgolus/the-best-darn-grid-shader-yet-727f9278b9d8
-    github: bgolus/PristineGrid.shader
-    */
     Properties
     {
         [KeywordEnum(MeshUV, WorldX, WorldY, WorldZ)] _UVMode ("UV Mode", Float) = 2.0

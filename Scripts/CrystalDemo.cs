@@ -17,8 +17,11 @@ public class CrystalDemo : UdonSharpBehaviour
     [SerializeField]
     MeshRenderer meshEwald;
 
+    //[SerializeField]
     bool iHaveCrystal = false;
+    //[SerializeField]
     bool iHaveReciprocal = false;
+    //[SerializeField]
     bool iHaveEwald = false;
 
     [Header("UI Controls and Settings")]
@@ -86,12 +89,12 @@ public class CrystalDemo : UdonSharpBehaviour
     private Vector3 reciprocalA3;
 
 
-    [Header("Serialized as needed for verification in editor")]
-    [SerializeField]
+    //[Header("Serialized as needed for verification in editor")]
+    //[SerializeField]
     Material matReciprocal;
-    [SerializeField]
+   // [SerializeField]
     Material matCrystal;
-    [SerializeField]
+    //[SerializeField]
     Material matEwald;
     //[SerializeField]
     Transform reciprocalXfrm;
@@ -215,6 +218,29 @@ public class CrystalDemo : UdonSharpBehaviour
     /// </summary>
     private int XtalType {  get => (int)crystalType; }
     private int RecipType { get => (int)reciprocalType; }
+
+    private void showCrystalType()
+    {
+        switch (crystalType)
+        {
+            case CrystalTypes.Simple:
+                if (selectRect != null && !selectRect.isOn)
+                    selectRect.SetIsOnWithoutNotify(true);
+                break;
+            case CrystalTypes.Ionic:
+                if (selectIonic != null && !selectIonic.isOn)
+                    selectIonic.SetIsOnWithoutNotify(true);
+                break;
+            case CrystalTypes.FaceCentred:
+                if (selectFace != null && !selectFace.isOn)
+                    selectFace.SetIsOnWithoutNotify(true);
+                break;
+            case CrystalTypes.BodyCentred:
+                if (selectBody != null && !selectBody.isOn)
+                    selectBody.SetIsOnWithoutNotify(true);
+                break;
+        }
+    }
     private CrystalTypes CrystalType
     {
         get => crystalType;
@@ -222,7 +248,7 @@ public class CrystalDemo : UdonSharpBehaviour
         {
             bool isNew = crystalType != value;
             crystalType = value;
-            //showCrystalType();
+            showCrystalType();
             if (isNew)
                 updateLattice(crystalType);
             RequestSerialization();
@@ -243,8 +269,8 @@ public class CrystalDemo : UdonSharpBehaviour
                 angstromSliderY.gameObject.SetActive(!unitCellCubic);
             if (iHaveControlZ)
                 angstromSliderZ.gameObject.SetActive(!unitCellCubic);
-            if (selectCubic != null && selectCubic != value)
-                selectCubic.isOn = value;
+            if (selectCubic != null && selectCubic.isOn != value)
+                selectCubic.SetIsOnWithoutNotify(value);
             UpdatePitch();
             RequestSerialization();
         }

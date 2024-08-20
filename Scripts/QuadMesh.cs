@@ -15,7 +15,7 @@ public class QuadMesh : UdonSharpBehaviour
     [SerializeField]
     public Material material;
     
-    Mesh theMesh;
+    Mesh mesh;
     MeshFilter mf;
 
     // Serialize for debug
@@ -157,14 +157,14 @@ public class QuadMesh : UdonSharpBehaviour
             }
             quadPos.z += arraySpacing.z;
         }
-        theMesh = mf.mesh;
-        theMesh.Clear();
+        mesh = mf.mesh;
+        mesh.Clear();
         numDecals = numVertices / 4;
         int[] meshTris = new int[numTriangles];
         for (int i = 0; i < numTriangles; i++)
             meshTris[i] = triangles[i];
         if (meshTris.Length >= 32767)
-            theMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+            mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
         Vector3[] meshVerts = new Vector3[numVertices];
         Vector2[] meshUVs = new Vector2[numVertices];
         for (int i = 0; i < numVertices; i++)
@@ -172,9 +172,9 @@ public class QuadMesh : UdonSharpBehaviour
             meshUVs[i] = uvs[i];
             meshVerts[i] = vertices[i];
         }
-        theMesh.vertices = meshVerts;
-        theMesh.triangles = meshTris;
-        theMesh.uv = meshUVs;
+        mesh.vertices = meshVerts;
+        mesh.triangles = meshTris;
+        mesh.uv = meshUVs;
         triangles = null;
         vertices = null;
         uvs = null;

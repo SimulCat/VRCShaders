@@ -106,9 +106,9 @@ public class CRTWaveDemo : UdonSharpBehaviour
             if (changed)
             {
                 if (togPlay != null && !togPlay.isOn && playSim)
-                    togPlay.isOn = true;
+                    togPlay.SetIsOnWithoutNotify(true);
                 if (togPause != null && !togPause.isOn && !playSim)
-                    togPause.isOn = true;
+                    togPause.SetIsOnWithoutNotify(true);
             }
             RequestSerialization();
         }
@@ -189,27 +189,27 @@ public class CRTWaveDemo : UdonSharpBehaviour
             {
                 case 0:
                     if (iHaveTogReal && !togReal.isOn)
-                        togReal.isOn = true;
+                        togReal.SetIsOnWithoutNotify(true);
                     break;
                 case 1:
                     if (iHaveTogRealPwr && !togRealPwr.isOn)
-                        togRealPwr.isOn = true;
+                        togRealPwr.SetIsOnWithoutNotify(true);
                     break;
                 case 2:
                     if (iHaveTogIm && !togImaginary.isOn)
-                        togImaginary.isOn = true;
+                        togImaginary.SetIsOnWithoutNotify(true);
                     break;
                 case 3:
                     if (iHaveToImPwr && !togImPwr.isOn)
-                        togImPwr.isOn = true;
+                        togImPwr.SetIsOnWithoutNotify(true);
                     break;
                 case 4:
                     if (iHaveTogAmp && !togAmplitude.isOn)
-                        togAmplitude.isOn = true;
+                        togAmplitude.SetIsOnWithoutNotify(true);
                     break;
                 default:
                     if (iHaveTogProb && !togProbability.isOn)
-                        togProbability.isOn = true;
+                        togProbability.SetIsOnWithoutNotify(true);
                     break;
             }
             RequestSerialization();
