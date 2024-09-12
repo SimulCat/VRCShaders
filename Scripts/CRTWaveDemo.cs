@@ -297,7 +297,7 @@ public class CRTWaveDemo : UdonSharpBehaviour
         //Debug.Log("CRTWaveDemo: useDisplayStates" + useDisplayStates.ToString());
         useDisplayMode = matPanel.HasProperty("_DisplayMode");
         useFrequency = matPanel.HasProperty("_Frequency");
-        Debug.Log("CRTWaveDemo: useFrequency" + useFrequency.ToString());
+        //Debug.Log(gameObject.name + ": CRTWaveDemo.cs: useFrequency" + useFrequency.ToString());
     }
 
     void Start()

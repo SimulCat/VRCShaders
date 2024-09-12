@@ -10,13 +10,15 @@ public enum CrystalTypes { Simple, Ionic, FaceCentred, BodyCentred };
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class CrystalDemo : UdonSharpBehaviour
 {
+    [Header("Model Components")]
     [SerializeField]
     MeshRenderer meshCrystal;
     [SerializeField]
     MeshRenderer meshReciprocal;
     [SerializeField]
     MeshRenderer meshEwald;
-
+    [SerializeField]
+    UdonBehaviour beamPointer;
     //[SerializeField]
     bool iHaveCrystal = false;
     //[SerializeField]
@@ -374,6 +376,8 @@ public class CrystalDemo : UdonSharpBehaviour
             beamAngle = Mathf.Clamp(value, -90, 90);
             float beamRadians = beamAngle * Mathf.Deg2Rad;
             WorldBeamVector = new Vector3(Mathf.Cos(beamRadians), -Mathf.Sin(beamRadians), 0);
+            if (beamPointer != null)
+                beamPointer.SetProgramVariable("thetaDegrees",-beamAngle);
         }
     }
 
