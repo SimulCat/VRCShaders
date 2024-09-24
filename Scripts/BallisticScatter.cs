@@ -438,7 +438,7 @@ public class BallisticScatter : UdonSharpBehaviour
         }
     }
 
-    public Color spectrumColour(float wavelength, float gamma = 0.8f)
+    private Color spectrumColour(float wavelength, float gamma = 0.8f)
     {
         Color result = Color.white;
         if (wavelength >= 380 & wavelength <= 440)
@@ -523,6 +523,7 @@ public class BallisticScatter : UdonSharpBehaviour
         get => displayColor;
         set
         {
+           // Debug.Log(gameObject.name + ": displayColour->" + value.ToString());
             displayColor = value;
             if (iHaveProbability)
                 matProbabilitySim.SetColor("_Color", displayColor);
