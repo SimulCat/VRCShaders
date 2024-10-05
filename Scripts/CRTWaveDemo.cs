@@ -32,11 +32,13 @@ public class CRTWaveDemo : UdonSharpBehaviour
     bool iHaveTogProb = false;
     [SerializeField] Toggle togPlay;
     [SerializeField] Toggle togPause;
-    [SerializeField, UdonSynced, FieldChangeCallback(nameof(PlaySim))] bool playSim;
+    [SerializeField, UdonSynced, FieldChangeCallback(nameof(PlayPhi))] bool playPhi;
 
 
     [SerializeField] UdonSlider contrastSlider;
 
+    [SerializeField, FieldChangeCallback(nameof(Visibility))]
+    public float visibility = 1f;
 
     [SerializeField, FieldChangeCallback(nameof(ContrastVal))]
     public float contrastVal = 40f;
@@ -46,7 +48,7 @@ public class CRTWaveDemo : UdonSharpBehaviour
     {
         if (matPanel == null)
             return;
-        float targetViz = contrastVal / 50;
+        float targetViz = (contrastVal / 50)*visibility;
         if (targetViz == prevVisibility)
             return;
         prevVisibility = targetViz;
@@ -92,22 +94,22 @@ public class CRTWaveDemo : UdonSharpBehaviour
     private void UpdateWaveFrequency()
     {
         if (matPanel != null && useFrequency)
-            matPanel.SetFloat("_Frequency", playSim ? frequency : 0f);
+            matPanel.SetFloat("_Frequency", playPhi ? frequency : 0f);
     }
 
-    private bool PlaySim
+    private bool PlayPhi
     {
-        get => playSim;
+        get => playPhi;
         set
         {
-            bool changed = playSim != value;
-            playSim = value;
+            bool changed = playPhi != value;
+            playPhi = value;
             UpdateWaveFrequency();
             if (changed)
             {
-                if (togPlay != null && !togPlay.isOn && playSim)
+                if (togPlay != null && !togPlay.isOn && playPhi)
                     togPlay.SetIsOnWithoutNotify(true);
-                if (togPause != null && !togPause.isOn && !playSim)
+                if (togPause != null && !togPause.isOn && !playPhi)
                     togPause.SetIsOnWithoutNotify(true);
             }
             RequestSerialization();
@@ -121,6 +123,19 @@ public class CRTWaveDemo : UdonSharpBehaviour
         {
             contrastVal = value;
             reviewContrast();
+        }
+    }
+
+    private float Visibility
+    {
+        get => visibility;
+        set
+        {
+            if (visibility != value)
+            {
+                visibility = value;
+                reviewContrast();
+            }
         }
     }
 
@@ -223,30 +238,30 @@ public class CRTWaveDemo : UdonSharpBehaviour
     }
 
     // Display mode Toggles are all set to send custom event to this function
-    public void onPlayPhi()
+    public void onPlay()
     {
         if (togPlay == null || !togPlay.isOn)
             return;
-        if (!playSim)
+        if (!playPhi)
         {
             if (!iamOwner)
                 Networking.SetOwner(player, gameObject);
-            PlaySim = true;
+            PlayPhi = true;
         }
     }
 
-    public void onPausePhi()
+    public void onPause()
     {
         if (togPause == null || !togPause.isOn)
             return;
-        if (playSim)
+        if (playPhi)
         {
             if (!iamOwner)
                 Networking.SetOwner(player, gameObject);
-            PlaySim = false;
+            PlayPhi = false;
         }
     }
-    public void togMode()
+    public void onMode()
     {
         if (!iamOwner)
             Networking.SetOwner(player, gameObject);
@@ -318,7 +333,7 @@ public class CRTWaveDemo : UdonSharpBehaviour
             contrastSlider.SetValue(contrastVal);
         checkPanelType();
         if (togPlay != null)
-            PlaySim = togPlay.isOn;
+            PlayPhi = togPlay.isOn;
         DisplayMode = displayMode;
         if (useFrequency)
             frequency = matPanel.GetFloat("_Frequency");

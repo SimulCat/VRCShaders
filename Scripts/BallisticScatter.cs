@@ -18,14 +18,10 @@ public class BallisticScatter : UdonSharpBehaviour
     [SerializeField]
     Vector2Int simPixels = new Vector2Int(1024, 640);
     
-    [SerializeField,Tooltip("Shown for editor reference, loaded at Start")]
-    Material matProbabilitySim = null;
     [SerializeField]
     string texName = "_MomentumMap";
     [SerializeField]
     MeshRenderer particleMeshRend = null;
-    [SerializeField]
-    Material matParticleFlow = null;
     [SerializeField, FieldChangeCallback(nameof(Visibility))]
     private float visibility = 1;
 
@@ -101,18 +97,23 @@ public class BallisticScatter : UdonSharpBehaviour
     [SerializeField] UdonSlider pulseWidthSlider;
     [SerializeField] UdonSlider speedRangeSlider;
 
-    //[Header("For tracking in Editor")]
-    //[SerializeField]
+    [Header("For tracking in Editor")]
+    [SerializeField, Tooltip("Shown for editor reference, loaded at Start")]
+    Material matProbabilitySim = null;
+    [SerializeField]
+    Material matParticleFlow = null;
+
+    [SerializeField]
     bool ihaveParticleFlow = false;
-    //[SerializeField]
+    [SerializeField]
     bool iHaveProbability = false;
-    //[SerializeField]
-    bool iHavematProbabilitySim = false;
+    [SerializeField]
+    bool iHaveProbSimMat = false;
     //[SerializeField]
     private float shaderPauseTime = 0;
     //[SerializeField]
     private float shaderBaseTime = 0;
-    //[SerializeField]
+    [SerializeField]
     private bool shaderPlaying = false;
     private VRCPlayerApi player;
     private bool iamOwner = false;
@@ -121,7 +122,7 @@ public class BallisticScatter : UdonSharpBehaviour
     private float prevVisibility = -1;
     private void reviewProbVisibility()
     {
-        if (!iHavematProbabilitySim) 
+        if (!iHaveProbSimMat) 
             return;
         float targetViz = visibility * (showProbability ? ProbVisPercent/10 : 0);
         if (targetViz == prevVisibility)
@@ -314,7 +315,7 @@ public class BallisticScatter : UdonSharpBehaviour
         gratingUpdateRequired = isChanged;
         if (isChanged)
         {
-            if (iHavematProbabilitySim) setGratingParams(matProbabilitySim);
+            if (iHaveProbSimMat) setGratingParams(matProbabilitySim);
             if (ihaveParticleFlow) setParticleParams(matParticleFlow);
         }
     }
@@ -327,7 +328,7 @@ public class BallisticScatter : UdonSharpBehaviour
         {
             gratingOffset = value;
             //Debug.Log("GratingOffset=" + value.ToString());
-            if (iHavematProbabilitySim)
+            if (iHaveProbSimMat)
                 matProbabilitySim.SetFloat("_GratingOffset", gratingOffset*simPixelScale);
             if (ihaveParticleFlow)
                 matParticleFlow.SetFloat("_GratingOffset", gratingOffset);
@@ -342,7 +343,7 @@ public class BallisticScatter : UdonSharpBehaviour
             if (value != simScale)
                 crtUpdateRequired = true;
             simScale = value;
-            if (iHavematProbabilitySim)
+            if (iHaveProbSimMat)
                 matProbabilitySim.SetFloat("_Scale", simScale);
             if (ihaveParticleFlow)
                 matParticleFlow.SetFloat("_Scale", simScale);
@@ -353,7 +354,7 @@ public class BallisticScatter : UdonSharpBehaviour
     private void UpdatebeamWidth()
     {
         beamWidth = Mathf.Max(slitCount-1,0)* slitPitch + slitWidth*1.3f;
-        if (iHavematProbabilitySim)
+        if (iHaveProbSimMat)
             matProbabilitySim.SetFloat("_BeamWidth", beamWidth * simPixelScale);
         if (ihaveParticleFlow)
             matParticleFlow.SetFloat("_BeamWidth", beamWidth);
@@ -369,7 +370,7 @@ public class BallisticScatter : UdonSharpBehaviour
                 crtUpdateRequired = true;
             }
             slitCount = value;
-            if (iHavematProbabilitySim)
+            if (iHaveProbSimMat)
                 matProbabilitySim.SetFloat("_SlitCount", 1f*slitCount);
             if (ihaveParticleFlow)
                 matParticleFlow.SetFloat("_SlitCount", 1f* slitCount);
@@ -387,7 +388,7 @@ public class BallisticScatter : UdonSharpBehaviour
                 crtUpdateRequired = true;
             }
             slitWidth = value;
-            if (iHavematProbabilitySim)
+            if (iHaveProbSimMat)
                 matProbabilitySim.SetFloat("_SlitWidth", slitWidth * simPixelScale);
             if (ihaveParticleFlow)
                 matParticleFlow.SetFloat("_SlitWidth", slitWidth);
@@ -430,7 +431,7 @@ public class BallisticScatter : UdonSharpBehaviour
                 crtUpdateRequired = true;
             }
             slitPitch = value;
-            if (iHavematProbabilitySim)
+            if (iHaveProbSimMat)
                 matProbabilitySim.SetFloat("_SlitPitch", slitPitch * simPixelScale);
             if (ihaveParticleFlow)
                 matParticleFlow.SetFloat("_SlitPitch", slitPitch);
@@ -509,7 +510,7 @@ public class BallisticScatter : UdonSharpBehaviour
             crtUpdateRequired |= value != particleK;
             particleK = value;
             //float particleP = particleK / planckSim;
-            if (iHavematProbabilitySim)
+            if (iHaveProbSimMat)
                 matProbabilitySim.SetFloat("_ParticleP", particleK);
             if (ihaveParticleFlow)
                 matParticleFlow.SetFloat("_ParticleP", particleK);
@@ -638,7 +639,7 @@ public class BallisticScatter : UdonSharpBehaviour
 
         Color[] texData = new Color[pointsWide + pointsWide];
 
-        if (iHavematProbabilitySim)
+        if (iHaveProbSimMat)
         {
             var tex = new Texture2D(pointsWide * 2, 1, TextureFormat.RGBAFloat, 0, true);
 
@@ -784,7 +785,7 @@ public class BallisticScatter : UdonSharpBehaviour
         simPixelScale = simPixels.y / simSize.y;
         if (iHaveProbability)
             matProbabilitySim = probabilityCRT.material;
-        iHavematProbabilitySim = hasMaterialWithProperty(matProbabilitySim, texName);
+        iHaveProbSimMat = hasMaterialWithProperty(matProbabilitySim, texName);
         ShowProbability = showProbability;
         if (particleMeshRend != null)
         {

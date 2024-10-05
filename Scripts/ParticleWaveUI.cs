@@ -15,8 +15,6 @@ public class ParticleWaveUI : UdonSharpBehaviour
 
     [SerializeField]
     CustomRenderTexture waveCRT;
-    [SerializeField]
-    Material matWaveCRT;
     private bool iHaveWaveCRT;
     [SerializeField]
     Vector2Int waveCrtSizePx = new Vector2Int(1024, 640);
@@ -74,6 +72,8 @@ public class ParticleWaveUI : UdonSharpBehaviour
     private int MAX_SLITS = 17;
 
     [Header("Working Value Feedback")]
+    [SerializeField]
+    Material matWaveCRT;
     [SerializeField]
     private float waveMeshScale = 1; // Scales UI control values for wavelength and grating dimensions to CRT gridpoints units
     private VRCPlayerApi player;

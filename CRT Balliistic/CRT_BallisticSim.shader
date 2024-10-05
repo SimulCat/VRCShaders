@@ -1,10 +1,9 @@
-﻿Shader"SimulCat/Ballistic/CRT Compute"
+﻿Shader"SimuCat/Ballistic/CRT Density"
 {
     Properties
     {
         _Color("Colour Wave", color) = (1, 1, 1, 1)
         _ColorNeg("Colour Base", color) = (0, 0.3, 1, 0)
-        _OutputRaw("Generate Raw Output", float) = 1
         _Brightness("Display Brightness", Range(0,10)) = 1
 
         _SlitCount("Num Sources",float) = 2
@@ -30,7 +29,6 @@ CGINCLUDE
     
         float4 _Color;
         float4 _ColorNeg;
-        float  _OutputRaw;
         float  _Brightness;
 
         float _SlitCount;
@@ -98,8 +96,6 @@ float4 fragBallistic(v2f_customrendertexture i) : SV_Target
     // Check before aperture
     float before = _ShowBeam * ((_GratingOffset > 0 && xDelta <= 0) ? 2.0 : 0);
     result = result + before*(1.0 - smoothstep(halfBeam,halfBeam*1.3,abs(yPos)));
-    if (_OutputRaw > 0.5)
-        return float4(result,0,0,1);
     float3 col = lerp(_ColorNeg,_Color,result*_Brightness).rgb;
 
     return float4(col,result*_Brightness+0.2);
@@ -109,7 +105,6 @@ float4 fragBallistic(v2f_customrendertexture i) : SV_Target
 float4 frag(v2f_customrendertexture i) : SV_Target
 {
     float2 pos = i.globalTexcoord.xy;
-    float4 output = float4(1, 1, 0,1);
     // Pixel Positions
     int xPixel = (int)(floor(pos.x * _CustomRenderTextureWidth));
     int yPixel = (int)(floor(pos.y * _CustomRenderTextureHeight));
@@ -147,11 +142,7 @@ float4 frag(v2f_customrendertexture i) : SV_Target
     float invCount = 0.1/sourceCount;
     particleRate *= invCount;
     pixelDistance *= invCount/_CustomRenderTextureWidth;
-    if (_OutputRaw > 0.5)
-        output = float4(particleRate,particleRate,pixelDistance,1);
-    else
-        output = float4(lerp(_ColorNeg,_Color,particleRate).rgb,particleRate+.25);
-    return output;
+    return float4(lerp(_ColorNeg,_Color,particleRate).rgb,particleRate+.25);
 }
 
 ENDCG

@@ -100,7 +100,7 @@ public class CRTBallisticParticles : UdonSharpBehaviour
         get => slitWidth;
         private set
         {
-            Debug.Log(gameObject.name + "slitWidth=" + value.ToString());
+            //Debug.Log(gameObject.name + "slitWidth=" + value.ToString());
             if (value != slitWidth)
             {
                 slitWidth = value;
