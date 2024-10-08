@@ -12,6 +12,8 @@ public class ParticleWaveUI : UdonSharpBehaviour
     [SerializeField]
     UdonBehaviour particleSim;
     private bool iHaveParticleSim;
+    [SerializeField]
+    private UdonBehaviour vectorDrawing;
 
     [SerializeField]
     CustomRenderTexture waveCRT;
@@ -173,6 +175,8 @@ public class ParticleWaveUI : UdonSharpBehaviour
             matWaveCRT.SetFloat("_Lambda",lambda * waveMeshScale);
             crtUpdateRequired = true;
         }
+        if (vectorDrawing != null)
+            vectorDrawing.SetProgramVariable<float>("lambda", lambda);
         if (iHaveWaveDemo)
         {
             waveDemo.Frequency = waveSpeed/lambda;
@@ -235,6 +239,8 @@ public int SlitCount
             }
             if (lblSlitCount != null)
                 lblSlitCount.text = value.ToString();
+            if (vectorDrawing != null)
+                vectorDrawing.SetProgramVariable<int>("slitCount", slitCount);
             if (iHaveParticleSim)
                 particleSim.SetProgramVariable<int>("slitCount", slitCount);
             if (iHaveWaveCRT)
@@ -253,6 +259,8 @@ public int SlitCount
                 crtUpdateRequired = true;
                 slitWidth = value;
             }
+            if (vectorDrawing != null)
+                vectorDrawing.SetProgramVariable<float>("slitWidth", slitWidth);
             if (iHaveParticleSim)
                 particleSim.SetProgramVariable<float>("slitWidth", slitWidth * controlScale);
             if (iHaveWaveCRT)
@@ -271,6 +279,8 @@ public int SlitCount
                 slitPitch = value;
                 crtUpdateRequired = true;
             }
+            if (vectorDrawing != null)
+                vectorDrawing.SetProgramVariable<float>("slitPitch", slitPitch);
             if (iHaveParticleSim)
                 particleSim.SetProgramVariable<float>("slitPitch", slitPitch * controlScale);
             if (iHaveWaveCRT)
