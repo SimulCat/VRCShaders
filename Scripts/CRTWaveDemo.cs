@@ -336,6 +336,11 @@ public class CRTWaveDemo : UdonSharpBehaviour
             PlayPhi = togPlay.isOn;
         DisplayMode = displayMode;
         if (useFrequency)
-            frequency = matPanel.GetFloat("_Frequency");
+        {
+            if (frequency <= 0)
+                frequency = matPanel.GetFloat("_Frequency");
+            else
+                matPanel.SetFloat("_Frequency", frequency);
+        }
     }
 }
