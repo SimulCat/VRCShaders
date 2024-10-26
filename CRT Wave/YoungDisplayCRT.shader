@@ -1,4 +1,4 @@
-Shader"SimuCat/CRT/Display Wave Opaque"
+Shader"SimuCat/Young/CRT Display"
 {
     Properties
     {
@@ -6,13 +6,16 @@ Shader"SimuCat/CRT/Display Wave Opaque"
         _IdleTex ("Idle Wallpaper", 2D) = "grey" {}
         _IdleColour ("Idle Shade",color) = (0.5,0.5,0.5,1)
 
-        _ShowCRT ("Show CRT", float) = 1
-        _ShowReal("Show Real", float) = 1
-        _ShowImaginary("Show Imaginary", float) = 0
-        _ShowSquare("Show Square", float) = 0
+       _DisplayMode("Display Mode", float) = 0
 
-        _ScaleAmplitude("Scale Amplitude", Range(0.1, 120)) = 50
-        _ScaleEnergy("Scale Energy", Range(0.1, 100)) = 50
+       _ScaleAmplitude("Scale Amplitude", Range(0.1, 10)) = 5
+       _ScaleEnergy("Scale Energy", Range(0.1, 10)) = 5
+       _Brightness("Display Brightness", Range(0.0,1.0)) = 1
+
+        _LeftPx("Left Edge",float) = 50
+        _RightPx("Right Edge",float) = 1964
+        _UpperEdge("Upper Edge",float) = 972
+        _LowerEdge("Lower Edge",float) = 76
 
         _ColorNeg("Colour Base", color) = (0, 0.3, 1, 0)
         _Color("Colour Wave", color) = (1, 1, 0, 0)
@@ -23,7 +26,9 @@ Shader"SimuCat/CRT/Display Wave Opaque"
 
     SubShader
     {
-        Tags {"RenderType"="Opaque"}
+        Tags {"Queue"="Transparent" "IgnoreProjector"="True" "RenderType"="Transparent"}
+        ZWrite Off
+        Blend SrcAlpha OneMinusSrcAlpha
         LOD 100
         Cull Off
 
@@ -54,15 +59,21 @@ Shader"SimuCat/CRT/Display Wave Opaque"
 
             sampler2D _IdleTex;
             float4 _IdleTex_ST;
+            float4 _IdleTex_TexelSize;
+
             float4 _IdleColour;
 
+            float _LeftPx;
+            float _RightPx;
+            float _UpperEdge;
+            float _LowerEdge;
+
+
+            float _DisplayMode;
             float _ScaleAmplitude;
             float _ScaleEnergy;
 
-            float _ShowCRT;
-            float _ShowReal;
-            float _ShowImaginary;
-            float _ShowSquare;
+            float _Brightness;
             
             float4 _Color;
             float4 _ColorNeg;
@@ -76,7 +87,7 @@ Shader"SimuCat/CRT/Display Wave Opaque"
             {
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
-                if (_ShowReal <= 0 && _ShowImaginary <= 0)
+                if (_DisplayMode >= 0)
                     o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 else
                     o.uv = TRANSFORM_TEX(v.uv, _IdleTex);
@@ -85,37 +96,56 @@ Shader"SimuCat/CRT/Display Wave Opaque"
 
             fixed4 frag(v2f i) : SV_Target
             {
-                bool displaySquare = round(_ShowSquare);
-                bool displayReal = _ShowReal > 0;
-                bool displayIm = _ShowImaginary > 0;                       
-                fixed4 col = _ColorNeg;
+                fixed4 col = _ColorNeg * _Brightness;
 
-                if (!(displayReal || displayIm))
+                if (_DisplayMode < 0)
                 {
                     fixed4 sample = tex2D(_IdleTex, i.uv);
                     col.rgb = sample.rgb * _IdleColour;
-                    col.a = sample.r * _IdleColour.a;
+                    col.a = sample.r * _IdleColour.a * _Brightness;
                     return col;
                 }
-                            // sample the texture
+
                 float4 sample = tex2D(_MainTex, i.uv);
                 float2 pos = i.uv;
-                float2 phasor = float2(1,0);
+                float2 phasor = sample.xy;
+                float amplitude = sample.z;
+                float ampSq = sample.w;
                 float value = 0;
+
+                int xPixel = (int)(floor(pos.x * _MainTex_TexelSize.z));
+                int yPixel = (int)(floor(pos.y * _MainTex_TexelSize.w));
+
+
+                if ((xPixel < _LeftPx) || (xPixel > _RightPx) || (yPixel < _LowerEdge) || (yPixel > _UpperEdge))
+                {
+                    col = _ColorNeg;
+                    col.a = 0.33 * _Brightness;
+                    return col;
+                }
+
+                int displayMode = round(_DisplayMode);
+                bool displaySquare = displayMode == 1 || displayMode == 3 || displayMode == 5;
+                bool displayReal =   displayMode < 2 || displayMode > 3;
+                bool displayIm =  displayMode >= 2;                         
+
+                            // sample the texture
+
+
                 if (displayIm && displayReal)
                 {
                     if (displaySquare)
-                    {
                         value = sample.w * _ScaleEnergy * _ScaleEnergy;
-                    }
                     else
                         value = sample.z * _ScaleAmplitude;
+                    value *= _Brightness;
                     col = lerp(_ColorNeg, _ColorFlow, value);
+                    col.a = _Brightness * (displaySquare ? value+0.33 : clamp(value, .25,1));
                     return col;
                 }
 
                 // If showing phase, rotate phase vector, no need to recalculate pattern, this allows CRT to calculate once, then leave alone;
-                if (_Frequency > 0 )
+                if (_Frequency > 0)
                 {
                     float tphi = (1 - frac(_Frequency * _Time.y)) * Tau;
                     float sinPhi = sin(tphi);
@@ -123,8 +153,6 @@ Shader"SimuCat/CRT/Display Wave Opaque"
                     phasor.x = sample.x * cosPhi - sample.y * sinPhi;
                     phasor.y = sample.x * sinPhi + sample.y * cosPhi;
                 }
-                else
-                    phasor = sample.xy;
 
                 value = displayReal ? phasor.x : phasor.y;
                 if (displaySquare)
@@ -134,7 +162,10 @@ Shader"SimuCat/CRT/Display Wave Opaque"
                 }
                 else
                     value *= _ScaleAmplitude;
-                col = lerp(_ColorNeg, _ShowReal ? _Color : _ColorVel, value);
+
+                value *= _Brightness;
+                col = lerp(_ColorNeg, displayReal ? _Color : _ColorVel, value);
+                col.a = _Brightness * ((displaySquare) ? value +0.33 : clamp(value + 1, 0.3, 1));
                 return col;
             }
             ENDCG

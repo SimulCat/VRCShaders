@@ -1,4 +1,4 @@
-Shader "SimulCat/Ballistic/Surface From CRT"
+Shader "SimuCat/Ballistic/Surface From CRT"
 {
     Properties
     {

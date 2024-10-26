@@ -1,4 +1,4 @@
-﻿Shader"SimulCat/CRT/Reciprocal Lattice"
+﻿Shader"SimuCat/Crystal/Reciproal Lattice CRT"
 {
     /*
 

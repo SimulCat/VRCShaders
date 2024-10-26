@@ -81,7 +81,7 @@ Material:
     - _BUILTIN_QueueControl: 0
     - _BUILTIN_QueueOffset: 0
     - _BaseLight: 0.35
-    - _Brightness: 1
+    - _Brightness: 0
     - _BumpScale: 1
     - _ClipHeight: 0.3
     - _Cutoff: 0.5

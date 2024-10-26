@@ -1,4 +1,4 @@
-Shader"SimulCat/Crystal/ReciprocalBees"
+Shader"SimuCat/Crystal/ReciprocalBees"
 {
 	Properties
 	{

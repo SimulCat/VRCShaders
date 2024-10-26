@@ -1,4 +1,4 @@
-Shader "SimuCat/CRT/Display Wave"
+Shader"SimuCat/Wave/Display Phase CRT Opaque"
 {
     Properties
     {
@@ -6,14 +6,12 @@ Shader "SimuCat/CRT/Display Wave"
         _IdleTex ("Idle Wallpaper", 2D) = "grey" {}
         _IdleColour ("Idle Shade",color) = (0.5,0.5,0.5,1)
 
-        _ShowCRT ("Show CRT", float) = 1
-        _ShowReal("Show Real", float) = 0
+        _ShowReal("Show Real", float) = 1
         _ShowImaginary("Show Imaginary", float) = 0
         _ShowSquare("Show Square", float) = 0
 
-        _ScaleAmplitude("Scale Amplitude", Range(1, 120)) = 50
-        _ScaleEnergy("Scale Energy", Range(1, 120)) = 50
-        _Brightness("Display Brightness", Range(0,2)) = 1
+        _ScaleAmplitude("Scale Amplitude", Range(0.1, 120)) = 50
+        _ScaleEnergy("Scale Energy", Range(0.1, 100)) = 50
 
         _ColorNeg("Colour Base", color) = (0, 0.3, 1, 0)
         _Color("Colour Wave", color) = (1, 1, 0, 0)
@@ -24,9 +22,7 @@ Shader "SimuCat/CRT/Display Wave"
 
     SubShader
     {
-        Tags {"Queue"="Transparent" "IgnoreProjector"="True" "RenderType"="Transparent"}
-        ZWrite Off
-        Blend SrcAlpha OneMinusSrcAlpha
+        Tags {"RenderType"="Opaque"}
         LOD 100
         Cull Off
 
@@ -61,7 +57,6 @@ Shader "SimuCat/CRT/Display Wave"
 
             float _ScaleAmplitude;
             float _ScaleEnergy;
-            float _Brightness;
 
             float _ShowCRT;
             float _ShowReal;
@@ -89,10 +84,11 @@ Shader "SimuCat/CRT/Display Wave"
 
             fixed4 frag(v2f i) : SV_Target
             {
-                bool displaySquare = round(_ShowSquare) > 0;
-                bool displayReal = round(_ShowReal) > 0;
-                bool displayIm = round(_ShowImaginary) > 0;                       
+                bool displaySquare = round(_ShowSquare);
+                bool displayReal = _ShowReal > 0;
+                bool displayIm = _ShowImaginary > 0;                       
                 fixed4 col = _ColorNeg;
+
                 if (!(displayReal || displayIm))
                 {
                     fixed4 sample = tex2D(_IdleTex, i.uv);
@@ -104,24 +100,20 @@ Shader "SimuCat/CRT/Display Wave"
                 float4 sample = tex2D(_MainTex, i.uv);
                 float2 pos = i.uv;
                 float2 phasor = float2(1,0);
-                float amplitude = sample.z;
-                float ampSq = sample.w;
                 float value = 0;
-
                 if (displayIm && displayReal)
                 {
                     if (displaySquare)
+                    {
                         value = sample.w * _ScaleEnergy * _ScaleEnergy;
+                    }
                     else
                         value = sample.z * _ScaleAmplitude;
-                    value *= _Brightness;
                     col = lerp(_ColorNeg, _ColorFlow, value);
-                    col.a = displaySquare ? value+0.33 : clamp(value, .25,1);
                     return col;
                 }
 
                 // If showing phase, rotate phase vector, no need to recalculate pattern, this allows CRT to calculate once, then leave alone;
-
                 if (_Frequency > 0 )
                 {
                     float tphi = (1 - frac(_Frequency * _Time.y)) * Tau;
@@ -132,7 +124,7 @@ Shader "SimuCat/CRT/Display Wave"
                 }
                 else
                     phasor = sample.xy;
-                
+
                 value = displayReal ? phasor.x : phasor.y;
                 if (displaySquare)
                 {
@@ -141,10 +133,7 @@ Shader "SimuCat/CRT/Display Wave"
                 }
                 else
                     value *= _ScaleAmplitude;
-                value *= _Brightness;
-                col = lerp(_ColorNeg, displayReal ? _Color : _ColorVel, value);
-                col.a = (displaySquare) ? value +0.33 : clamp(value + 1, 0.3, 1);
-
+                col = lerp(_ColorNeg, _ShowReal ? _Color : _ColorVel, value);
                 return col;
             }
             ENDCG

@@ -1,12 +1,13 @@
-﻿Shader"SimuCat/CRT/Simulate Waves"
+﻿Shader"SimuCat/Wave/Phase Map CRT with Display"
 {
     /*
-    A CRT to my mind is a cross between a regular shader and a compute shader.
-    Unlike a compute shader, the output can be linked directly to the game engine graphics as a render texture similar to a camera render texture.
+    A CRT is a cross between a regular shader and a compute shader.
+    The output can be linked directly to the game engine graphics as a render texture similar to a camera render texture.
     
-    Like a compute shader, it is run independently of the graphics frame cadence and needs to be explicitly output from code, you can decide what to do on each pass, and even what zone of the texture needs updating (this example does neither).
+    Like a compute shader, it can be set to run independently of the graphics frame cadence allowing it to be explicitly invoked from code.
+    From code, you can choose what pass to invoke, and what zone of the texture needs updating (this example does not implement zones).
 
-    Maintaining state: It is a halfway-house between a compute shader and a graphics shader, the latter being stateless in that it can be set to be double-buffered so that the main "texture" (data) state 
+    Maintaining state: While graphics shaders are stateless, the CRT can be set to be double-buffered so that the main "texture" (data) state persists from one pass to the next.
 
     This example is intended for dual use. First, the output can be used directly with a standard shader
     to do wave calculation across a surface and is able to be used with a standard fragment shader running on a material. This produces static output unless the CRT shader is output (e.g. with new phase to animate the waves.)
@@ -35,9 +36,7 @@
         _Scale("Simulation Scale",Range(1.0,10.0)) = 1
         _SourceResolution("Source Resolution",Range(0.1,5)) = 0.5
 
-        _OutputRaw("Generate Raw Output", float) = 0
         _DisplayMode("Display Mode", float) = 0
-
         _Color("Colour Wave", color) = (1, 1, 0, 0)
         _ColorNeg("Colour Base", color) = (0, 0.3, 1, 0)
         _ColorVel("Colour Velocity", color) = (0, 0.3, 1, 0)
@@ -57,7 +56,6 @@ float _SlitWidth;
 float _Scale;
 float _SourceResolution;
 
-float _OutputRaw;
 float _DisplayMode;
 
 float4 _Color;
@@ -95,12 +93,12 @@ float4 frag(v2f_customrendertexture i) : SV_Target
     int phasorCount = 0;
     float pixScale = 1 / _Scale;
     
-    float sourceY = ((_SlitCount - 1) * +_SlitPitch) * 0.5 + (_SlitWidth * 0.25);
+    float apertureTop = (max(sourceCount - 1.0,0) * _SlitPitch * 0.5) + _SlitWidth * 0.5;
     float2 delta = float2(xPixel*_Scale,0.0);
     float yScaled = (yPixel - _CustomRenderTextureHeight / 2.0)*_Scale;
     for (int nAperture = 0; nAperture < sourceCount; nAperture++)
     {
-        float slitY = sourceY;
+        float slitY = apertureTop;
         float2 phaseAmp = float2(0, 0);
         for (int apertureStep = 0; apertureStep < slitWidthCount; apertureStep++)
         {
@@ -110,7 +108,7 @@ float4 frag(v2f_customrendertexture i) : SV_Target
              phasorCount++;
         }
         phasor += phaseAmp;
-        sourceY -= _SlitPitch;
+        apertureTop -= _SlitPitch;
     }
     phasor *= 1.0/phasorCount;
     /*
@@ -122,21 +120,13 @@ float4 frag(v2f_customrendertexture i) : SV_Target
          e) x and y squared separate the potential and kinetic energy components.
     */
 
-    /* The output is a raw 2D texture able to be used on a material, to use the rendertexture output in a standard shader, this part takes the data point and generates a color that can be written to the      output buffer.
-        accordng to the selected display mode.
-     - now set a colour for the output point so the final rendertexture can show up in a standard shader. the output is RGB (colour) a is the (signed) wave amplitude (e.g. for surface shader).
-    float alpha = 0;
+    /* The output is a 2D texture able to be used on a material, able to be used in a rendertexture output with a standard shader.
+    This part takes the data point and generates a color that can be written to the output buffer according to the selected display mode.
     */
+
    float phaseAmp = length(phasor); 
    float ampSq = phaseAmp * phaseAmp;
-   if (_OutputRaw >= 0.5)
-   {
-       output.xy = phasor;
-       output.z = phaseAmp;
-       output.w = ampSq; 
-       return output;
-   }
-    int displayMode = round(_DisplayMode);
+   int displayMode = round(_DisplayMode);
     if (displayMode < 4 && _Frequency > 0)
     {
         float2 sample = phasor;
@@ -148,7 +138,7 @@ float4 frag(v2f_customrendertexture i) : SV_Target
     }
 
    /*
-     Generate required false colour representation of user's choive of wave component
+     Generate required false colour representation of user's choice of wave component
      < 0 (Nothing)
      0 = x
      1 = x squared
