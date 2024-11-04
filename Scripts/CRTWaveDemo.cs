@@ -59,11 +59,11 @@ public class CRTWaveDemo : UdonSharpBehaviour
     [Header("Serialized for monitoring in Editor")]
     [SerializeField]
     private Material matPanel = null;
-    [SerializeField]
+    //[SerializeField]
     private bool useDisplayMode = false;
     [SerializeField]
     private bool useFrequency = false;
-    [SerializeField]
+    //[SerializeField]
     private bool useDisplayStates = false;
 
     [SerializeField]
