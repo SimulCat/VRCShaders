@@ -79,8 +79,7 @@ public class BallisticScatter : UdonSharpBehaviour
         set 
         { 
             maxParticleK = value; 
-            if (setColour)
-                SetColour(); 
+            SetColour(); 
         } 
     }
     public float MinParticleK { get => minParticleK; set => minParticleK = value; }
@@ -493,6 +492,11 @@ public class BallisticScatter : UdonSharpBehaviour
 
     private void SetColour()
     {
+        if (!setColour)
+        {
+            DisplayColor = displayColor;
+            return;
+        }
         float frac = Mathf.InverseLerp(minParticleK, maxParticleK, particleK);
         Color dColour = spectrumColour(Mathf.Lerp(700, 400, frac));
         dColour.r = Mathf.Clamp(dColour.r, 0.2f, 2f);
@@ -514,8 +518,7 @@ public class BallisticScatter : UdonSharpBehaviour
                 matProbabilitySim.SetFloat("_ParticleP", particleK);
             if (ihaveParticleFlow)
                 matParticleFlow.SetFloat("_ParticleP", particleK);
-            if (setColour)
-                SetColour();
+            SetColour();
         }
     }
 
