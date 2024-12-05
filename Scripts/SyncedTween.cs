@@ -1,5 +1,5 @@
 ﻿
-using System;
+using System.Security.AccessControl;
 using UdonSharp;
 using UnityEngine;
 using UnityEngine.UI;
@@ -30,27 +30,41 @@ public class SyncedTween : UdonSharpBehaviour
     bool locallyOwned = true;
     private VRCPlayerApi localPlayer;
 
+    private bool prevState;
+
+    private void UpdateToggle()
+    {
+        if (syncedState || offToggle == null)
+        {
+            if (stateToggle != null)
+                stateToggle.SetIsOnWithoutNotify(syncedState);
+        }
+        else
+        {
+            offToggle.SetIsOnWithoutNotify(true);
+        }
+    }
+
     private bool SyncedState
     {
         get => syncedState;
         set
         {
-            isPlaying |= value != syncedState;
+            isPlaying |=  value != prevState;
             syncedState = value;
+            prevState = value;
             if (!locallyOwned)
-            {
-                if (syncedState || offToggle == null)
-                {
-                    if (stateToggle != null)
-                        stateToggle.SetIsOnWithoutNotify(syncedState);
-                }
-                else
-                {
-                    offToggle.SetIsOnWithoutNotify(true);
-                }
-            }
+                UpdateToggle();
             RequestSerialization();
         }
+    }
+
+    public void setState(bool state)
+    {
+        SyncedState = state;
+        UpdateToggle();
+        animationTime = state ? 1 : 0;
+        isPlaying = true;
     }
 
     void SendOutValues(float value)
