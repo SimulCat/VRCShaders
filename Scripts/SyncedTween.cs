@@ -27,6 +27,7 @@ public class SyncedTween : UdonSharpBehaviour
     [SerializeField, UdonSynced, FieldChangeCallback(nameof(SyncedState))]
     private bool syncedState = false;
     private bool isPlaying = false;
+    [SerializeField]
     bool locallyOwned = true;
     private VRCPlayerApi localPlayer;
 
@@ -34,15 +35,18 @@ public class SyncedTween : UdonSharpBehaviour
 
     private void UpdateToggle()
     {
-        if (syncedState || offToggle == null)
+        if (offToggle == null && stateToggle != null)
+        {
+            stateToggle.SetIsOnWithoutNotify(syncedState);
+            return;
+        }
+        if (syncedState)
         {
             if (stateToggle != null)
                 stateToggle.SetIsOnWithoutNotify(syncedState);
+            return;
         }
-        else
-        {
-            offToggle.SetIsOnWithoutNotify(true);
-        }
+        offToggle.SetIsOnWithoutNotify(true);
     }
 
     private bool SyncedState
@@ -53,8 +57,7 @@ public class SyncedTween : UdonSharpBehaviour
             isPlaying |=  value != prevState;
             syncedState = value;
             prevState = value;
-            if (!locallyOwned)
-                UpdateToggle();
+            UpdateToggle();
             RequestSerialization();
         }
     }
