@@ -386,7 +386,7 @@ public int SlitCount
         SlitCount = slitCount;
         if (iHaveWidthSlider)
         {
-            widthSlider.SetLimits(5, 50);
+            widthSlider.SetLimits(5, 75);
             widthSlider.SetValue(slitWidth);
         }
         SlitWidth = slitWidth;
