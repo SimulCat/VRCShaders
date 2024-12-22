@@ -97,16 +97,16 @@ public class BallisticScatter : UdonSharpBehaviour
     [SerializeField] UdonSlider speedRangeSlider;
 
     [Header("For tracking in Editor")]
-    [SerializeField, Tooltip("Shown for editor reference, loaded at Start")]
-    Material matProbabilitySim = null;
-    [SerializeField]
-    Material matParticleFlow = null;
+    //[SerializeField, Tooltip("Shown for editor reference, loaded at Start")]
+    private Material matProbabilitySim = null;
+    //[SerializeField]
+    private Material matParticleFlow = null;
 
-    [SerializeField]
+    //[SerializeField]
     bool ihaveParticleFlow = false;
-    [SerializeField]
+    //[SerializeField]
     bool iHaveProbability = false;
-    [SerializeField]
+    //[SerializeField]
     bool iHaveProbSimMat = false;
     //[SerializeField]
     private float shaderPauseTime = 0;

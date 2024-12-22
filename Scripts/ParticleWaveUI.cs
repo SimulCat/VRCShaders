@@ -42,7 +42,7 @@ public class ParticleWaveUI : UdonSharpBehaviour
     [SerializeField, FieldChangeCallback(nameof(Lambda))]
     private float lambda;
 
-    [SerializeField]
+    //[SerializeField]
     private bool crtUpdateRequired;
 
     [Header("UI Controls")]

@@ -45,13 +45,13 @@ public class CrystalDemo : UdonSharpBehaviour
     public Toggle selectCubic;
 
     [SerializeField]
-    SyncedSlider angstromSliderX;
+    UdonBehaviour angstromSliderX;
     bool iHaveControlX;
     [SerializeField]
-    SyncedSlider angstromSliderY;
+    UdonBehaviour angstromSliderY;
     bool iHaveControlY;
     [SerializeField]
-    SyncedSlider angstromSliderZ;
+    UdonBehaviour angstromSliderZ;
     bool iHaveControlZ;
 
     [Header("Settings")]
@@ -508,13 +508,13 @@ public class CrystalDemo : UdonSharpBehaviour
 
         CellX = cellX;
         if (iHaveControlX)
-            angstromSliderX.SetValue(cellX);
+            angstromSliderX.SetProgramVariable<float>("syncedValue",cellX);
         CellY = cellY;
         if (iHaveControlY)
-            angstromSliderY.SetValue(cellY);
+            angstromSliderY.SetProgramVariable<float>("syncedValue", cellY);
         CellZ = cellZ;
         if (iHaveControlZ)
-            angstromSliderX.SetValue(cellZ);
+            angstromSliderX.SetProgramVariable<float>("syncedValue", cellZ);
 
         CrystalType = crystalType;
         BeamAngle = beamAngle;
