@@ -8,7 +8,7 @@ using VRC.Udon;
 
 [RequireComponent(typeof(MeshRenderer))]
 [RequireComponent(typeof(MeshFilter))]
-
+[UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class PlaneMesh : UdonSharpBehaviour
 {
     [SerializeField]
@@ -24,11 +24,7 @@ public class PlaneMesh : UdonSharpBehaviour
         get => useHighRes;
         set
         {
-            if (value != useHighRes)
-            {
-                useHighRes = value;
-            }
-            RequestSerialization();
+            useHighRes = value;
             if (useHighRes)
                 AssignBigMesh();
             else
@@ -36,42 +32,11 @@ public class PlaneMesh : UdonSharpBehaviour
         }
     }
 
-    /*
-    public Vector2 Dimensions
-    {
-        get => dimensions;
-        set
-        {
-            if ((!isInitialized) || dimensions != value)
-            {
-                isInitialized = CalculatePlaneDefinition();
-                if (isInitialized)
-                    AssignPlane();
-            }
-            dimensions = value;
-        }
-    }
-    */
-    /*
-    public Vector2Int Resolution
-    {
-        get => resolution;
-        set
-        {
-            if ((!isInitialized) || resolution != value)
-            {
-                isInitialized = CalculatePlaneDefinition();
-                if (isInitialized)
-                    AssignPlane();
-            }
-            resolution = value;
-        }
-    }
-    */
-
+  
     public Material material;
-    
+    [SerializeField]
     Mesh smallMesh;
+    [SerializeField]
     Mesh bigMesh;
     MeshFilter mf;
 
@@ -103,7 +68,10 @@ public class PlaneMesh : UdonSharpBehaviour
         if (mf == null)
             mf = GetComponent<MeshFilter>();
         if (mf == null)
+        {
+            Debug.LogError("No MeshFilter component found");
             return false;
+        }
         if (smallMesh == null)
             ConstructSmallMesh();
         if (smallMesh == null)
@@ -208,5 +176,4 @@ public class PlaneMesh : UdonSharpBehaviour
         }
         UseHighRes = useHighRes;
     }
-
 }

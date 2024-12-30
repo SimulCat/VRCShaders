@@ -1,4 +1,4 @@
-﻿Shader"SimuCat/Wave/Phase Map CRT with Display"
+﻿Shader"SimulCat/Wave/Phase Map CRT with Display"
 {
     /*
     A CRT is a cross between a regular shader and a compute shader.
@@ -41,7 +41,7 @@
         _ColorNeg("Colour Base", color) = (0, 0.3, 1, 0)
         _ColorVel("Colour Velocity", color) = (0, 0.3, 1, 0)
         _ColorFlow("Colour Flow", color) = (1, 0.3, 0, 0)
-        _Frequency("Wave Frequency", float) = 0
+        _Frequency("Frequency", float) = 0
     }
 
 CGINCLUDE

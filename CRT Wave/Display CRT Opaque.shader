@@ -1,10 +1,8 @@
-Shader"SimuCat/Wave/Display Phase CRT Opaque"
+Shader"SimulCat/Wave/Display Phase from CRT Opaque"
 {
     Properties
     {
         _MainTex ("CRT Texture", 2D) = "grey" {}
-        _IdleTex ("Idle Wallpaper", 2D) = "grey" {}
-        _IdleColour ("Idle Shade",color) = (0.5,0.5,0.5,1)
 
         _ShowReal("Show Real", float) = 1
         _ShowImaginary("Show Imaginary", float) = 0
@@ -12,12 +10,13 @@ Shader"SimuCat/Wave/Display Phase CRT Opaque"
 
         _ScaleAmplitude("Scale Amplitude", Range(0.1, 120)) = 50
         _ScaleEnergy("Scale Energy", Range(0.1, 100)) = 50
+        _Brightness("Display Brightness", Range(0,2)) = 1
 
         _ColorNeg("Colour Base", color) = (0, 0.3, 1, 0)
         _Color("Colour Wave", color) = (1, 1, 0, 0)
         _ColorVel("Colour Velocity", color) = (0, 0.3, 1, 0)
         _ColorFlow("Colour Flow", color) = (1, 0.3, 0, 0)
-        _Frequency("Wave Frequency", float) = 0
+        _Frequency("Frequency", float) = 0
     }
 
     SubShader
@@ -51,12 +50,9 @@ Shader"SimuCat/Wave/Display Phase CRT Opaque"
             float4 _MainTex_ST;
             float4 _MainTex_TexelSize;
 
-            sampler2D _IdleTex;
-            float4 _IdleTex_ST;
-            float4 _IdleColour;
-
             float _ScaleAmplitude;
             float _ScaleEnergy;
+            float _Brightness;
 
             float _ShowCRT;
             float _ShowReal;
@@ -75,10 +71,7 @@ Shader"SimuCat/Wave/Display Phase CRT Opaque"
             {
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
-                if (_ShowReal <= 0 && _ShowImaginary <= 0)
-                    o.uv = TRANSFORM_TEX(v.uv, _MainTex);
-                else
-                    o.uv = TRANSFORM_TEX(v.uv, _IdleTex);
+                o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 return o;
             }
 
@@ -91,9 +84,6 @@ Shader"SimuCat/Wave/Display Phase CRT Opaque"
 
                 if (!(displayReal || displayIm))
                 {
-                    fixed4 sample = tex2D(_IdleTex, i.uv);
-                    col.rgb = sample.rgb * _IdleColour;
-                    col.a = sample.r * _IdleColour.a;
                     return col;
                 }
                             // sample the texture
@@ -104,11 +94,10 @@ Shader"SimuCat/Wave/Display Phase CRT Opaque"
                 if (displayIm && displayReal)
                 {
                     if (displaySquare)
-                    {
                         value = sample.w * _ScaleEnergy * _ScaleEnergy;
-                    }
                     else
                         value = sample.z * _ScaleAmplitude;
+                    value *= _Brightness;
                     col = lerp(_ColorNeg, _ColorFlow, value);
                     return col;
                 }
@@ -133,6 +122,7 @@ Shader"SimuCat/Wave/Display Phase CRT Opaque"
                 }
                 else
                     value *= _ScaleAmplitude;
+                value *= _Brightness;
                 col = lerp(_ColorNeg, _ShowReal ? _Color : _ColorVel, value);
                 return col;
             }

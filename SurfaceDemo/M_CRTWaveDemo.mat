@@ -1,0 +1,149 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_CRTWaveDemo
+  m_Shader: {fileID: 4800000, guid: 0eb0e8585d06c9d4eac4fff7f517a976, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BumpMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailAlbedoMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailMask:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailNormalMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EmissionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _IdleTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 8600000, guid: 25252273be310514a90889053ef77c5c, type: 2}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MetallicGlossMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _OcclusionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _ParallaxMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _PhaseSurface:
+        m_Texture: {fileID: 8600000, guid: 25252273be310514a90889053ef77c5c, type: 2}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _WaveMesh:
+        m_Texture: {fileID: 8600000, guid: 27cf4cf7075b94741b4848b27c9b6333, type: 2}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _WaveTex:
+        m_Texture: {fileID: 8600000, guid: 27cf4cf7075b94741b4848b27c9b6333, type: 2}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _AO: 2.4
+    - _BUILTIN_QueueControl: 0
+    - _BUILTIN_QueueOffset: 0
+    - _BaseLight: 0.35
+    - _Brightness: 0
+    - _BumpScale: 1
+    - _ClipHeight: 0.3
+    - _Cutoff: 0.5
+    - _DetailNormalMapScale: 1
+    - _Displacement: 0.0025
+    - _DisplayMode: 0
+    - _DstBlend: 0
+    - _EnableEmission: 0
+    - _Frequency: 2
+    - _GlossMapScale: 1
+    - _Glossiness: 0.832
+    - _GlossyReflections: 1
+    - _HeightScale: 0.002
+    - _K: 0.1
+    - _Lambda: 49.642857
+    - _LambdaPx: 49.642857
+    - _Metallic: 0.942
+    - _Mode: 0
+    - _NumSources: 2
+    - _OcclusionStrength: 1
+    - _OutputRaw: 1
+    - _Parallax: 0.02
+    - _Phase: 0
+    - _Scale: 1
+    - _ScaleAmplitude: 23.4
+    - _ScaleColour: 9.2
+    - _ScaleEnergy: 24.1
+    - _ScaleHeight: 0.19
+    - _ShowCRT: 1
+    - _ShowHeight: 0
+    - _ShowImaginary: 1
+    - _ShowReal: 1
+    - _ShowSquare: 1
+    - _ShowVelocity: 1
+    - _SlitCount: 2
+    - _SlitPitch: 448
+    - _SlitPitchPx: 448
+    - _SlitWidePx: 40
+    - _SlitWidth: 12
+    - _SmoothnessTextureChannel: 0
+    - _SpecularHighlights: 1
+    - _SquashAmount: 1
+    - _SrcBlend: 1
+    - _UVSec: 0
+    - _UseHeight: 1
+    - _UseSquare: 0
+    - _UseVelocity: 0
+    - _WaveStrength: 0.01
+    - _ZWrite: 1
+    - _mmHigh: 1000
+    - _mmWide: 2000
+    m_Colors:
+    - _Color: {r: 1, g: 0.2980392, b: 0.25098038, a: 1}
+    - _ColorBase: {r: 0.19999996, g: 0.29999998, b: 0.39999998, a: 1}
+    - _ColorFlow: {r: 0.64705884, g: 0.20784314, b: 0.90588236, a: 0}
+    - _ColorIm: {r: 1, g: 0.57254905, b: 0, a: 1}
+    - _ColorNeg: {r: 0.043137256, g: 0.019607844, b: 0.3882353, a: 0}
+    - _ColorVel: {r: 0.2971698, g: 0.5066406, b: 1, a: 0}
+    - _ColourDeep: {r: 0.6792453, g: 0.086507656, b: 0.12975544, a: 1}
+    - _ColourPeak: {r: 0.66935843, g: 0.34509802, b: 1, a: 1}
+    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _IdleColour: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+    - _TreeInstanceColor: {r: 1, g: 1, b: 1, a: 1}
+    - _TreeInstanceScale: {r: 1, g: 1, b: 1, a: 1}
+  m_BuildTextureStacks: []
