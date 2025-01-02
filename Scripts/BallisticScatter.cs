@@ -235,11 +235,11 @@ public class BallisticScatter : UdonSharpBehaviour
         }
     }
 
-    [SerializeField]
+    //[SerializeField]
     bool crtUpdateRequired = false;
-    [SerializeField]
+   // [SerializeField]
     bool gratingUpdateRequired = false;
-    [SerializeField]
+   // [SerializeField]
     float simPixelScale = 1;
 
     private void setGratingParams(Material mat)

@@ -133,6 +133,7 @@ public class WavePanelControl : UdonSharpBehaviour
 
     private void configureSimControl(bool vanillaDisplay)
     {
+       // Debug.Log("configureSimControl(" + vanillaDisplay.ToString() + ")");
         CRTUpdatesMovement = false;
         if (vanillaDisplay)
         { 
@@ -149,7 +150,7 @@ public class WavePanelControl : UdonSharpBehaviour
                 // No CRT and not a compatible display
                 matSimDisplay = null;
                 matSimControl = null;
-                Debug.Log("Warning:configureSimControl() no Interference control/display material");
+                //Debug.Log("Warning:configureSimControl() no Interference control/display material");
             }
         }
         else 
@@ -270,7 +271,7 @@ public class WavePanelControl : UdonSharpBehaviour
     {
         if (!iHaveSimDisplay)
         {
-            Debug.Log(gameObject.name + " Warning- no Display material");
+            Debug.LogWarning(gameObject.name + ": no Display material");
             return;
         }
         //Debug.Log(gameObject.name + "updateDisplayTxture(Mode 2#" + displayMode.ToString() + ")");
@@ -474,10 +475,8 @@ public class WavePanelControl : UdonSharpBehaviour
         iHavePanelMaterial = matPanel != null;
 
         if (simCRT != null)
-        {
             iHaveCRT = true;
-        }
-
+        //Debug.Log(gameObject.name + "Start() iHaveCRT=" + iHaveCRT.ToString());
         configureSimControl(PanelHasVanillaMaterial);
         if (iHaveSimControl)
         {

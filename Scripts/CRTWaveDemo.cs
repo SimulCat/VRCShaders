@@ -1,5 +1,4 @@
 ﻿
-using System;
 using UdonSharp;
 using UnityEngine;
 using UnityEngine.UI;
@@ -55,19 +54,19 @@ public class CRTWaveDemo : UdonSharpBehaviour
         matPanel.SetFloat("_Brightness", targetViz);
     }
 
-
-    [Header("Serialized for monitoring in Editor")]
-    [SerializeField]
-    private Material matPanel = null;
-    //[SerializeField]
-    private bool useDisplayMode = false;
-    [SerializeField]
-    private bool useFrequency = false;
-    //[SerializeField]
-    private bool useDisplayStates = false;
+    [Header("Mode Colours")]
 
     [SerializeField]
     private Color flowColour = Color.magenta;
+
+    //[Header("Serialized for monitoring in Editor")]
+    //[SerializeField]
+    private Material matPanel = null;
+    //[SerializeField]
+    private bool hasDisplayModes = false;
+    [SerializeField]
+    private bool useFrequency = false;
+
 
     public Color FlowColour
     {
@@ -157,9 +156,7 @@ public class CRTWaveDemo : UdonSharpBehaviour
         set
         {
             displayMode = value;
-            if (useDisplayMode)
-                matPanel.SetFloat("_DisplayMode", value);
-            if (useDisplayStates)
+            if (hasDisplayModes)
             {
                 switch (displayMode)
                 {
@@ -302,17 +299,13 @@ public class CRTWaveDemo : UdonSharpBehaviour
     {
         if (matPanel == null)
         {
-            useDisplayMode = false;
-            useDisplayStates = false;
+            hasDisplayModes = false;
             useFrequency = false;
             Debug.LogWarning("CRTWaveDemo: No Wave Display Material");
             return;
         }
-        useDisplayStates = matPanel.HasProperty("_ShowReal");
-        //Debug.Log("CRTWaveDemo: useDisplayStates" + useDisplayStates.ToString());
-        useDisplayMode = matPanel.HasProperty("_DisplayMode");
+        hasDisplayModes = matPanel.HasProperty("_ShowReal");
         useFrequency = matPanel.HasProperty("_Frequency");
-        //Debug.Log(gameObject.name + ": CRTWaveDemo.cs: useFrequency" + useFrequency.ToString());
     }
 
     void Start()
