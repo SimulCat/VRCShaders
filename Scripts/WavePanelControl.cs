@@ -95,7 +95,7 @@ public class WavePanelControl : UdonSharpBehaviour
     //[SerializeField]
     private bool iHaveSimControl = false;
     [SerializeField]
-    private bool CRTUpdatesMovement;
+    private bool CRTUpdatesMovement = false;
     private VRCPlayerApi player;
     private bool iamOwner = false;
 
@@ -131,11 +131,11 @@ public class WavePanelControl : UdonSharpBehaviour
         ReviewOwnerShip();
     }
 
-    private void configureSimControl(bool vanillaDisplay)
+    private void configureSimControl(bool scrollingDisplay)
     {
-       // Debug.Log("configureSimControl(" + vanillaDisplay.ToString() + ")");
+        //Debug.Log("configureSimControl(" + scrollingDisplay.ToString() + ")");
         CRTUpdatesMovement = false;
-        if (vanillaDisplay)
+        if (!scrollingDisplay)
         { 
             if (iHaveCRT)
             { // Display mode and wave speed controls get handled by the panel material
@@ -143,14 +143,13 @@ public class WavePanelControl : UdonSharpBehaviour
                 matSimControl = simCRT.material;
                 CRTUpdatesMovement = true;
                 simCRT.material.SetFloat("_OutputRaw", 0);
-                crtUpdateNeeded = true;
             }
             else
             {
                 // No CRT and not a compatible display
                 matSimDisplay = null;
                 matSimControl = null;
-                //Debug.Log("Warning:configureSimControl() no Interference control/display material");
+                Debug.LogWarning("Warning:configureSimControl() no Interference control/display material");
             }
         }
         else 
@@ -173,15 +172,18 @@ public class WavePanelControl : UdonSharpBehaviour
         iHaveSimDisplay = matSimDisplay != null;
     }
 
-    private bool PanelHasVanillaMaterial
+    private bool PanelHasScrollingMaterial
     {
         get
         {
             if (!iHavePanelMaterial)
-                return true;
+            {
+                Debug.LogWarning(gameObject.name + ": no Panel material");
+                return false;
+            }
             if (matPanel.HasProperty("_ShowReal"))
-                return false; 
-            return true;
+                return true; 
+            return false;
         }
     }
 
@@ -431,6 +433,7 @@ public class WavePanelControl : UdonSharpBehaviour
         if (displayMode >= 0)
             simCRT.Update(1);
         crtUpdateNeeded = false;
+        //Debug.Log(gameObject.name + "UpdateSimulation()");
     }
 
     float waveTime = 0;
@@ -477,7 +480,7 @@ public class WavePanelControl : UdonSharpBehaviour
         if (simCRT != null)
             iHaveCRT = true;
         //Debug.Log(gameObject.name + "Start() iHaveCRT=" + iHaveCRT.ToString());
-        configureSimControl(PanelHasVanillaMaterial);
+        configureSimControl(PanelHasScrollingMaterial);
         if (iHaveSimControl)
         {
             defaultWidth = matSimControl.GetFloat("_SlitWidth");

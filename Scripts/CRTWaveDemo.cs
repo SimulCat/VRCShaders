@@ -59,9 +59,11 @@ public class CRTWaveDemo : UdonSharpBehaviour
     [SerializeField]
     private Color flowColour = Color.magenta;
 
-    //[Header("Serialized for monitoring in Editor")]
-    //[SerializeField]
+    [Header("Serialized for monitoring in Editor")]
+    [SerializeField]
     private Material matPanel = null;
+    private bool iHaveDisplayMat = false;
+
     //[SerializeField]
     private bool hasDisplayModes = false;
     [SerializeField]
@@ -74,7 +76,7 @@ public class CRTWaveDemo : UdonSharpBehaviour
         set
         {
            flowColour = value;
-            if (matPanel != null)
+            if (iHaveDisplayMat)
             {
                 matPanel.SetColor("_ColorFlow", flowColour);
             }
@@ -92,7 +94,8 @@ public class CRTWaveDemo : UdonSharpBehaviour
     }
     private void UpdateWaveFrequency()
     {
-        if (matPanel != null && useFrequency)
+        //Debug.Log(gameObject.name + "->CRTWaveDemo: Frequency: " + frequency);
+        if (iHaveDisplayMat && useFrequency)
             matPanel.SetFloat("_Frequency", playPhi ? frequency : 0f);
     }
 
@@ -297,8 +300,10 @@ public class CRTWaveDemo : UdonSharpBehaviour
 
     private void checkPanelType()
     {
-        if (matPanel == null)
+        iHaveDisplayMat = matPanel != null;
+        if (!iHaveDisplayMat)
         {
+            iHaveDisplayMat = false;
             hasDisplayModes = false;
             useFrequency = false;
             Debug.LogWarning("CRTWaveDemo: No Wave Display Material");
@@ -306,6 +311,7 @@ public class CRTWaveDemo : UdonSharpBehaviour
         }
         hasDisplayModes = matPanel.HasProperty("_ShowReal");
         useFrequency = matPanel.HasProperty("_Frequency");
+        //Debug.Log("CRTWaveDemo: Wave Display Material Is: " + matPanel.name);
     }
 
     void Start()
@@ -321,19 +327,12 @@ public class CRTWaveDemo : UdonSharpBehaviour
         iHaveTogProb = togProbability != null;
         if (waveMesh != null)
             matPanel = waveMesh.material;
+        checkPanelType();
         ContrastVal = contrastVal;
         if (contrastSlider != null)
             contrastSlider.SetValue(contrastVal);
-        checkPanelType();
         if (togPlay != null)
             PlayPhi = togPlay.isOn;
         DisplayMode = displayMode;
-        if (useFrequency)
-        {
-            if (frequency <= 0)
-                frequency = matPanel.GetFloat("_Frequency");
-            else
-                matPanel.SetFloat("_Frequency", frequency);
-        }
     }
 }

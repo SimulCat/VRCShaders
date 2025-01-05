@@ -74,7 +74,7 @@ public class ParticleWaveUI : UdonSharpBehaviour
     private int MAX_SLITS = 17;
 
     [Header("Working Value Feedback")]
-    [SerializeField]
+    //[SerializeField]
     Material matWaveCRT;
     [SerializeField]
     private float waveMeshScale = 1; // Scales UI control values for wavelength and grating dimensions to CRT gridpoints units
