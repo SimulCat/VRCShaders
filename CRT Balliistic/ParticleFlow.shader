@@ -1,4 +1,4 @@
-Shader "SimuCat/Ballistic/Particle Dispersion"
+Shader "SimulCat/Ballistic/Particle Dispersion"
 {
     Properties
     {

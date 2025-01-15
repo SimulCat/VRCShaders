@@ -102,17 +102,12 @@ Shader"SimulCat/Wave/Display Phase from CRT Opaque"
                     return col;
                 }
 
-                // If showing phase, rotate phase vector, no need to recalculate pattern, this allows CRT to calculate once, then leave alone;
-                if (_Frequency > 0 )
-                {
-                    float tphi = (1 - frac(_Frequency * _Time.y)) * Tau;
-                    float sinPhi = sin(tphi);
-                    float cosPhi = cos(tphi);
-                    phasor.x = sample.x * cosPhi - sample.y * sinPhi;
-                    phasor.y = sample.x * sinPhi + sample.y * cosPhi;
-                }
-                else
-                    phasor = sample.xy;
+                // To show wave movement, rotate phase vector, no need to recalculate pattern, this allows CRT to calculate once, then leave static;
+                float tphi = (1 - frac(_Frequency * _Time.y)) * Tau;
+                float sinPhi = sin(tphi);
+                float cosPhi = cos(tphi);
+                phasor.x = sample.x * cosPhi - sample.y * sinPhi;
+                phasor.y = sample.x * sinPhi + sample.y * cosPhi;
 
                 value = displayReal ? phasor.x : phasor.y;
                 if (displaySquare)

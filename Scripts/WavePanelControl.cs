@@ -15,10 +15,6 @@ public class WavePanelControl : UdonSharpBehaviour
     [Tooltip("Wave Display Mesh")] 
     public MeshRenderer thePanel;
 
-    [SerializeField] UdonSlider speedSlider;
-    private bool iHaveSpeedControl = false;
-    [SerializeField, FieldChangeCallback(nameof(WaveSpeed))] public float waveSpeed;
-    [SerializeField] float defaultSpeed = 1;
     [SerializeField, Tooltip("CRT Update Cadence"), Range(0.01f, 0.5f)] float dt = 0.3f;
 
     [SerializeField] Toggle togPlay;
@@ -42,6 +38,10 @@ public class WavePanelControl : UdonSharpBehaviour
     [SerializeField] Toggle togProbability;
     bool iHaveTogProb = false;
 
+    [SerializeField] UdonSlider speedSlider;
+    private bool iHaveSpeedControl = false;
+    [SerializeField, FieldChangeCallback(nameof(WaveSpeed))] public float waveSpeed;
+    private float initialSpeed = 1;
     [SerializeField] UdonSlider lambdaSlider;
     private bool iHaveLambdaControl = false;
     [SerializeField, Range(1, 100)] float defaultLambda = 24;
@@ -190,7 +190,7 @@ public class WavePanelControl : UdonSharpBehaviour
     private void UpdateWaveSpeed()
     {
         if (iHaveSimDisplay)
-            matSimDisplay.SetFloat("_Frequency", playSim ? waveSpeed * defaultLambda / lambda : 0f);
+            matSimDisplay.SetFloat("_Frequency", playSim ?  waveSpeed * defaultLambda / lambda : 0f);
         crtUpdateNeeded |= iHaveCRT;
     }
 
@@ -199,7 +199,7 @@ public class WavePanelControl : UdonSharpBehaviour
         get => waveSpeed;
         set
         {
-            waveSpeed = Mathf.Clamp(value,0,5);
+            waveSpeed = Mathf.Clamp(value,-5,5);
             UpdateWaveSpeed();
         }
     }
@@ -489,9 +489,9 @@ public class WavePanelControl : UdonSharpBehaviour
             defaultPitch = matSimControl.GetFloat("_SlitPitch"); 
             defaultSources = Mathf.RoundToInt(matSimControl.GetFloat("_SlitCount"));
         }
-        defaultSpeed = waveSpeed;
+        initialSpeed = waveSpeed;
         if (iHaveSimDisplay)
-            defaultSpeed = matSimDisplay.GetFloat("_Frequency");
+            initialSpeed = matSimDisplay.GetFloat("_Frequency");
 
         slitPitch = defaultPitch;
         slitWidth = defaultWidth;
@@ -537,9 +537,9 @@ public class WavePanelControl : UdonSharpBehaviour
         Lambda = defaultLambda;
         if (iHaveLambdaControl)
             lambdaSlider.SetValue(defaultLambda);
-        WaveSpeed = defaultSpeed;
+        WaveSpeed = initialSpeed;
         if (iHaveSpeedControl)
-            speedSlider.SetValue(defaultSpeed);
+            speedSlider.SetValue(initialSpeed);
         SimScale = defaultScale;
         if (iHaveScaleControl)
             scaleSlider.SetValue(defaultScale);
