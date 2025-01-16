@@ -157,7 +157,7 @@ Shader "SimulCat/Ballistic/Particle Dispersion"
                 float leftEdge = leftSlitCenter - slitWidthScaled*0.5;
 
                 // Fresh hash of the particle to pick a start position
-                float startHash = RandomRange(1.0,idHash ^ 0xAFAFAF)-0.5;
+                float startHash = RandomRange(1.0,idHash ^ 0xAC3FFF)-0.5;
                 float speedHash = RandomRange(2.0,idHash >> 3)-1.0;
                 float startPosY =  (_GratingOffset > 0.00001) ? (beamWidth * startHash) : slitCenter + (startHash * slitWidthScaled);
                 float normPos = frac((startPosY-leftEdge)/slitPitchScaled)*slitPitchScaled;

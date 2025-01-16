@@ -32,7 +32,7 @@
         _Lambda("Wavelength", float) = 49.64285714
         _SlitCount("Num Sources",float) = 2
         _SlitPitch("Slit Pitch",float) = 448
-        _SlitWidth("Slit Width", Range(1.0,40.0)) = 12.0
+        _SlitWidth("Slit Width", float) = 12.0
         _Scale("Simulation Scale",Range(1.0,10.0)) = 1
         _SourceResolution("Source Resolution",Range(0.1,5)) = 0.5
     }
