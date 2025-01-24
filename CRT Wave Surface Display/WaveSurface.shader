@@ -1,4 +1,4 @@
-Shader "SimuCat/Wave Surface/From Tank CRT"
+Shader "SimulCat/Wave Surface/From Tank CRT"
 {
     Properties
     {

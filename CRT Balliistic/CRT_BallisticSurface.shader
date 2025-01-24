@@ -1,4 +1,4 @@
-Shader "SimuCat/Ballistic/Surface From CRT"
+Shader "SimulCat/Ballistic/Prob Surface Display"
 {
     Properties
     {

@@ -1,4 +1,4 @@
-Shader "SimuCat/Wave Surface/From Phase CRT"
+Shader "SimulCat/Wave Surface/From Phase CRT"
 {
     Properties
     {

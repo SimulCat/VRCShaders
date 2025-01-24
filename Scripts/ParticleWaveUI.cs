@@ -19,9 +19,9 @@ public class ParticleWaveUI : UdonSharpBehaviour
     CustomRenderTexture waveCRT;
     private bool iHaveWaveCRT;
     [SerializeField]
-    Vector2Int waveCrtSizePx = new Vector2Int(1024, 640);
+    Vector2Int waveCrtSizePx = new Vector2Int(1280, 640);
     [SerializeField]
-    Vector2 waveCrtDims = new Vector2(2.56f, 1.6f);
+    Vector2 waveCrtDims = new Vector2(3.2f, 1.6f);
     [SerializeField]
     private CRTWaveDemo waveDemo;
     private bool iHaveWaveDemo;

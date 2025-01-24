@@ -1,4 +1,4 @@
-Shader "SimuCat/Wave Surface/From Height"
+Shader "SimulCat/Wave Surface/From Height"
 {
     Properties
     {

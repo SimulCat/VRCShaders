@@ -1,4 +1,4 @@
-Shader "SimulCat/Ballistic/Particle Dispersion"
+Shader "SimulCat/Ballistic/Particle Scattering"
 {
     Properties
     {
@@ -46,8 +46,6 @@ Shader "SimulCat/Ballistic/Particle Dispersion"
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-            // make fog work
-            #pragma multi_compile_fog
 
             #include "UnityCG.cginc"
 		    //#include "../include/spectrum_zucconi.cginc"
@@ -70,7 +68,6 @@ Shader "SimulCat/Ballistic/Particle Dispersion"
             struct v2f
             {
                 float2 uv : TEXCOORD0;
-                UNITY_FOG_COORDS(1)
                 float4 vertex : SV_POSITION;
                 float4 color : COLOR;
             };
@@ -131,45 +128,41 @@ Shader "SimulCat/Ballistic/Particle Dispersion"
             v2f vert (appdata v)
             {
                 v2f o;
-                uint quadID = v.id/3;
+                
+                int slitCount = max(round(_SlitCount),1);
+                float slitPitchScaled = _SlitPitch/_Scale;
+                float slitWidthScaled = _SlitWidth/_Scale;
+                float gratingWidthScaled = (slitCount-1)*slitPitchScaled + slitWidthScaled;
+                float beamWidth = max (_BeamWidth/_Scale,(gratingWidthScaled + slitWidthScaled));
 
                 // Get hash of quad ID and also random 0-1;
-                uint idHash = pcg_hash(quadID);
-                //uint idHashFlip = idHash ^ 0x7FFFF;
+                uint idHash = pcg_hash(v.id/3);
                 float hsh01 = (float)(idHash & 0x7FFFFF);
                 float div = 0x7FFFFF;
                 hsh01 = (hsh01/div);
                 float hshPlusMinus = (hsh01*2.0)-1.0;
                 
-                int slitCount = max(round(_SlitCount),1);
-
-                float slitPitchScaled = _SlitPitch/_Scale;
-                float slitWidthScaled = _SlitWidth/_Scale;
-                float gratingWidthScaled = (slitCount-1)*slitPitchScaled + slitWidthScaled;
-                float beamWidth = max (_BeamWidth/_Scale,(gratingWidthScaled + slitWidthScaled));
-                
-                // Set slitCenter to left-most position
-                float leftSlitCenter = -(slitCount - 1)*slitPitchScaled*0.5;
-
                 // Shift slit centre to a randomly chosen slit number 
                 int nSlit = (idHash >> 8) % slitCount;
+                // Set slitCenter to left-most position
+                float leftSlitCenter = -(slitCount - 1)*slitPitchScaled*0.5;
                 float slitCenter = leftSlitCenter + (nSlit * slitPitchScaled);
                 float leftEdge = leftSlitCenter - slitWidthScaled*0.5;
+                // check if gratingmakes sense;
 
-                // Fresh hash of the particle to pick a start position
+                // Now to pick a start position within theslit
                 float startHash = RandomRange(1.0,idHash ^ 0xAC3FFF)-0.5;
                 float speedHash = RandomRange(2.0,idHash >> 3)-1.0;
                 float startPosY =  (_GratingOffset > 0.00001) ? (beamWidth * startHash) : slitCenter + (startHash * slitWidthScaled);
                 float normPos = frac((startPosY-leftEdge)/slitPitchScaled)*slitPitchScaled;
                 // check if particle y pos is valid;
-                bool gratingValid = (startPosY >= leftEdge) && (startPosY <= (-leftEdge)) && (normPos <= slitWidthScaled);
+                bool validPosY = (startPosY >= leftEdge) && (startPosY <= (-leftEdge)) && (normPos <= slitWidthScaled);
                 //(0.0 > (frac((rightEdge - startPosY)/slitPitchScaled)*slitPitchScaled + slitWidthScaled));
 
 
-                uint cornerID = v.id%3;
                 float3 centerOffset;
 
-                switch(cornerID)
+                switch(v.id%3)
                 {
                     case 2:
                         centerOffset = float3(0,0.57735027,0); 
@@ -183,7 +176,7 @@ Shader "SimulCat/Ballistic/Particle Dispersion"
                 }
 
                 float3 vertexOffset = centerOffset*_ArraySpacing;
-                float3 quadCenterInMesh = v.vertex - vertexOffset;
+                float3 triCentreInMesh = v.vertex - vertexOffset;
 
                 float markerScale =  _MarkerScale/_Scale;
 
@@ -202,7 +195,7 @@ Shader "SimulCat/Ballistic/Particle Dispersion"
                 float vScale = particleVelocity/_Scale;
                 float cyclePeriod = (maxDiagonalDistance/vScale) + pulseMax;
 
-                // Divid time by period to get fraction of the cycle.
+                // Divide time by period to get fraction of the cycle.
                 float cycles = ((_Play * _Time.y + (1-_Play)*_PauseTime)-_BaseTime)/cyclePeriod;
                 float cycleTime = frac(cycles + continuous*hsh01)*cyclePeriod - pulseMax;
                 float timeOffset =  pulseDuration * invPi * asin(hshPlusMinus);
@@ -210,25 +203,25 @@ Shader "SimulCat/Ballistic/Particle Dispersion"
                 float gratingDistance = _GratingOffset/_Scale;
                 float postGratingDist = max(0.0,trackDistance-gratingDistance);
                 float preGratingDist = min(gratingDistance,trackDistance);
-                //float markerRadius = _ArraySpacing.x*0.5*markerScale;
+
                 float2 startPos = float2(preGratingDist-(localGridCentre.x),startPosY);
                 float momentumHash = RandomRange(2, idHash);
                 float3 sample = sampleMomentum(_ParticleP*voffset,momentumHash-1.0);
                 float2 particlePos = startPos + sample.xy*postGratingDist;
-                gratingValid = gratingValid || (trackDistance <= gratingDistance);
-                int  posIsInside = (int)(gratingValid)*floor(sample.z)*int((abs(particlePos.x) < localGridCentre.x) && (abs(particlePos.y) <= localGridCentre.y));
+                validPosY = validPosY || (trackDistance <= gratingDistance);
+                int  posIsInside = (int)(validPosY)*floor(sample.z)*int((abs(particlePos.x) < localGridCentre.x) && (abs(particlePos.y) <= localGridCentre.y));
                
                 // Check inside bounding box
-                particlePos = posIsInside*particlePos + (1-posIsInside)*quadCenterInMesh.xy;
+                particlePos = posIsInside*particlePos + (1-posIsInside)*triCentreInMesh.xy;
 
-                float3 quadCentreInModel = float3 (particlePos,quadCenterInMesh.z);
+                float3 triCentreInModel = float3 (particlePos,triCentreInMesh.z);
 
 
-                quadCentreInModel = posIsInside * quadCentreInModel + (1-posIsInside)*quadCenterInMesh; 
+                triCentreInModel = posIsInside * triCentreInModel + (1-posIsInside)*triCentreInMesh; 
                 vertexOffset *= markerScale;                    // Scale the quad corner offset to world, now we billboard
-                v.vertex.xyz=quadCentreInModel+vertexOffset;
+                v.vertex.xyz=triCentreInModel+vertexOffset;
 
-                float4 camModelCentre = float4(quadCentreInModel,1.0);
+                float4 camModelCentre = float4(triCentreInModel,1.0);
                 float4 camVertexOffset = float4(vertexOffset,0);
                 // Three steps in one line
                 //      1) Inner step is to use UNITY_MATRIX_MV to get the camera-oriented coordinate of the centre of the billboard.
@@ -243,7 +236,6 @@ Shader "SimulCat/Ballistic/Particle Dispersion"
                 */
                 o.color = float4(_Color.rgb,-.5 + posIsInside * 1.5);
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
-                UNITY_TRANSFER_FOG(o,o.vertex);
                 return o;
             }
 
@@ -258,7 +250,6 @@ Shader "SimulCat/Ballistic/Particle Dispersion"
 					col = 0;
 				}
                 col *= _Visibility;
-                //UNITY_APPLY_FOG(i.fogCoord, col);
                 return col;
             }
             ENDCG

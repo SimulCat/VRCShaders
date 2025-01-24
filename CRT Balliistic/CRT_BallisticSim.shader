@@ -1,4 +1,4 @@
-﻿Shader"SimuCat/Ballistic/CRT Density"
+﻿Shader"SimulCat/Ballistic/Prob Density CRT"
 {
     Properties
     {

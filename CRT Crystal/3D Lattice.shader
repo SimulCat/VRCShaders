@@ -1,4 +1,4 @@
-Shader "SimuCat/Crystal/ReciprocalEwald"
+Shader "SimulCat/Crystal/3D Lattice"
 {
 
     Properties

@@ -16,7 +16,7 @@ public class BallisticScatter : UdonSharpBehaviour
     [SerializeField, FieldChangeCallback(nameof(ProbVisPercent))]
     public float probVisPercent = 45f;
     [SerializeField]
-    Vector2Int simPixels = new Vector2Int(1024, 640);
+    Vector2Int simPixels = new Vector2Int(1280, 640);
     
     [SerializeField]
     string texName = "_MomentumMap";

@@ -1,4 +1,4 @@
-Shader "SimuCat/Crystal/LatticeUnlit"
+Shader "SimulCat/Crystal/3D LatticeUnlit"
 {
 
     Properties
@@ -116,7 +116,7 @@ Shader "SimuCat/Crystal/LatticeUnlit"
 				//UNITY_INITIALIZE_OUTPUT(v2f, o);
 				//UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
-                uint quadID = v.id/3;
+                uint triangleID = v.id/3;
                 uint cornerID = v.id%3;
                 float3 centerOffset;
                 /*
@@ -138,25 +138,7 @@ Shader "SimuCat/Crystal/LatticeUnlit"
                 }
 
                 float3 vertexOffset = centerOffset*_ArraySpacing;
-/*
-                float3 halfSpacing = (_ArraySpacing.xyz)*0.5;
-                switch(cornerID)
-                {
-                    case 3:
-                        centerOffset = float3(-1,1,0); 
-                        break;
-                    case 2:
-                        centerOffset = float3(1,1,0); 
-                        break;
-                    case 1:
-                        centerOffset = float3(-1,-1,0);
-                        break;
-                    default:
-                        centerOffset = float3(1,-1,0);
-                        break;
-                }
-                float3 vertexOffset = centerOffset*halfSpacing;
-                */
+
                 float3 quadCenterInMesh = v.vertex - vertexOffset;
                 
                 int3 indices = int3(round(quadCenterInMesh/_ArraySpacing));
