@@ -207,20 +207,20 @@ Shader "SimulCat/Ballistic/Particle Scattering"
                 float2 startPos = float2(preGratingDist-(localGridCentre.x),startPosY);
                 float momentumHash = RandomRange(2, idHash);
                 float3 sample = sampleMomentum(_ParticleP*voffset,momentumHash-1.0);
-                float2 particlePos = startPos + sample.xy*postGratingDist;
+                float2 particlePosXY = startPos + sample.xy*postGratingDist;
                 validPosY = validPosY || (trackDistance <= gratingDistance);
-                int  posIsInside = (int)(validPosY)*floor(sample.z)*int((abs(particlePos.x) < localGridCentre.x) && (abs(particlePos.y) <= localGridCentre.y));
+                int  posIsInside = (int)(validPosY)*floor(sample.z)*int((abs(particlePosXY.x) < localGridCentre.x) && (abs(particlePosXY.y) <= localGridCentre.y));
                
                 // Check inside bounding box
-                particlePos = posIsInside*particlePos + (1-posIsInside)*triCentreInMesh.xy;
+                particlePosXY = posIsInside*particlePosXY + (1-posIsInside)*triCentreInMesh.xy;
 
-                float3 triCentreInModel = float3 (particlePos,triCentreInMesh.z);
+                float3 triCentreInModel = float3(particlePosXY,0.0);
 
 
                 triCentreInModel = posIsInside * triCentreInModel + (1-posIsInside)*triCentreInMesh; 
                 vertexOffset *= markerScale;                    // Scale the quad corner offset to world, now we billboard
-                v.vertex.xyz=triCentreInModel+vertexOffset;
-
+                v.vertex.xyz =  triCentreInModel+vertexOffset;
+                // billboard the triangle
                 float4 camModelCentre = float4(triCentreInModel,1.0);
                 float4 camVertexOffset = float4(vertexOffset,0);
                 // Three steps in one line
@@ -228,12 +228,11 @@ Shader "SimulCat/Ballistic/Particle Scattering"
                 //         Here, the xy coords of the billboarded vertex are always aligned to the camera XY so...
                 //      2) Just add the scaled xy model offset to lock the vertex orientation to the camera view.
                 //      3) Transform the result by the Projection matrix (UNITY_MATRIX_P) and we now have the billboarded vertex in clip space.
-
                 o.vertex = mul(UNITY_MATRIX_P,mul(UNITY_MATRIX_MV, camModelCentre) + camVertexOffset);
-                /*
-                Standard code
-                o.vertex = UnityObjectToClipPos (v.vertex);
-                */
+                
+                //Standard code
+                //o.vertex = UnityObjectToClipPos (v.vertex);
+                
                 o.color = float4(_Color.rgb,-.5 + posIsInside * 1.5);
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 return o;
