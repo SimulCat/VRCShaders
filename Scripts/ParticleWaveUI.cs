@@ -381,18 +381,17 @@ public int SlitCount
         iHaveLambdaSlider = lambdaSlider != null; 
         
         iHaveScaleSlider = scaleSlider != null;
-        MinLambda = iHaveLambdaSlider ? lambdaSlider.MinValue : minLambda;
         initSimulations();
         SlitCount = slitCount;
         if (iHaveWidthSlider)
         {
-            widthSlider.SetLimits(5, 75);
+            widthSlider.SetLimits(5, 80);
             widthSlider.SetValue(slitWidth);
         }
         SlitWidth = slitWidth;
         if (iHavePitchSlider)
         {
-            pitchSlider.SetLimits(40, 200);
+            pitchSlider.SetLimits(40, 250);
             pitchSlider.SetValue(slitPitch);
         }
         SlitPitch = slitPitch;

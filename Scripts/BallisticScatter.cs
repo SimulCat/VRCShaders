@@ -14,7 +14,7 @@ public class BallisticScatter : UdonSharpBehaviour
     [SerializeField,UdonSynced,FieldChangeCallback(nameof(ShowProbability))] 
     public bool showProbability = true;
     [SerializeField, FieldChangeCallback(nameof(ProbVisPercent))]
-    public float probVisPercent = 45f;
+    private float probVisPercent = 45f;
     [SerializeField]
     Vector2Int simPixels = new Vector2Int(1280, 640);
     

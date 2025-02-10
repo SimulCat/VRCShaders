@@ -36,22 +36,19 @@ public class CRTWaveDemo : UdonSharpBehaviour
 
     [SerializeField] UdonSlider contrastSlider;
 
-    [SerializeField, FieldChangeCallback(nameof(Visibility))]
+    // Overall visibility of the diagram independent of the contrast
+    [SerializeField, Tooltip("Overall visibility of pattern fades from 0 to 1"), Range(0,1),FieldChangeCallback(nameof(Visibility))]
     public float visibility = 1f;
 
-    [SerializeField, FieldChangeCallback(nameof(ContrastVal))]
-    public float contrastVal = 40f;
+    // Contrast value sets the brightness of the diagram
+    [SerializeField, Tooltip("Contrast of pattern as percentage"),FieldChangeCallback(nameof(BrightPercent))]
+    public float brightPercent = 40f;
 
-    private float prevVisibility = -1;
     private void reviewContrast()
     {
         if (matPanel == null)
             return;
-        float targetViz = (contrastVal / 50)*visibility;
-        if (targetViz == prevVisibility)
-            return;
-        prevVisibility = targetViz;
-        matPanel.SetFloat("_Brightness", targetViz);
+        matPanel.SetFloat("_Brightness", (brightPercent / 50) * visibility);
     }
 
     [Header("Mode Colours")]
@@ -118,12 +115,12 @@ public class CRTWaveDemo : UdonSharpBehaviour
         }
     }
 
-    private float ContrastVal
+    private float BrightPercent
     {
-        get => contrastVal;
+        get => brightPercent;
         set
         {
-            contrastVal = value;
+            brightPercent = value;
             reviewContrast();
         }
     }
@@ -133,6 +130,7 @@ public class CRTWaveDemo : UdonSharpBehaviour
         get => visibility;
         set
         {
+            value = Mathf.Clamp01(value);
             if (visibility != value)
             {
                 visibility = value;
@@ -328,9 +326,9 @@ public class CRTWaveDemo : UdonSharpBehaviour
         if (waveMesh != null)
             matPanel = waveMesh.material;
         checkPanelType();
-        ContrastVal = contrastVal;
+        BrightPercent = brightPercent;
         if (contrastSlider != null)
-            contrastSlider.SetValue(contrastVal);
+            contrastSlider.SetValue(brightPercent);
         if (togPlay != null)
             PlayPhi = togPlay.isOn;
         DisplayMode = displayMode;
