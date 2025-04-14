@@ -12,7 +12,10 @@ Material:
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
-  m_InvalidKeywords: []
+  m_InvalidKeywords:
+  - _HIGHLIGHTEWALD_ON
+  - _ISRECIPROCAL_ON
+  - _ORIGINATCORNER_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -63,12 +66,16 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    m_Ints: []
+    m_Ints:
+    - _HighlightEwald: 1
+    - _IsReciprocal: 1
+    - _LatticeType: 0
+    - _OriginAtCorner: 1
     m_Floats:
     - _BumpScale: 1
     - _CellFormat: 1
     - _Cutoff: 0.5
-    - _DecalScale: 2
+    - _DecalScale: 1
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _Frequency: 0
@@ -87,7 +94,7 @@ Material:
     - _OcclusionStrength: 1
     - _Parallax: 0.02
     - _ParticleImpulse: 0
-    - _Scale: 1
+    - _Scale: 0.08
     - _ScaleAmplitude: 50
     - _ScaleEnergy: 50
     - _ShowCRT: 1
@@ -110,6 +117,7 @@ Material:
     - _ColorVel: {r: 0, g: 0.29999998, b: 1, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _IdleColour: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+    - _LatticePitch: {r: 0.1, g: 0.1, b: 0.1, a: 0.1}
     - _LatticeSpacing: {r: 0.9412032, g: 0.9412032, b: 0.9412032, a: 0.9412032}
     - _MaxMinP: {r: 22, g: 2, b: 0, a: 0}
     - _MeshSpacing: {r: 1, g: 1, b: 1, a: 1}

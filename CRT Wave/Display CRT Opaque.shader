@@ -30,7 +30,6 @@ Shader"SimulCat/Wave/Display Phase from CRT Opaque"
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-            // make fog work
 
             #include "UnityCG.cginc"
 

@@ -1,4 +1,4 @@
-﻿Shader"SimulCat/Wave/Phase Map CRT"
+﻿Shader"SimulCat/Wave/Wave Sim CRT"
 {
     /*
     A CRT is a cross between a regular shader and a compute shader.

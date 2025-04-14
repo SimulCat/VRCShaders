@@ -7,12 +7,14 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: M_Lattice
+  m_Name: M_LatticeModel
   m_Shader: {fileID: 4800000, guid: 8825a62d4fa450b45b641048d50115fb, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
-  m_InvalidKeywords: []
+  m_InvalidKeywords:
+  - _LIMITTOBASE_ON
+  - _ORIGINATCORNER_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -48,7 +50,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: c7287bdfc5090f6469f482764fc1d731, type: 3}
+        m_Texture: {fileID: 2800000, guid: 2e0df7ca3c27f324a8c322971699bf3e, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
@@ -63,11 +65,16 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    m_Ints: []
+    m_Ints:
+    - _IsReciprocal: 0
+    - _LatticeType: 0
+    - _LimitIndex: 1
+    - _LimitToBase: 1
+    - _OriginAtCorner: 1
     m_Floats:
     - _BumpScale: 1
     - _Cutoff: 0.5
-    - _DecalScale: 0.33
+    - _DecalScale: 0.5
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _Frequency: 0
@@ -85,7 +92,7 @@ Material:
     - _OcclusionStrength: 1
     - _Parallax: 0.02
     - _ParticleImpulse: 0
-    - _Scale: 0.125
+    - _Scale: 0.075
     - _ScaleAmplitude: 50
     - _ScaleEnergy: 50
     - _ShowCRT: 1
@@ -109,6 +116,7 @@ Material:
     - _ColorVel: {r: 0, g: 0.29999998, b: 1, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _IdleColour: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+    - _LatticePitch: {r: 0.1, g: 0.1, b: 0.1, a: 0.1}
     - _LatticeSpacing: {r: 0.75, g: 0.75, b: 0.75, a: 0.75}
     - _MaxMinP: {r: 33, g: 3, b: 0, a: 0}
     - _MeshSpacing: {r: 0.25, g: 0.25, b: 0.25, a: 0.25}

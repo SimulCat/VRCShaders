@@ -7,28 +7,31 @@ using VRC.Udon;
 public class QuadMesh : UdonSharpBehaviour
 {
     [Tooltip("Width/Height/Depth in model space")] public Vector3 meshDimensions = Vector3.one;
-    [SerializeField, Tooltip("Uncheck for circular/sphere point distribution")] public bool isRectangular = false;
-    [SerializeField, Tooltip("Center array around mesh origin")] public bool centerArrayOrigin = true;
-    [Tooltip("# quads across")] public Vector3Int pointsAcross = new Vector3Int(16,16,16);
+    [SerializeField, Tooltip("Uncheck for circular/sphere point distribution")] 
+    public bool isRectangular = false;
+    [SerializeField, Tooltip("Center array around mesh origin")] 
+    bool centerArrayOrigin = true;
+    [Tooltip("# quads across")] 
+    public Vector3Int pointsAcross = new Vector3Int(16,16,16);
     [Tooltip("Snap points to origin (adds 1 point when origin at model center & even #points across)")] 
     public bool snapOrigin = true;
-    [SerializeField]
+    [SerializeField, Tooltip("Create triangles, off for billboards as Quads")]
+    bool useTriangles = true;
+    [SerializeField,Tooltip("Material Template")]
     public Material material;
     
     Mesh mesh;
     MeshFilter mf;
 
-    // Serialize for debug
- //   [SerializeField]
+    // Only Uncomment serialization for verification in editor 
+    //[SerializeField]
     float radiusSq;
-    [SerializeField]
+    //[SerializeField]
     Vector3 arraySpacing;
-    [SerializeField]
+    //[SerializeField]
     float arrayRadius;
-    [SerializeField]
+    //[SerializeField]
     Vector3 arrayOrigin;
-    [SerializeField]
-    bool useTriangles = false;
     // Only Uncomment for verification in editor 
     //[SerializeField]
     private Vector3[] vertices;
@@ -36,11 +39,11 @@ public class QuadMesh : UdonSharpBehaviour
     private Vector2[] uvs;
     //[SerializeField]
     int[] triangles;
-    [SerializeField]
+    //[SerializeField]
     int numDecals;
-    [SerializeField]
+    //[SerializeField]
     int numVertices;
-    [SerializeField]
+    //[SerializeField]
     int numTriangles;
     private bool generateMesh()
     {
@@ -159,7 +162,6 @@ public class QuadMesh : UdonSharpBehaviour
         }
         mesh = mf.mesh;
         mesh.Clear();
-        numDecals = numVertices / 4;
         int[] meshTris = new int[numTriangles];
         for (int i = 0; i < numTriangles; i++)
             meshTris[i] = triangles[i];

@@ -1,4 +1,4 @@
-Shader "SimulCat/Ballistic/Particle Scattering"
+Shader "SimulCat/Ballistic/Particle Scattering 2D"
 {
     Properties
     {
@@ -34,7 +34,11 @@ Shader "SimulCat/Ballistic/Particle Scattering"
 
     SubShader
     {
-        Tags { "Queue"="Transparent" "IgnoreProjector"="True" "RenderType"="Transparent" "PreviewType"="Plane" }
+        Tags 
+        { 
+            "Queue"="Transparent" "IgnoreProjector"="True"  
+            "RenderType"="Transparent" "PreviewType"="Plane" 
+        }
         Blend One One
         LOD 100
         Cull Off
@@ -50,13 +54,6 @@ Shader "SimulCat/Ballistic/Particle Scattering"
             #include "UnityCG.cginc"
 		    //#include "../include/spectrum_zucconi.cginc"
 		    #include "../include/pcg_hash.cginc"
-
-            #define ObjectScale length(unity_ObjectToWorld._m00_m10_m20)
-
-            #define ObjectScaleVec float3( \
-                length(unity_ObjectToWorld._m00_m10_m20),\
-                length(unity_ObjectToWorld._m01_m11_m21),\
-                length(unity_ObjectToWorld._m02_m12_m22))
 
             struct appdata
             {
@@ -230,7 +227,7 @@ Shader "SimulCat/Ballistic/Particle Scattering"
                 //      3) Transform the result by the Projection matrix (UNITY_MATRIX_P) and we now have the billboarded vertex in clip space.
                 o.vertex = mul(UNITY_MATRIX_P,mul(UNITY_MATRIX_MV, camModelCentre) + camVertexOffset);
                 
-                //Standard code
+                //Non-billboard standard code
                 //o.vertex = UnityObjectToClipPos (v.vertex);
                 
                 o.color = float4(_Color.rgb,-.5 + posIsInside * 1.5);

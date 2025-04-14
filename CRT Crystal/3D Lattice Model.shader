@@ -1,4 +1,4 @@
-Shader "SimulCat/Crystal/3D LatticeUnlit"
+Shader "SimulCat/Crystal/3D Lattice Model"
 {
 
     Properties
@@ -6,12 +6,13 @@ Shader "SimulCat/Crystal/3D LatticeUnlit"
         _MainTex ("Texture", 2D) = "white" {}
         _Color("Pos Ion Colour",Color) = (0,.7,1.,1.)
         _ColorN("Neg Ion Colour ",Color) = (1,.7,0,1.)
-        _LatticeSpacing("Lattice Spacing", Vector) = (0.1,0.1,0.1,0.1)
+        _LatticePitch("Lattice Point Pitch", Vector) = (0.1,0.1,0.1,0.1)
         _ArraySpacing("Array Spacing", Vector) = (1.0,1.0,1.0,1.0)
-
+        
         _DecalScale ("Marker Size", Range(0.03,10)) = 2.5
-        _LatticeType("Unit Cell: 0=Simple, 1=Ionic, 2=Face Centred, 3=Body Centred", Float) = 0
-        _IsReciprocal("Show as: 0=Crystal Cell, 1=Reciprocal Cell", Float) = 0
+        _LatticeType("Unit Cell: 0=Simple, 1=Ionic, 2=Face Centred, 3=Body Centred", Integer) = 0
+        [MaterialToggle]_OriginAtCorner("Cell origin at corner", Integer) = 0
+        [MaterialToggle]_LimitToBase("Limit to Base Cell", Integer) = 1
         _Scale("Scale Lattice",Float) = 0.25
     }
 
@@ -22,8 +23,6 @@ Shader "SimulCat/Crystal/3D LatticeUnlit"
         Cull Off
         Lighting Off
         ZWrite Off
-        Fog { Color (0,0,0,0) }
-
 
 
         Pass
@@ -31,32 +30,24 @@ Shader "SimulCat/Crystal/3D LatticeUnlit"
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-            // make fog work
-            #pragma multi_compile_fog
 
             #include "UnityCG.cginc"
-
-            // slightly shorter version for when the scale can be assumed to be uniform all directions.
-            #define ObjectScale length(unity_ObjectToWorld._m00_m10_m20)
-
-            #define ObjectScaleVec float3( \
-                length(unity_ObjectToWorld._m00_m10_m20),\
-                length(unity_ObjectToWorld._m01_m11_m21),\
-                length(unity_ObjectToWorld._m02_m12_m22))
 
             struct appdata
             {
                 float4 vertex : POSITION;
                 float2 uv : TEXCOORD0;
 				uint id : SV_VertexID;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+
             };
 
             struct v2f
             {
                 float2 uv : TEXCOORD0;
-                UNITY_FOG_COORDS(1)
                 float4 vertex : SV_POSITION;
                 float4 color : COLOR;
+                UNITY_VERTEX_OUTPUT_STEREO
             };
 
             sampler2D _MainTex;
@@ -64,64 +55,57 @@ Shader "SimulCat/Crystal/3D LatticeUnlit"
             float4 _Color;
             float4 _ColorN;
 
-            float4 _LatticeSpacing; // Crystal/Reciprocal Lattice Spacing
+            float4 _LatticePitch; // Crystal/Reciprocal Lattice Spacing
             float4 _ArraySpacing; // Initial Quad Mesh Spacing
             float _DecalScale;
 
-            float _LatticeType;
-            float _IsReciprocal; // Display format of cell Lattice or Reciprocal 0=normal != 0 = reciprocal
+            int _LatticeType;
+            int _OriginAtCorner; // Display format of cell Lattice or Reciprocal 0=normal != 0 = reciprocal
+            int _LimitToBase; // Limit the index of lattice points to display
             float _Scale;
             
             // Cubic Cell reciprocal lattice points start at corner (all three even)
-           int2 checkLatticePoint(int nX, int nY, int nZ, float latticeType)
+           int2 checkLatticePoint(int3 idx, int latticeType)
             {
-                int nType = (int)(_IsReciprocal > 0.5);
-                int sum = (abs(nX) - nType) & 1;
-                    sum += (abs(nY) - nType) & 1;
-                    sum += (abs(nZ) - nType) & 1;
-                /* Adapted from C#
-                if (sum == 0) // on Corner
-                    return 1;
-                switch (latticeType)
-                {
-                    case 0:
-                    case 1:
-                        return 0;
-                        break;
-                    case 2:
-                        return (int)(sum==2);
-                        break;
-                    case 3:
-                        return (int)(sum==3);
-                        break;
-                }
-                return 0;
-                */
-                int cubic = (int)(latticeType < 1 || latticeType > 3);
-                int ionic = (int)(latticeType == 1);
-                int face = (int)(latticeType == 2);
-                int body = (int)(latticeType == 3);
-                int zero = (int)(sum == 0);
-                int one = (int)(sum == 1);
-                int two = (int)(sum == 2);
-                int three = (int)(sum == 3);
-                return int2(ionic + cubic*three + face*(three + one) + body*(zero + three), three + ionic*one);
+                int cubic = (latticeType < 1 || latticeType > 3);
+                int ionic = (latticeType == 1);
+                int face = (latticeType == 2);
+                int body = (latticeType == 3);
+                int maxCell = 3;
+                maxCell -= (_OriginAtCorner && ((cubic+ionic) > 0)) ? 2 : 0;
+                int withinLimit = (int)((_LimitToBase == 0) || 
+                    ((abs(idx.x) + abs(idx.y) + abs(idx.z)) <= maxCell));
+
+
+                int3 offsetToCorner = (_OriginAtCorner) ? int3(-1,-1,-1) : int3(0,0,0);
+                idx += offsetToCorner;
+
+                int sum = (abs(idx.x) & 1) + (abs(idx.y) & 1) + (abs(idx.z) & 1);
+                int zero = (sum == 0);
+                int one = (sum == 1);
+                int two = (sum == 2);
+                int three = (sum == 3);
+                int isPoint = ionic + cubic + face*(three + one) + body*(zero + three);
+                isPoint *= withinLimit;
+
+                int notIon = ((cubic + three + ionic*one) > 0);
+                return int2(isPoint, notIon);
             }
 
-            v2f vert (appdata v)
-            {
+           v2f vert (appdata v)
+           {
                 v2f o;
-                //UNITY_SETUP_INSTANCE_ID(v);
-    			//UNITY_TRANSFER_INSTANCE_ID(v, o);
-				//UNITY_INITIALIZE_OUTPUT(v2f, o);
-				//UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
+                UNITY_SETUP_INSTANCE_ID(v);
+    		    UNITY_TRANSFER_INSTANCE_ID(v, o);
+			    UNITY_INITIALIZE_OUTPUT(v2f, o);
+			    UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
                 uint triangleID = v.id/3;
                 uint cornerID = v.id%3;
                 float3 centerOffset;
                 /*
-                      vxOffset0 = new Vector2(0.5f, -0.288675135f);
-                      vxOffset1 = new Vector2(-0.5f, -0.288675135f);
+                        vxOffset0 = new Vector2(0.5f, -0.288675135f);
+                        vxOffset1 = new Vector2(-0.5f, -0.288675135f);
                         vxOffset2 = new Vector2(0, 0.57735027f);
                 */
                 switch(cornerID)
@@ -141,10 +125,9 @@ Shader "SimulCat/Crystal/3D LatticeUnlit"
 
                 float3 quadCenterInMesh = v.vertex - vertexOffset;
                 
-                int3 indices = int3(round(quadCenterInMesh/_ArraySpacing));
+                int3 latticePoint = int3(round(quadCenterInMesh/_ArraySpacing));
                 // Now Scale to lattice
-                float3 quadCenterInLattice = indices * _LatticeSpacing;
-
+                float3 quadCenterInLattice = latticePoint * _LatticePitch;
 
                 float markerScale =  _DecalScale;
 
@@ -152,9 +135,8 @@ Shader "SimulCat/Crystal/3D LatticeUnlit"
                 quadCenterInLattice *= _Scale;
 
                 vertexOffset *= markerScale; // Scale the quad corner offset to world, now we billboard
-                float objScale = ObjectScale;
-                float4 camModelCentre = float4((quadCenterInLattice * objScale),1.0);
-                float4 camVertexOffset = float4(vertexOffset * objScale,0.0);
+                float4 camModelCentre = float4(quadCenterInLattice,1.0);
+                float4 camVertexOffset = float4(vertexOffset,0.0);
                 // Three steps in one line
                 //      1) Inner step is to use UNITY_MATRIX_MV to get the camera-oriented coordinate of the centre of the billboard.
                 //         Here, the xy coords of the billboarded vertex are always aligned to the camera XY so...
@@ -163,31 +145,29 @@ Shader "SimulCat/Crystal/3D LatticeUnlit"
 
                 o.vertex = mul(UNITY_MATRIX_P,mul(UNITY_MATRIX_MV, camModelCentre) + camVertexOffset);
 
-                int2 pointType = checkLatticePoint(indices.x,indices.y,indices.z,_LatticeType);
+                int2 pointType=checkLatticePoint(latticePoint,_LatticeType);
                 float4 col = _Color * pointType.y + _ColorN * (1-pointType.y);
 
                 float a = -0.0001 + pointType.x;
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 o.color = float4(col.xyz,1)*a;
-                UNITY_TRANSFER_FOG(o,o.vertex);
                 return o;
-            }
+           }
 
             float4 frag (v2f i) : SV_Target
             {
                 // sample the texture
-                float4 col = tex2D(_MainTex, i.uv);
+                    float4 col = tex2D(_MainTex, i.uv);
                 col.rgb *= i.color.rgb;
                 col.a *= i.color.a;
                 if(col.a < 0)
                 {
-					clip(-1);
-					col = 0;
-				}
-                UNITY_APPLY_FOG(i.fogCoord, col);
+	                clip(-1);
+	                col = 0;
+                }
                 return col;
             }
-            ENDCG
+           ENDCG
         }
     }
 }

@@ -5,7 +5,7 @@ using VRC.SDKBase;
 using UnityEngine.UI;
 using VRC.Udon;
 
-public enum CrystalTypes { Simple, Ionic, FaceCentred, BodyCentred };
+//public enum CrystalTypes { Simple, Ionic, FaceCentred, BodyCentred };
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class CrystalDemo : UdonSharpBehaviour
@@ -70,9 +70,9 @@ public class CrystalDemo : UdonSharpBehaviour
 
     [Header("Unit Cell Parameters")]
     [SerializeField]
-    public Vector3 cellDimsAngstroms = new Vector3(3, 3, 3);
+    public Vector3 latticePitchAngstroms = new Vector3(3, 3, 3);
 
-    [UdonSynced, FieldChangeCallback(nameof(CrystalType))]
+    [UdonSynced, FieldChangeCallback(nameof(CrystalTypes))]
     public CrystalTypes crystalType = CrystalTypes.Simple;
 
     private Vector3 primitiveA1;
@@ -117,32 +117,32 @@ public class CrystalDemo : UdonSharpBehaviour
         if ( !started)
             return;
         Vector3 newDims = unitCellCubic ? new Vector3(CellX, CellX, CellX) : new Vector3(CellX, CellY, CellZ);
-        if (cellDimsAngstroms != newDims)
+        if (latticePitchAngstroms != newDims)
         {
-            cellDimsAngstroms = newDims;
+            latticePitchAngstroms = newDims;
             updateLattice(crystalType);
         }
-        Vector4 Dims = new Vector4(cellDimsAngstroms.x, cellDimsAngstroms.y, cellDimsAngstroms.z, 0);
+        Vector4 ModelPitch = new Vector4(latticePitchAngstroms.x, latticePitchAngstroms.y, latticePitchAngstroms.z, 0);
+        if (crystalType == CrystalTypes.Simple)
+            ModelPitch *= 0.5f;
         if (iHaveCrystal)
         {
-            matCrystal.SetVector("_LatticeSpacing", Dims);
-            float xtaltype = XtalType;
-           // Debug.Log("Crystal Type Set:" + xtaltype.ToString());
-            matCrystal.SetFloat("_LatticeType", xtaltype);
-            matCrystal.SetFloat("_IsReciprocal", 0f);
+            matCrystal.SetVector("_LatticePitch", ModelPitch);
+            matCrystal.SetInteger("_LatticeType", (int)crystalType);
+            matCrystal.SetInteger("_OriginAtCorner", 0);
         }
-        Dims = new Vector4(reciprocalDims.x, reciprocalDims.y, reciprocalDims.z, 0);
-        float recipType = reciprocalType == CrystalTypes.Ionic ? 0f : RecipType;
+        Vector4 RecipPitch = new Vector4(reciprocalDims.x, reciprocalDims.y, reciprocalDims.z, 0);
         if (iHaveReciprocal)
         {
-            matReciprocal.SetVector("_LatticeSpacing", Dims);
-            matReciprocal.SetFloat("_LatticeType", recipType);
-            matReciprocal.SetFloat("_IsReciprocal", 1f);
+            matReciprocal.SetVector("_LatticePitch", RecipPitch);
+            matReciprocal.SetInteger("_LatticeType", (int)reciprocalType);
+            matReciprocal.SetInteger("_OriginAtCorner", 1);
         }
         if (iHaveEwald)
         {
-            matEwald.SetVector("_LatticeSpacing", Dims);
-            matEwald.SetFloat("_LatticeType", recipType);
+            matEwald.SetVector("_LatticePitch", RecipPitch);
+            matEwald.SetInteger("_LatticeType", (int)reciprocalType);
+            matReciprocal.SetInteger("_OriginAtCorner", 1);
         }
     }
 
@@ -154,27 +154,27 @@ public class CrystalDemo : UdonSharpBehaviour
         switch (type)
         {
             case CrystalTypes.Ionic:
-                primitiveA1 = 0.5f * cellDimsAngstroms.x * Vector3.right;
-                primitiveA2 = 0.5f * cellDimsAngstroms.y * Vector3.up;
-                primitiveA3 = 0.5f * cellDimsAngstroms.z * Vector3.forward;
+                primitiveA1 = 0.5f * latticePitchAngstroms.x * Vector3.right;
+                primitiveA2 = 0.5f * latticePitchAngstroms.y * Vector3.up;
+                primitiveA3 = 0.5f * latticePitchAngstroms.z * Vector3.forward;
                 break;
             case CrystalTypes.Simple:
-                primitiveA1 = cellDimsAngstroms.x * Vector3.right;
-                primitiveA2 = cellDimsAngstroms.y * Vector3.up;
-                primitiveA3 = cellDimsAngstroms.z * Vector3.forward;
+                primitiveA1 = latticePitchAngstroms.x * Vector3.right;
+                primitiveA2 = latticePitchAngstroms.y * Vector3.up;
+                primitiveA3 = latticePitchAngstroms.z * Vector3.forward;
                 break;
             case CrystalTypes.BodyCentred:
-                /*	A1 = - brA/2 * x + cellDimsAngstroms.y/2 * y + cellDimsAngstroms.z/2 * z
-                    A2 =   brA/2 * x - cellDimsAngstroms.y/2 * y + cellDimsAngstroms.z/2 * z
-                    A3 =   brA/2 * x + cellDimsAngstroms.y/2 * y - cellDimsAngstroms.z/2 * z */
-                primitiveA1 = (-cellDimsAngstroms.x / 2 * Vector3.right) + cellDimsAngstroms.y / 2 * Vector3.up + cellDimsAngstroms.z / 2 * Vector3.forward;
-                primitiveA2 = cellDimsAngstroms.x / 2 * Vector3.right + (-cellDimsAngstroms.y / 2 * Vector3.up) + cellDimsAngstroms.z / 2 * Vector3.forward;
-                primitiveA3 = cellDimsAngstroms.x / 2 * Vector3.right + cellDimsAngstroms.y / 2 * Vector3.up + (-cellDimsAngstroms.z / 2 * Vector3.forward);
+                /*	A1 = - brA/2 * x + latticePitchAngstroms.y/2 * y + latticePitchAngstroms.z/2 * z
+                    A2 =   brA/2 * x - latticePitchAngstroms.y/2 * y + latticePitchAngstroms.z/2 * z
+                    A3 =   brA/2 * x + latticePitchAngstroms.y/2 * y - latticePitchAngstroms.z/2 * z */
+                primitiveA1 = (-latticePitchAngstroms.x / 2 * Vector3.right) + latticePitchAngstroms.y / 2 * Vector3.up + latticePitchAngstroms.z / 2 * Vector3.forward;
+                primitiveA2 = latticePitchAngstroms.x / 2 * Vector3.right + (-latticePitchAngstroms.y / 2 * Vector3.up) + latticePitchAngstroms.z / 2 * Vector3.forward;
+                primitiveA3 = latticePitchAngstroms.x / 2 * Vector3.right + latticePitchAngstroms.y / 2 * Vector3.up + (-latticePitchAngstroms.z / 2 * Vector3.forward);
                 break;
             case CrystalTypes.FaceCentred:
-                primitiveA1 = (cellDimsAngstroms.y / 2 * Vector3.up) + (cellDimsAngstroms.z / 2 * Vector3.forward);
-                primitiveA2 = (cellDimsAngstroms.x / 2 * Vector3.right) + (cellDimsAngstroms.z / 2 * Vector3.forward);
-                primitiveA3 = (cellDimsAngstroms.x / 2 * Vector3.right) + (cellDimsAngstroms.y / 2 * Vector3.up);
+                primitiveA1 = (latticePitchAngstroms.y / 2 * Vector3.up) + (latticePitchAngstroms.z / 2 * Vector3.forward);
+                primitiveA2 = (latticePitchAngstroms.x / 2 * Vector3.right) + (latticePitchAngstroms.z / 2 * Vector3.forward);
+                primitiveA3 = (latticePitchAngstroms.x / 2 * Vector3.right) + (latticePitchAngstroms.y / 2 * Vector3.up);
                 break;
         }
         float invVolume = 1 / Vector3.Dot(primitiveA1, Vector3.Cross(primitiveA2, primitiveA3));
@@ -218,9 +218,6 @@ public class CrystalDemo : UdonSharpBehaviour
     /// <summary>
     /// Handle Crystal Type
     /// </summary>
-    private int XtalType {  get => (int)crystalType; }
-    private int RecipType { get => (int)reciprocalType; }
-
     private void showCrystalType()
     {
         switch (crystalType)
@@ -243,7 +240,7 @@ public class CrystalDemo : UdonSharpBehaviour
                 break;
         }
     }
-    private CrystalTypes CrystalType
+    private CrystalTypes CrystalTypes
     {
         get => crystalType;
         set
@@ -331,7 +328,7 @@ public class CrystalDemo : UdonSharpBehaviour
         {
             if (!iamOwner)
                 Networking.SetOwner(player, gameObject);
-            CrystalType = CrystalTypes.Simple;
+            CrystalTypes = CrystalTypes.Simple;
         }
     }
 
@@ -341,7 +338,7 @@ public class CrystalDemo : UdonSharpBehaviour
         {
             if (!iamOwner)
                 Networking.SetOwner(player, gameObject);
-            CrystalType = CrystalTypes.Ionic;
+            CrystalTypes = CrystalTypes.Ionic;
         }
     }
     public void togFace()
@@ -350,7 +347,7 @@ public class CrystalDemo : UdonSharpBehaviour
         {
             if (!iamOwner)
                 Networking.SetOwner(player, gameObject);
-            CrystalType = CrystalTypes.FaceCentred;
+            CrystalTypes = CrystalTypes.FaceCentred;
         }
     }
     public void togBody()
@@ -359,7 +356,7 @@ public class CrystalDemo : UdonSharpBehaviour
         {
             if (!iamOwner)
                 Networking.SetOwner(player, gameObject);
-            CrystalType = CrystalTypes.BodyCentred;
+            CrystalTypes = CrystalTypes.BodyCentred;
         }
     }
 
@@ -516,7 +513,7 @@ public class CrystalDemo : UdonSharpBehaviour
         if (iHaveControlZ)
             angstromSliderX.SetProgramVariable<float>("syncedValue", cellZ);
 
-        CrystalType = crystalType;
+        CrystalTypes = crystalType;
         BeamAngle = beamAngle;
         if (iHaveBeamAngle)
             beamAngleSlider.SetValue(beamAngle);
