@@ -95,7 +95,6 @@ Shader "SimulCat/Crystal/3D Lattice Model"
                 v2f o;
                 UNITY_SETUP_INSTANCE_ID(v);
     		    UNITY_TRANSFER_INSTANCE_ID(v, o);
-			    //UNITY_INITIALIZE_OUTPUT(v2f, o);
 			    UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
                 uint triangleID = v.id/3;
@@ -154,8 +153,9 @@ Shader "SimulCat/Crystal/3D Lattice Model"
 
             float4 frag (v2f i) : SV_Target
             {
+		        UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
                 // sample the texture
-                    float4 col = tex2D(_MainTex, i.uv);
+                float4 col = tex2D(_MainTex, i.uv);
                 col.rgb *= i.color.rgb;
                 col.a *= i.color.a;
                 if(col.a < 0)

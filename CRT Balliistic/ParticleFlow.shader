@@ -60,6 +60,7 @@ Shader "SimulCat/Ballistic/Particle Scattering 2D"
                 float4 vertex : POSITION;
                 float2 uv : TEXCOORD0;
 				uint id : SV_VertexID;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
             struct v2f
@@ -67,6 +68,8 @@ Shader "SimulCat/Ballistic/Particle Scattering 2D"
                 float2 uv : TEXCOORD0;
                 float4 vertex : SV_POSITION;
                 float4 color : COLOR;
+    			UNITY_VERTEX_INPUT_INSTANCE_ID
+                UNITY_VERTEX_OUTPUT_STEREO
             };
             
             //#define M(U) tex2D(_MomentumMap, float2(U))
@@ -125,6 +128,9 @@ Shader "SimulCat/Ballistic/Particle Scattering 2D"
             v2f vert (appdata v)
             {
                 v2f o;
+                UNITY_SETUP_INSTANCE_ID(v);
+    			UNITY_TRANSFER_INSTANCE_ID(v, o);
+				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
                 
                 int slitCount = max(round(_SlitCount),1);
                 float slitPitchScaled = _SlitPitch/_Scale;
@@ -237,6 +243,7 @@ Shader "SimulCat/Ballistic/Particle Scattering 2D"
 
             fixed4 frag (v2f i) : SV_Target
             {
+		        UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
                 float4 col = tex2D(_MainTex, i.uv);
                 col.rgb *= i.color.rgb;
                 col.a *= i.color.a;
