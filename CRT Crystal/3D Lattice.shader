@@ -49,6 +49,7 @@ Shader "SimulCat/Crystal/3D Lattice"
                 float2 uv : TEXCOORD0;
                 float4 vertex : SV_POSITION;
                 float4 color : COLOR;
+    			UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
@@ -89,7 +90,7 @@ Shader "SimulCat/Crystal/3D Lattice"
                 v2f o;
                 UNITY_SETUP_INSTANCE_ID(v);
     			UNITY_TRANSFER_INSTANCE_ID(v, o);
-				UNITY_INITIALIZE_OUTPUT(v2f, o);
+				//UNITY_INITIALIZE_OUTPUT(v2f, o);
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
                 uint quadID = v.id/3;

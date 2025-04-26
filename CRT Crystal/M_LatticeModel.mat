@@ -14,7 +14,6 @@ Material:
   m_ValidKeywords: []
   m_InvalidKeywords:
   - _LIMITTOBASE_ON
-  - _ORIGINATCORNER_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -67,14 +66,14 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints:
     - _IsReciprocal: 0
-    - _LatticeType: 0
+    - _LatticeType: 2
     - _LimitIndex: 1
     - _LimitToBase: 1
-    - _OriginAtCorner: 1
+    - _OriginAtCorner: 0
     m_Floats:
     - _BumpScale: 1
     - _Cutoff: 0.5
-    - _DecalScale: 0.5
+    - _DecalScale: 0.25
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _Frequency: 0
@@ -116,7 +115,7 @@ Material:
     - _ColorVel: {r: 0, g: 0.29999998, b: 1, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _IdleColour: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-    - _LatticePitch: {r: 0.1, g: 0.1, b: 0.1, a: 0.1}
+    - _LatticePitch: {r: 2.40891, g: 2.40891, b: 2.40891, a: 2.40891}
     - _LatticeSpacing: {r: 0.75, g: 0.75, b: 0.75, a: 0.75}
     - _MaxMinP: {r: 33, g: 3, b: 0, a: 0}
     - _MeshSpacing: {r: 0.25, g: 0.25, b: 0.25, a: 0.25}

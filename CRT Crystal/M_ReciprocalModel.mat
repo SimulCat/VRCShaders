@@ -68,7 +68,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints:
     - _IsReciprocal: 1
-    - _LatticeType: 0
+    - _LatticeType: 3
     - _LimitIndex: 0
     - _LimitToBase: 1
     - _OriginAtCorner: 1
@@ -76,7 +76,7 @@ Material:
     - _BumpScale: 1
     - _CellFormat: 0
     - _Cutoff: 0.5
-    - _DecalScale: 0.82
+    - _DecalScale: 0.25
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _Frequency: 0
@@ -118,7 +118,7 @@ Material:
     - _ColorVel: {r: 0, g: 0.29999998, b: 1, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _IdleColour: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-    - _LatticePitch: {r: 0.1, g: 0.1, b: 0.1, a: 0.1}
+    - _LatticePitch: {r: 1.33106, g: 1.33106, b: 1.33106, a: 0}
     - _LatticeSpacing: {r: 0.75, g: 0.75, b: 0.75, a: 0.75}
     - _MaxMinP: {r: 33, g: 3, b: 0, a: 0}
     - _MeshSpacing: {r: 0.25, g: 0.25, b: 0.25, a: 0.25}

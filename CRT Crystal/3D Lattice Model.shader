@@ -1,6 +1,5 @@
 Shader "SimulCat/Crystal/3D Lattice Model"
 {
-
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
@@ -24,7 +23,6 @@ Shader "SimulCat/Crystal/3D Lattice Model"
         Lighting Off
         ZWrite Off
 
-
         Pass
         {
             CGPROGRAM
@@ -39,7 +37,6 @@ Shader "SimulCat/Crystal/3D Lattice Model"
                 float2 uv : TEXCOORD0;
 				uint id : SV_VertexID;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
-
             };
 
             struct v2f
@@ -47,6 +44,7 @@ Shader "SimulCat/Crystal/3D Lattice Model"
                 float2 uv : TEXCOORD0;
                 float4 vertex : SV_POSITION;
                 float4 color : COLOR;
+    			UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
@@ -97,7 +95,7 @@ Shader "SimulCat/Crystal/3D Lattice Model"
                 v2f o;
                 UNITY_SETUP_INSTANCE_ID(v);
     		    UNITY_TRANSFER_INSTANCE_ID(v, o);
-			    UNITY_INITIALIZE_OUTPUT(v2f, o);
+			    //UNITY_INITIALIZE_OUTPUT(v2f, o);
 			    UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
                 uint triangleID = v.id/3;

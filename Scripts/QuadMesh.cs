@@ -22,6 +22,7 @@ public class QuadMesh : UdonSharpBehaviour
     
     Mesh mesh;
     MeshFilter mf;
+    MeshRenderer mr;
 
     // Only Uncomment serialization for verification in editor 
     //[SerializeField]
@@ -162,21 +163,11 @@ public class QuadMesh : UdonSharpBehaviour
         }
         mesh = mf.mesh;
         mesh.Clear();
-        int[] meshTris = new int[numTriangles];
-        for (int i = 0; i < numTriangles; i++)
-            meshTris[i] = triangles[i];
-        if (meshTris.Length >= 32767)
+        if (triangles.Length >= 32767)
             mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
-        Vector3[] meshVerts = new Vector3[numVertices];
-        Vector2[] meshUVs = new Vector2[numVertices];
-        for (int i = 0; i < numVertices; i++)
-        {
-            meshUVs[i] = uvs[i];
-            meshVerts[i] = vertices[i];
-        }
-        mesh.vertices = meshVerts;
-        mesh.triangles = meshTris;
-        mesh.uv = meshUVs;
+        mesh.vertices = vertices;
+        mesh.triangles = triangles;
+        mesh.uv = uvs;
         triangles = null;
         vertices = null;
         uvs = null;
@@ -188,6 +179,7 @@ public class QuadMesh : UdonSharpBehaviour
                 Vector4 pointVec = new Vector4(numGridPoints.x, numGridPoints.y, numGridPoints.z, numGridPoints.x * numGridPoints.y * numGridPoints.z);
                 material.SetVector("_ArrayDimension", pointVec);
             }
+            mr.material = material;
             //material.SetFloat("_CornerCount", useTriangles ? 3f : 4f);
             //material.SetFloat("_MarkerScale", value: 0.3f);
         }
@@ -196,9 +188,7 @@ public class QuadMesh : UdonSharpBehaviour
     void Start()
     {
         mf = GetComponent<MeshFilter>();
-        MeshRenderer mr = GetComponent<MeshRenderer>();
-        if (mr != null)
-            material = mr.material;
+        mr = GetComponent<MeshRenderer>();
         generateMesh();
     }
 }
