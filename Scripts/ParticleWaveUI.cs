@@ -28,7 +28,7 @@ public class ParticleWaveUI : UdonSharpBehaviour
 
     [Header("Grating Properties")]
     [SerializeField,Tooltip("Scales control settings in mm to lengths in metres")]
-    private float controlScale = 0.001f;
+    private float mmToMetres = 0.001f;
     [SerializeField, UdonSynced, FieldChangeCallback(nameof(SlitCount))]
     private int slitCount;
     [SerializeField, FieldChangeCallback(nameof(SlitWidth))]
@@ -37,8 +37,9 @@ public class ParticleWaveUI : UdonSharpBehaviour
     private float slitPitch;
     [SerializeField, Range(1, 5), FieldChangeCallback(nameof(SimScale))]
     private float simScale;
-    [SerializeField]
-    private float momentum;
+    [SerializeField,FieldChangeCallback(nameof(ParticleMomentum))]
+    private float particleMomentum;
+
     [SerializeField, FieldChangeCallback(nameof(Lambda))]
     private float lambda;
 
@@ -52,7 +53,7 @@ public class ParticleWaveUI : UdonSharpBehaviour
     [SerializeField]
     UdonSlider widthSlider;
     [SerializeField]
-    UdonSlider lambdaSlider;
+    UdonSlider momentumSlider;
     [SerializeField]
     UdonSlider scaleSlider;
     [SerializeField]
@@ -74,6 +75,7 @@ public class ParticleWaveUI : UdonSharpBehaviour
     private int MAX_SLITS = 17;
 
     [Header("Working Value Feedback")]
+    [SerializeField] Vector2 minMaxMomentum = new Vector2(1, 10);
     //[SerializeField]
     Material matWaveCRT;
     [SerializeField]
@@ -83,7 +85,7 @@ public class ParticleWaveUI : UdonSharpBehaviour
 
     private bool iHavePitchSlider;
     private bool iHaveWidthSlider;
-    private bool iHaveLambdaSlider;
+    private bool iHaveMomentumSlider;
     private bool iHaveScaleSlider;
 
     public Color spectrumColour(float wavelength, float gamma = 0.8f)
@@ -160,9 +162,6 @@ public class ParticleWaveUI : UdonSharpBehaviour
     {
         float frac = Mathf.InverseLerp(minLambda,maxLambda,lambda);
         Color dColour = spectrumColour(Mathf.Lerp(400,700,frac));
-        dColour.r = Mathf.Clamp(dColour.r, 0.2f, 2f);
-        dColour.g = Mathf.Clamp(dColour.g, 0.2f, 2f);
-        dColour.b = Mathf.Clamp(dColour.b, 0.2f, 2f);
         DisplayColour = dColour;
     }
 
@@ -208,9 +207,11 @@ public class ParticleWaveUI : UdonSharpBehaviour
 
     private void initSimulations()
     {
+        minMaxMomentum = new Vector2(1 / (maxLambda * mmToMetres), 1 / (minLambda * mmToMetres));
         if (iHaveParticleSim)
         {
-            particleSim.SetProgramVariable<float>("maxParticleK", 1/(minLambda*controlScale));
+            particleSim.SetProgramVariable < float>("maxParticleK",minMaxMomentum[1]);
+            particleSim.SetProgramVariable<float>("minParticleK", minMaxMomentum[0]);
             particleSim.SetProgramVariable<float>("simScale", simScale);
         }
         if (iHaveWaveCRT)
@@ -262,7 +263,7 @@ public int SlitCount
             if (vectorDrawing != null)
                 vectorDrawing.SetProgramVariable<float>("slitWidth", slitWidth);
             if (iHaveParticleSim)
-                particleSim.SetProgramVariable<float>("slitWidth", slitWidth * controlScale);
+                particleSim.SetProgramVariable<float>("slitWidth", slitWidth * mmToMetres);
             if (iHaveWaveCRT)
                 matWaveCRT.SetFloat("_SlitWidth", slitWidth * waveMeshScale);
             RequestSerialization();
@@ -282,7 +283,7 @@ public int SlitCount
             if (vectorDrawing != null)
                 vectorDrawing.SetProgramVariable<float>("slitPitch", slitPitch);
             if (iHaveParticleSim)
-                particleSim.SetProgramVariable<float>("slitPitch", slitPitch * controlScale);
+                particleSim.SetProgramVariable<float>("slitPitch", slitPitch * mmToMetres);
             if (iHaveWaveCRT)
                 matWaveCRT.SetFloat("_SlitPitch", slitPitch * waveMeshScale);
         }
@@ -313,7 +314,25 @@ public int SlitCount
         {
             minLambda = Mathf.Max(value, 10); // !! Hard coded to 10mm
             if (iHaveParticleSim)
-                particleSim.SetProgramVariable<float>("maxParticleK", 1 / (minLambda*controlScale));
+                particleSim.SetProgramVariable<float>("maxParticleK", 1 / (minLambda*mmToMetres));
+        }
+    }
+
+    public float ParticleMomentum
+    {
+        get => particleMomentum;
+        set
+        {
+            particleMomentum = Mathf.Clamp(value, minMaxMomentum.x, minMaxMomentum.y);
+            if (lblMomentum != null)
+                lblMomentum.text = string.Format("p={0:0.0}", particleMomentum);
+            Lambda = 1 /(mmToMetres * particleMomentum);
+
+            SetColour();
+            if (particleSim != null)
+            {
+                particleSim.SetProgramVariable<float>("particleK", particleMomentum);
+            }
         }
     }
 
@@ -332,12 +351,12 @@ public int SlitCount
 
     private void updateMomentum()
     {
-        momentum = 1/(lambda*controlScale);
+        particleMomentum = 1/(lambda*mmToMetres);
         if (lblMomentum != null)
-            lblMomentum.text = string.Format("p={0:0.0}", momentum);
+            lblMomentum.text = string.Format("p={0:0.0}", particleMomentum);
         if (iHaveParticleSim)
         {
-            particleSim.SetProgramVariable<float>("particleK", momentum);
+            particleSim.SetProgramVariable<float>("particleK", particleMomentum);
             particleSim.SetProgramVariable<Color>("displayColor", displayColour);
         }
     }
@@ -363,6 +382,8 @@ public int SlitCount
 
     void Start()
     {
+        minMaxMomentum = new Vector2(1 / (maxLambda * mmToMetres), 1 / (minLambda * mmToMetres));
+        particleMomentum = 1 / (lambda * mmToMetres);
         iHaveParticleSim = particleSim != null;
         iHaveWaveDemo = waveDemo != null;
         iHaveWaveCRT = waveCRT != null;
@@ -372,13 +393,13 @@ public int SlitCount
             iHaveWaveCRT = matWaveCRT != null;
             waveCrtSizePx = new Vector2Int(waveCRT.width, waveCRT.height);
         }
-        waveMeshScale = controlScale * waveCrtSizePx.y /(waveCrtDims.y > 0 ? waveCrtDims.y : 1);
+        waveMeshScale = mmToMetres * waveCrtSizePx.y /(waveCrtDims.y > 0 ? waveCrtDims.y : 1);
         player = Networking.LocalPlayer;
         ReviewOwnerShip();
 
         iHavePitchSlider = pitchSlider != null;
         iHaveWidthSlider = widthSlider != null;
-        iHaveLambdaSlider = lambdaSlider != null; 
+        iHaveMomentumSlider = momentumSlider != null; 
         
         iHaveScaleSlider = scaleSlider != null;
         initSimulations();
@@ -395,10 +416,10 @@ public int SlitCount
             pitchSlider.SetValue(slitPitch);
         }
         SlitPitch = slitPitch;
-        if (iHaveLambdaSlider)
+        if (iHaveMomentumSlider)
         {
-            lambdaSlider.SetLimits(minLambda, maxLambda);
-            lambdaSlider.SetValue(lambda);
+            momentumSlider.SetLimits(minMaxMomentum[0], minMaxMomentum[1]);
+            momentumSlider.SetValue(particleMomentum);
         }
         Lambda = lambda;
         if (iHaveScaleSlider)

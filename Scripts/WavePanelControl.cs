@@ -42,7 +42,7 @@ public class WavePanelControl : UdonSharpBehaviour
     private bool iHaveSpeedControl = false;
     [SerializeField, FieldChangeCallback(nameof(WaveSpeed))] public float waveSpeed;
     private float initialSpeed = 1;
-    [SerializeField] UdonSlider lambdaSlider;
+    [SerializeField] UdonSlider momentumSlider;
     private bool iHaveLambdaControl = false;
     [SerializeField, Range(1, 100)] float defaultLambda = 24;
     [SerializeField, Range(1, 100), FieldChangeCallback(nameof(Lambda))] public float lambda = 24;
@@ -500,7 +500,7 @@ public class WavePanelControl : UdonSharpBehaviour
 
         iHaveWidthControl = widthSlider != null;
         iHaveSpeedControl = speedSlider != null;
-        iHaveLambdaControl = lambdaSlider != null;
+        iHaveLambdaControl = momentumSlider != null;
         iHaveScaleControl = scaleSlider != null;
         ContrastVal = contrastVal;
         if (contrastSlider != null)
@@ -536,7 +536,7 @@ public class WavePanelControl : UdonSharpBehaviour
         }
         Lambda = defaultLambda;
         if (iHaveLambdaControl)
-            lambdaSlider.SetValue(defaultLambda);
+            momentumSlider.SetValue(defaultLambda);
         WaveSpeed = initialSpeed;
         if (iHaveSpeedControl)
             speedSlider.SetValue(initialSpeed);

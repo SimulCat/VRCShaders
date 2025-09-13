@@ -77,12 +77,25 @@ public class BallisticScatter : UdonSharpBehaviour
     public float MaxParticleK 
     {   get=>maxParticleK; 
         set 
-        { 
-            maxParticleK = value; 
+        {
+            if (MaxParticleK == value)
+                return;
+            maxParticleK = value;
             SetColour(); 
         } 
     }
-    public float MinParticleK { get => minParticleK; set => minParticleK = value; }
+    public float MinParticleK 
+    { 
+        get => minParticleK;
+        set
+        {
+            if (minParticleK == value)
+                return;
+            minParticleK = value;
+            SetColour();
+        }
+    }
+
     [SerializeField,FieldChangeCallback(nameof(ParticleK))]
     private float particleK = 1;
 
@@ -257,6 +270,8 @@ public class BallisticScatter : UdonSharpBehaviour
         mat.SetFloat("_GratingOffset", gratingOffset);
         mat.SetFloat("_SpeedRange", speedRange / 100f);
         mat.SetFloat("_ParticleP", particleK);
+        mat.SetFloat("_MaxParticleP", maxParticleK);
+        mat.SetFloat("_MinParticleP", minParticleK);
         mat.SetColor("_Color", displayColor);
 
     }
@@ -302,8 +317,8 @@ public class BallisticScatter : UdonSharpBehaviour
                 return;
         }
     }
-
-    public void SetGrating(int numSlits, float widthSlit, float pitchSlits, float momentumMax)
+    /*
+    public void SetGrating(int numSlits, float widthSlit, float pitchSlits, float momentumMax, float momentumMin)
     {
         //Debug.Log(string.Format("{0} SetGrating: #slit1={1} width={2} pitch={3}", gameObject.name,  numSlits, widthSlit, pitchSlits));
 
@@ -311,6 +326,7 @@ public class BallisticScatter : UdonSharpBehaviour
         isChanged |= maxParticleK != momentumMax;
         slitCount = numSlits;
         maxParticleK = momentumMax;
+        minParticleK = momentumMin;
         slitWidth = widthSlit;
         slitPitch = pitchSlits;
         gratingUpdateRequired = isChanged;
@@ -321,7 +337,7 @@ public class BallisticScatter : UdonSharpBehaviour
                 setParticleParams(matParticleFlow);
         }
     }
-
+    */
     
     private float GratingOffset
     {
@@ -440,6 +456,42 @@ public class BallisticScatter : UdonSharpBehaviour
             UpdatebeamWidth();
         }
     }
+    [SerializeField]
+    Texture2D colourMap = null;
+
+    //private const float tHz750nm = 400;
+    private const float tHz725nm = 413.5f;
+    //private const float tHz700nm = 430;
+    //private const float tHz400nm = 750;
+    private const float tHz380nm = 790;
+    /*
+    private bool loadColourMap(int nSamples, string texName, Material mat)
+    {
+        if (mat == null)
+            return false;
+        Color[] texData = new Color[nSamples];
+        for (int i = 0; i < nSamples; i++)
+        {
+            float frac = Mathf.InverseLerp(0f, nSamples, i);
+            Color dColour = momentumColour(frac);
+            texData[i] = dColour;
+        }
+        colourMap = new Texture2D(nSamples, 1, TextureFormat.RGBAFloat, 0, true);
+        colourMap.SetPixels(0, 0, nSamples, 1, texData, 0);
+        colourMap.filterMode = FilterMode.Point;
+        colourMap.wrapMode = TextureWrapMode.Clamp;
+        colourMap.Apply();
+        mat.SetTexture(texName, colourMap);
+        return true;
+    }
+    */
+    private Color momentumColour(float e)
+    {
+        float tHz = Mathf.Lerp(tHz725nm, tHz380nm, e);
+        float nm = 299792f / tHz;
+        return spectrumColour(nm);
+    }
+    
 
     private Color spectrumColour(float wavelength, float gamma = 0.8f)
     {
@@ -495,16 +547,8 @@ public class BallisticScatter : UdonSharpBehaviour
 
     private void SetColour()
     {
-        if (!updateColour)
-        {
-            DisplayColor = displayColor;
-            return;
-        }
         float frac = Mathf.InverseLerp(minParticleK, maxParticleK, particleK);
-        Color dColour = spectrumColour(Mathf.Lerp(700, 400, frac));
-        dColour.r = Mathf.Clamp(dColour.r, 0.2f, 2f);
-        dColour.g = Mathf.Clamp(dColour.g, 0.2f, 2f);
-        dColour.b = Mathf.Clamp(dColour.b, 0.2f, 2f);
+        Color dColour = momentumColour(frac);
         DisplayColor = dColour;
     }
 
@@ -514,9 +558,10 @@ public class BallisticScatter : UdonSharpBehaviour
         get => particleK;
         set
         {
-            crtUpdateRequired |= value != particleK;
+            if (value == particleK)
+                return;
+            crtUpdateRequired = true;
             particleK = value;
-            //float particleP = particleK / planckSim;
             if (iHaveProbSimMat)
                 matProbabilitySim.SetFloat("_ParticleP", particleK);
             if (matParticleFlow != null)
@@ -525,7 +570,7 @@ public class BallisticScatter : UdonSharpBehaviour
         }
     }
 
-    public Color DisplayColor
+    private Color DisplayColor
     {
         get => displayColor;
         set
@@ -534,8 +579,6 @@ public class BallisticScatter : UdonSharpBehaviour
             displayColor = value;
             if (iHaveProbability)
                 matProbabilitySim.SetColor("_Color", displayColor);
-            if (matParticleFlow != null)
-                matParticleFlow.SetColor("_Color", displayColor);
         }
     }
 
@@ -797,6 +840,12 @@ public class BallisticScatter : UdonSharpBehaviour
 
     void Start()
     {
+
+        if (particleMeshRend != null)
+            matParticleFlow = particleMeshRend.material;
+//        if ((matParticleFlow != null) && matParticleFlow.HasProperty("_ColourMap"))
+//           loadColourMap(256, "_ColourMap", matParticleFlow);
+
         //Debug.Log("BScatter Start");
         ReviewOwnerShip();
         iHaveProbability = probabilityCRT != null;

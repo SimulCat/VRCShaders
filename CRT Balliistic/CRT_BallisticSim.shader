@@ -13,7 +13,6 @@
         _GratingOffset("Grating X Offset", float) = 0
         _ShowBeam("Show Beam", float) = 1
         _SamplesPerSlit("Samples per Slit", Range(1,255)) = 7
-//        _ParticleK("Particle p*pi/h", float) = 0.26179939
         _ParticleP("Particle Momentum", float) = 1
         _Scale("Simulation Scale",Range(1.0,10.0)) = 1
         _MomentumMap("Momentum Map", 2D ) = "black" {}
@@ -38,7 +37,6 @@ CGINCLUDE
         float _GratingOffset;
         float _ShowBeam;
         float _SamplesPerSlit;
- //       float _ParticleK;
         float _ParticleP;
         float _Scale;
         sampler2D _MomentumMap;
