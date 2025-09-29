@@ -80,7 +80,7 @@ Material:
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
-    - _GratingOffset: 93.74997
+    - _GratingOffset: 45.312492
     - _Lambda: 0
     - _LambdaPx: 30
     - _MapMaxI: 254.99998
@@ -97,12 +97,12 @@ Material:
     - _Scale: 1
     - _ShowBeam: 0.2
     - _SlitCount: 2
-    - _SlitOffset: 180
-    - _SlitPitch: 93.333336
+    - _SlitOffset: 57.999992
+    - _SlitPitch: 48
     - _SlitPitchPx: 364.22433
-    - _SlitThickness: 16.666668
+    - _SlitThickness: 4
     - _SlitWidePx: 5
-    - _SlitWidth: 46.666668
+    - _SlitWidth: 20
     - _SmoothnessTextureChannel: 0
     - _SourceResolution: 0.5
     - _SpecularHighlights: 1

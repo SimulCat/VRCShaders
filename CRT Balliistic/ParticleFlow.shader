@@ -3,13 +3,12 @@ Shader "SimulCat/Ballistic/Particle Scattering 2D"
     Properties
     {
         _MainTex ("Particle Texture", 2D) = "white" {}
-        _Color("Particle Colour", color) = (1, 1, 1, 1)
         _ColourMap("Colour lookUp", 2D) = "black" {}
         _Visibility("Visibility",Range(0.0,1.0)) = 1.0
         _MomentumMap("Momentum Map", 2D ) = "black" {}
         _MapMaxP("Map max momentum", float ) = 1
 
-        _SlitCount("Num Sources",float) = 2
+        _SlitCount("Num Sources",Integer) = 2
         _SlitPitch("Slit Pitch",float) = 0.3
         _SlitWidth("Slit Width", float) = 0.05
         _BeamWidth("Beam Width", float) = 1
@@ -80,7 +79,6 @@ Shader "SimulCat/Ballistic/Particle Scattering 2D"
 
             sampler2D _MainTex;
             float4 _MainTex_ST;
-            float4 _Color;
             float _Visibility;
 
             sampler2D _MomentumMap;
@@ -89,7 +87,7 @@ Shader "SimulCat/Ballistic/Particle Scattering 2D"
             sampler2D _ColourMap;
             float4 _ColourMap_ST;
 
-            float _SlitCount;
+            int _SlitCount;
             float _SlitPitch;
             float _SlitWidth;
             float _BeamWidth;
@@ -115,17 +113,18 @@ Shader "SimulCat/Ballistic/Particle Scattering 2D"
             float _PauseTime;
             float _Play;
 
-            float3 sampleMomentum(float incidentP,float rnd01)
+            float3 scatterDirection(float incidentP,float rnd01)
             {
                 float fracMax = incidentP/_MapMaxP;
                 float4 mapMax = M(float4(fracMax,0.5,0,0));
                 float lookUp = mapMax.y*abs(rnd01);
                 float4 sample = M(float4(lookUp,0.5,0,0));
-                float py = sample.z*sign(rnd01);
-                int isValid = py < incidentP;
-                float sinTheta = clamp(py/incidentP,-1.0,1.0);
-                float cosTheta = cos(asin(sinTheta));
-                return float3(cosTheta,sinTheta,isValid);
+                float py = sample.z*sign(rnd01)/incidentP;
+                float pySq = py*py;
+                int isValid = pySq < 1.0;
+                pySq = clamp(pySq,0,1);
+                float pFwd = sqrt(1.0 - pySq);
+                return float3(pFwd,py,isValid);
             }
 
             // 2/Pi
@@ -139,11 +138,10 @@ Shader "SimulCat/Ballistic/Particle Scattering 2D"
                 UNITY_SETUP_INSTANCE_ID(v);
     			UNITY_TRANSFER_INSTANCE_ID(v, o);
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
-                
-                int slitCount = max(round(_SlitCount),1);
+                _SlitCount = max(1,_SlitCount);
                 float slitPitchScaled = _SlitPitch/_Scale;
                 float slitWidthScaled = _SlitWidth/_Scale;
-                float gratingWidthScaled = (slitCount-1)*slitPitchScaled + slitWidthScaled;
+                float gratingWidthScaled = (_SlitCount-1)*slitPitchScaled + slitWidthScaled;
                 float beamWidth = max (_BeamWidth/_Scale,(gratingWidthScaled + slitWidthScaled));
 
                 // Get hash of quad ID and also random 0-1;
@@ -154,9 +152,9 @@ Shader "SimulCat/Ballistic/Particle Scattering 2D"
                 float hshPlusMinus = (hsh01*2.0)-1.0;
                 
                 // Shift slit centre to a randomly chosen slit number 
-                int nSlit = (idHash >> 8) % slitCount;
+                int nSlit = (idHash >> 8) % _SlitCount;
                 // Set slitCenter to left-most position
-                float leftSlitCenter = -(slitCount - 1)*slitPitchScaled*0.5;
+                float leftSlitCenter = -(_SlitCount - 1)*slitPitchScaled*0.5;
                 float slitCenter = leftSlitCenter + (nSlit * slitPitchScaled);
                 float leftEdge = leftSlitCenter - slitWidthScaled*0.5;
                 // check if gratingmakes sense;
@@ -219,7 +217,7 @@ Shader "SimulCat/Ballistic/Particle Scattering 2D"
                 float momentumHash = RandomRange(2, idHash);
                 float particleP = _ParticleP*voffset;
                 float momentumFrac = (particleP - _MinParticleP)/(_MaxParticleP-_MinParticleP);
-                float3 sample = sampleMomentum(particleP,momentumHash-1.0);
+                float3 sample = scatterDirection(particleP,momentumHash-1.0);
                 float2 particlePosXY = startPos + sample.xy*postGratingDist;
                 validPosY = validPosY || (trackDistance <= gratingDistance);
                 int  posIsInside = (int)(validPosY)*floor(sample.z)*int((abs(particlePosXY.x) < localGridCentre.x) && (abs(particlePosXY.y) <= localGridCentre.y));

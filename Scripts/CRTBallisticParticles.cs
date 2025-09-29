@@ -32,7 +32,7 @@ public class CRTBallisticParticles : UdonSharpBehaviour
         set
         {
             planckSim = value;
-            updateParticleK();
+            updateParticleP();
         }
     }
 
@@ -51,7 +51,7 @@ public class CRTBallisticParticles : UdonSharpBehaviour
             value = Mathf.Max(value, 1f);
             particleSpeed = value; 
             gratingChanged = true;
-            updateParticleK();
+            updateParticleP();
         }
     }
 
@@ -62,9 +62,7 @@ public class CRTBallisticParticles : UdonSharpBehaviour
 
     [Header("Useful Feedback (Debug)")]
     [SerializeField]
-    private float particleMomentum;
-    [SerializeField]
-    private float particleK;
+    private float particleP;
 
 
     public float SimScale
@@ -124,7 +122,7 @@ public class CRTBallisticParticles : UdonSharpBehaviour
             {
                 slitCount = value;
                 if (iHaveCRT)
-                    matCRT.SetFloat("_SlitCount", slitCount);
+                    matCRT.SetInteger("_SlitCount", slitCount);
                 gratingChanged = true;
             }
         }
@@ -132,12 +130,12 @@ public class CRTBallisticParticles : UdonSharpBehaviour
 
     
 
-    private void updateParticleK()
-    { //_particleK("pi*p/h", float)
-        particleK = Mathf.PI * (particleMass * particleSpeed) / planckSim;
+    private void updateParticleP()
+    { //_particleP("pi*p/h", float)
+        particleP = Mathf.PI * (particleMass * particleSpeed) / planckSim;
         if (iHaveCRT)
         {
-            matCRT.SetFloat("_ParticleK",particleK);
+            matCRT.SetFloat("_ParticleP",particleP);
             gratingChanged = true;
         }
     }
@@ -146,8 +144,8 @@ public class CRTBallisticParticles : UdonSharpBehaviour
     {
         if (iHaveCRT)
         {
-            updateParticleK();
-            matCRT.SetFloat("_SlitCount", slitCount);
+            updateParticleP();
+            matCRT.SetInteger("_SlitCount", slitCount);
             matCRT.SetFloat("_SlitPitch", slitPitch);
             matCRT.SetFloat("_SlitWidth", slitWidth);
             matCRT.SetFloat("_Scale", simScale);
@@ -170,7 +168,7 @@ public class CRTBallisticParticles : UdonSharpBehaviour
         /*
         if (iHaveCRT)
         {
-            SlitCount = Mathf.RoundToInt(matCRT.GetFloat("_SlitCount"));
+            SlitCount = matCRT.GetInteger("_SlitCount");
             SlitPitch = matCRT.GetFloat("_SlitPitch");
             SlitWidth = matCRT.GetFloat("_SlitWidth");
             SimScale = matCRT.GetFloat("_Scale");

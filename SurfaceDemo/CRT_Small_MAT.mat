@@ -67,7 +67,8 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    m_Ints: []
+    m_Ints:
+    - _SlitCount: 2
     m_Floats:
     - _Brightness: 1
     - _BumpScale: 1
@@ -79,7 +80,7 @@ Material:
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
-    - _Lambda: 8.800001
+    - _Lambda: 8.800002
     - _LambdaPx: 12
     - _LeftPx: 0
     - _LowerEdge: 1

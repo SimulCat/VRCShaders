@@ -231,11 +231,11 @@ public class WavePanelControl : UdonSharpBehaviour
         if (numSources > 1 && slitPitch <= slitWidth)
         {
             float gratingWidth = (numSources - 1) * slitPitch + slitWidth;
-            matSimControl.SetFloat("_SlitCount", 1f);
+            matSimControl.SetInteger("_SlitCount", 1);
             matSimControl.SetFloat("_SlitWidth", gratingWidth);
             return;
         }
-        matSimControl.SetFloat("_SlitCount", numSources);
+        matSimControl.SetInteger("_SlitCount", numSources);
         matSimControl.SetFloat("_SlitWidth", slitWidth);
     }
     public int NumSources
@@ -487,7 +487,7 @@ public class WavePanelControl : UdonSharpBehaviour
             defaultLambda = matSimControl.GetFloat("_Lambda");
             defaultScale = matSimControl.GetFloat("_Scale");
             defaultPitch = matSimControl.GetFloat("_SlitPitch"); 
-            defaultSources = Mathf.RoundToInt(matSimControl.GetFloat("_SlitCount"));
+            defaultSources = matSimControl.GetInteger("_SlitCount");
         }
         initialSpeed = waveSpeed;
         if (iHaveSimDisplay)

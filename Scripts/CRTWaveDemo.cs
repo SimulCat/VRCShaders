@@ -73,6 +73,7 @@ public class CRTWaveDemo : UdonSharpBehaviour
         set
         {
            flowColour = value;
+            //Debug.Log(gameObject.name + "->CRTWaveDemo: FlowColour: " + flowColour);
             if (iHaveDisplayMat)
             {
                 matPanel.SetColor("_ColorFlow", flowColour);

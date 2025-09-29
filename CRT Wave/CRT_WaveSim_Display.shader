@@ -30,7 +30,7 @@
     Properties
     {
         _Lambda("Wavelength", float) = 49.64285714
-        _SlitCount("Num Sources",float) = 2
+        _SlitCount("Num Sources",Integer) = 2
         _SlitPitch("Slit Pitch",float) = 448
         _SlitWidth("Slit Width", Range(1.0,40.0)) = 12.0
         _Scale("Simulation Scale",Range(1.0,10.0)) = 1
@@ -89,14 +89,14 @@ float4 frag(v2f_customrendertexture i) : SV_Target
     float apertureAtRes = slitWidePx/_SourceResolution;
     int slitWidthCount = max(1,round(apertureAtRes/_SourceResolution));
     float stepDelta = slitWidePx/slitWidthCount;
-    int sourceCount = round(_SlitCount);
+    _SlitCount = max(1,_SlitCount);
     int phasorCount = 0;
     float pixScale = 1 / _Scale;
     
-    float apertureTop = (max(sourceCount - 1.0,0) * _SlitPitch * 0.5) + _SlitWidth * 0.5;
+    float apertureTop = ((_SlitCount - 1) * _SlitPitch * 0.5) + _SlitWidth * 0.5;
     float2 delta = float2(xPixel*_Scale,0.0);
     float yScaled = (yPixel - _CustomRenderTextureHeight / 2.0)*_Scale;
-    for (int nAperture = 0; nAperture < sourceCount; nAperture++)
+    for (int nAperture = 0; nAperture < _SlitCount; nAperture++)
     {
         float slitY = apertureTop;
         float2 phaseAmp = float2(0, 0);
