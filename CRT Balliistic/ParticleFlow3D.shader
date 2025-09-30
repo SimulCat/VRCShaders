@@ -40,6 +40,7 @@ Shader "SimulCat/Ballistic/Particle Scattering 3D"
         // x,y,z count of array w= total.
         _ArrayDimension("Array Dimension", Vector) = (128,80,1,10240)
         _MarkerScale ("Marker Scale", Range(0.01,10)) = 1
+        _Scale("Demo Scale",Range(1.0,10.0)) = 1
         // Play Control
         _BaseTime("Base Time Offset", Float)= 0
         _PauseTime("Freeze time",Float) = 0
@@ -132,6 +133,7 @@ Shader "SimulCat/Ballistic/Particle Scattering 3D"
             float4 _ArraySpacing;
             float4 _ArrayDimension;
             float _MarkerScale;
+            float _Scale;
 
             float _BaseTime;
             float _PauseTime;
@@ -152,6 +154,7 @@ Shader "SimulCat/Ballistic/Particle Scattering 3D"
                                 
                 float pH = sampleH.z*sign(rnd01)/incidentP;
                 float pV = sampleV.z*sign(rnd02)/incidentP;
+              
                 float2 pScaledHV = float2(pH,pV);
                 float pHVsq = dot(pScaledHV,pScaledHV);
               
@@ -194,19 +197,24 @@ Shader "SimulCat/Ballistic/Particle Scattering 3D"
                 float maxDiagonalDistance = length(localGridCentre);
                 localGridCentre *= 0.5; // Align centre
 
+                // Scaled values of grating dimensions
+                float slitPitch = _SlitPitch/_Scale;
+                float slitWidth = _SlitWidth/_Scale;
+                float slitHeight = _SlitHeight/_Scale;
+                float rowPitch = _RowPitch/_Scale;
+                float gratingDistance = _GratingOffset/_Scale;
+
                 _SlitCount = max(1,_SlitCount);
                 _RowCount = max(1,_RowCount);
-                float slitPitchScaled = _SlitPitch;
-                float slitWidthScaled = _SlitWidth;
-                float gratingWidthScaled = (_SlitCount-1)*slitPitchScaled + slitWidthScaled;
-                float beamWidth = max (_BeamWidth,(gratingWidthScaled + slitWidthScaled));
-                float gratingHeight = (_RowCount-1)*_RowPitch + _SlitHeight;
-                float beamHeight = min(_BeamHeight,(gratingHeight + _SlitHeight*0.5));
+                float gratingWidthScaled = (_SlitCount-1)*slitPitch + slitWidth;
+                float beamWidth = max (_BeamWidth,(gratingWidthScaled + slitWidth));
+                float gratingHeight = (_RowCount-1)*rowPitch + slitHeight;
+                float beamHeight = min(_BeamHeight,(gratingHeight + slitHeight*0.5));
 
                 // Set slitCenter to left-most position
-                float leftSlitCentre = -(_SlitCount - 1)*_SlitPitch*0.5;
+                float leftSlitCentre = -(_SlitCount - 1)*slitPitch*0.5;
                 // Set rowCenter to lower-most position
-                float lowerSlitCentre = -(_RowCount - 1)*_RowPitch*0.5;
+                float lowerSlitCentre = -(_RowCount - 1)*rowPitch*0.5;
 
                 // Get hash of quad ID and also random 0-1;
                 uint idHash = pcg_hash(v.id/3);
@@ -224,28 +232,28 @@ Shader "SimulCat/Ballistic/Particle Scattering 3D"
                 // 'Randomly' assign the particle to a row
                 int nRow = (idHash >> 10) % _RowCount;
 
-                float slitCenter = leftSlitCentre + (nSlit * slitPitchScaled);
-                float leftEdge = leftSlitCentre - slitWidthScaled*0.5;
+                float slitCenter = leftSlitCentre + (nSlit * slitPitch);
+                float leftEdge = leftSlitCentre - slitWidth*0.5;
                 // check if gratingmakes sense;
 
                 // Find horizontal position across the slits
-                float startPosH =  (_GratingOffset > 0.00001) ? (beamWidth * startHashH) : slitCenter + (startHashH * _SlitWidth);
+                float startPosH =  (_GratingOffset > 0.00001) ? (beamWidth * startHashH) : slitCenter + (startHashH * slitWidth);
                 
-                float normPosH = frac((startPosH-leftEdge)/_SlitPitch)*_SlitPitch;
+                float normPosH = frac((startPosH-leftEdge)/slitPitch)*slitPitch;
                 // check if particle Horiz pos is valid;
-                bool validPosH = (startPosH >= leftEdge) && (startPosH <= (-leftEdge)) && (normPosH <= _SlitWidth);
+                bool validPosH = (startPosH >= leftEdge) && (startPosH <= (-leftEdge)) && (normPosH <= slitWidth);
 
-                float rowCenter = lowerSlitCentre + (nRow * _RowPitch);
-                float lowerEdge = lowerSlitCentre - _SlitHeight*0.5;
+                float rowCenter = lowerSlitCentre + (nRow * rowPitch);
+                float lowerEdge = lowerSlitCentre - slitHeight*0.5;
 
                 // Find Vertical position
-                float startPosV =  (_GratingOffset > 0.00001) ? (beamHeight * startHashV) : rowCenter + (startHashV * _SlitHeight);
+                float startPosV =  (_GratingOffset > 0.00001) ? (beamHeight * startHashV) : rowCenter + (startHashV * slitHeight);
                 
-                float normPosV = frac((startPosV-lowerEdge)/_RowPitch)*_RowPitch;
+                float normPosV = frac((startPosV-lowerEdge)/rowPitch)*rowPitch;
                 // check if particle y pos is valid;
-                bool validPosV = (startPosV >= lowerEdge) && (startPosV <= (-lowerEdge)) && (normPosV <= _SlitHeight);
+                bool validPosV = (startPosV >= lowerEdge) && (startPosV <= (-lowerEdge)) && (normPosV <= slitHeight);
 
-                float particleV = _MaxVelocity*(_ParticleP/_MapMaxP);
+                float particleV = _MaxVelocity*(_ParticleP/_MapMaxP)/_Scale;
 
                 // Now particle scattering and position
                 
@@ -262,12 +270,12 @@ Shader "SimulCat/Ballistic/Particle Scattering 3D"
                 float timeOffset =  pulseDuration * invPi * asin(hshPlusMinus);
                 // Calculate distance travelled
                 float trackDistance = (cycleTime + timeOffset)*particleV*voffset;
-                bool beforeGrating = (trackDistance <= _GratingOffset);
-                float postGratingDist = max(0.0,trackDistance-_GratingOffset);
-                bool stuckGrating = ((!validPosH || !validPosV) && (!beforeGrating) && (postGratingDist < _GratingOffset));
+                bool beforeGrating = (trackDistance <= gratingDistance);
+                float postGratingDist = max(0.0,trackDistance-gratingDistance);
+                bool stuckGrating = ((!validPosH || !validPosV) && (!beforeGrating) && (postGratingDist < gratingDistance));
  
                 postGratingDist = stuckGrating ? 0.0 : postGratingDist;
-                float preGratingDist = min(_GratingOffset,trackDistance);
+                float preGratingDist = min(gratingDistance,trackDistance);
                 // Calculate the particle position based on the time and velocity
                 // Start position is offset from the centre of the emission x,y by the grating distance.
                 float3 startPos = float3(preGratingDist-(localGridCentre.x),startPosV,startPosH);
@@ -279,7 +287,7 @@ Shader "SimulCat/Ballistic/Particle Scattering 3D"
                 // Sample the horizontal and vertical momentum maps to obtain the momentum Vector
                 float4 sample = scatterDirection(particleP,momentumHashH-1.0,momentumHashV-1.0);
                 // Limit the post grating distance to avoid extreme angles taking particles out of bounds
-                float postGratingFwdMax = (_WallLimits.x > _GratingOffset) ? (_WallLimits.x -_GratingOffset) : _WallLimits.x;
+                float postGratingFwdMax = (_WallLimits.x > gratingDistance) ? (_WallLimits.x -gratingDistance) : _WallLimits.x;
                 postGratingFwdMax = postGratingFwdMax / clamp(sample.x,0.1,1.0);
 
                 float postGratingHorizMax = (_WallLimits.y - sign(sample.z)*startPosH);
@@ -297,7 +305,7 @@ Shader "SimulCat/Ballistic/Particle Scattering 3D"
                 // Update particle position in model to reflect either new position or orgiginal grid position
                float3 triCentreInModel = posIsInside*particlePos + (1-posIsInside)*triCentreInMesh;
 
-                vertexOffset *= _MarkerScale;                    // Scale the quad corner offset to world, now we billboard
+                vertexOffset *= _MarkerScale/_Scale;                    // Scale the quad corner offset to world, now we billboard
                 v.vertex.xyz =  triCentreInModel+vertexOffset;
                 // billboard the triangle
                 float4 camModelCentre = float4(triCentreInModel,1.0);
