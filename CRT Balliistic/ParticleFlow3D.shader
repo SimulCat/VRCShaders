@@ -291,7 +291,7 @@ Shader "SimulCat/Ballistic/Particle Scattering 3D"
                 postGratingFwdMax = postGratingFwdMax / clamp(sample.x,0.1,1.0);
 
                 float postGratingHorizMax = (_WallLimits.y - sign(sample.z)*startPosH);
-                postGratingHorizMax = postGratingHorizMax/clamp(abs(sample.z),0.1,1.0);
+                postGratingHorizMax = postGratingHorizMax/max(abs(sample.z),0.001);
                 postGratingDist = min(postGratingDist, postGratingFwdMax);
                 postGratingDist = min(postGratingDist, postGratingHorizMax);
 
