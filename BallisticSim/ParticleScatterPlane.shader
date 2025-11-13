@@ -1,4 +1,4 @@
-Shader "SimulCat/Ballistic/Particle Scattering 2D"
+Shader "SimulCat/Ballistic/Particle Scattering Plane"
 {
     Properties
     {
@@ -12,7 +12,7 @@ Shader "SimulCat/Ballistic/Particle Scattering 2D"
         _SlitPitch("Slit Pitch",float) = 0.3
         _SlitWidth("Slit Width", float) = 0.05
         _BeamWidth("Beam Width", float) = 1
-        _GratingOffset("Grating X Offset", float) = 0
+        _GratingDistance("Grating X Offset", float) = 0
 
         _ParticleP("Particle Momentum", float) = 1
         _MinParticleP("Min Momentum", float) = 1
@@ -90,7 +90,7 @@ Shader "SimulCat/Ballistic/Particle Scattering 2D"
             float _SlitPitch;
             float _SlitWidth;
             float _BeamWidth;
-            float _GratingOffset;
+            float _GratingDistance;
             float _ParticleP;
             float _MinParticleP;
             float _MaxParticleP;
@@ -141,7 +141,7 @@ Shader "SimulCat/Ballistic/Particle Scattering 2D"
                 float slitWidth = _SlitWidth/_Scale;
                 float gratingWidth = (_SlitCount-1)*slitPitch + slitWidth;
                 float beamWidth = max (_BeamWidth/_Scale,(gratingWidth + slitWidth));
-                float gratingDistance = _GratingOffset/_Scale;
+                float gratingDistance = _GratingDistance/_Scale;
 
                 // Get hash of quad ID and also random 0-1;
                 uint idHash = pcg_hash(v.id/3);
@@ -161,7 +161,7 @@ Shader "SimulCat/Ballistic/Particle Scattering 2D"
                 // Now to pick a start position within theslit
                 float startHash = RandomRange(1.0,idHash ^ 0xAC3FFF)-0.5;
                 float speedHash = RandomRange(2.0,idHash >> 3)-1.0;
-                float startPosY =  (_GratingOffset > 0.00001) ? (beamWidth * startHash) : slitCenter + (startHash * slitWidth);
+                float startPosY =  (_GratingDistance > 0.00001) ? (beamWidth * startHash) : slitCenter + (startHash * slitWidth);
                 float normPos = frac((startPosY-leftEdge)/slitPitch)*slitPitch;
                 // check if particle y pos is valid;
                 bool validPosY = (startPosY >= leftEdge) && (startPosY <= (-leftEdge)) && (normPos <= slitWidth);

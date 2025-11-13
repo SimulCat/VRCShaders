@@ -99,7 +99,7 @@ Material:
     - _SlitPitch: 40.000004
     - _SlitPitchPx: 40
     - _SlitWidePx: 12
-    - _SlitWidth: 10.000001
+    - _SlitWidth: 2.0000002
     - _SmoothnessTextureChannel: 0
     - _SourcePixelSize: 1
     - _SourceResolution: 1.02

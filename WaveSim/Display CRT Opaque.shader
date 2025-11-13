@@ -10,7 +10,7 @@ Shader"SimulCat/Wave/Display Phase from CRT Opaque"
 
         _ScaleAmplitude("Scale Amplitude", Range(0.1, 120)) = 50
         _ScaleEnergy("Scale Energy", Range(0.1, 100)) = 50
-        _Brightness("Display Brightness", Range(0,2)) = 1
+        _Visibility("Display Brightness", Range(0,2)) = 1
 
         _ColorNeg("Colour Base", color) = (0, 0.3, 1, 0)
         _Color("Colour Wave", color) = (1, 1, 0, 0)
@@ -56,7 +56,7 @@ Shader"SimulCat/Wave/Display Phase from CRT Opaque"
 
             float _ScaleAmplitude;
             float _ScaleEnergy;
-            float _Brightness;
+            float _Visibility;
 
             float _ShowCRT;
             float _ShowReal;
@@ -107,7 +107,7 @@ Shader"SimulCat/Wave/Display Phase from CRT Opaque"
                         value = sample.w * _ScaleEnergy * _ScaleEnergy;
                     else
                         value = sample.z * _ScaleAmplitude;
-                    value *= _Brightness;
+                    value *= _Visibility;
                     col = lerp(_ColorNeg, _ColorFlow, value);
                     return col;
                 }
@@ -127,7 +127,7 @@ Shader"SimulCat/Wave/Display Phase from CRT Opaque"
                 }
                 else
                     value *= _ScaleAmplitude;
-                value *= _Brightness;
+                value *= _Visibility;
                 col = lerp(_ColorNeg, _ShowReal ? _Color : _ColorVel, value);
                 return col;
             }

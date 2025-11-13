@@ -25,7 +25,7 @@ Shader "SimulCat/Ballistic/Particle Scattering 3D"
         _BeamWidth("Beam Width", float) = .5
         _BeamHeight("Beam Height", float) = .2
 
-        _GratingOffset("Grating X Offset", float) = 0
+        _GratingDistance("Grating X Offset", float) = 0
         _WallLimits("Wall Limits", Vector) = (5.0,2.0,1.0)
 
         _ParticleP("Particle Momentum", float) = 1
@@ -118,7 +118,7 @@ Shader "SimulCat/Ballistic/Particle Scattering 3D"
             float _BeamWidth;
             float _BeamHeight;
 
-            float _GratingOffset;
+            float _GratingDistance;
             float4 _WallLimits;
             float _ParticleP;
             float _MinParticleP;
@@ -202,7 +202,7 @@ Shader "SimulCat/Ballistic/Particle Scattering 3D"
                 float slitWidth = _SlitWidth/_Scale;
                 float slitHeight = _SlitHeight/_Scale;
                 float rowPitch = _RowPitch/_Scale;
-                float gratingDistance = _GratingOffset/_Scale;
+                float gratingDistance = _GratingDistance/_Scale;
 
                 _SlitCount = max(1,_SlitCount);
                 _RowCount = max(1,_RowCount);
@@ -237,7 +237,7 @@ Shader "SimulCat/Ballistic/Particle Scattering 3D"
                 // check if gratingmakes sense;
 
                 // Find horizontal position across the slits
-                float startPosH =  (_GratingOffset > 0.00001) ? (beamWidth * startHashH) : slitCenter + (startHashH * slitWidth);
+                float startPosH =  (_GratingDistance > 0.00001) ? (beamWidth * startHashH) : slitCenter + (startHashH * slitWidth);
                 
                 float normPosH = frac((startPosH-leftEdge)/slitPitch)*slitPitch;
                 // check if particle Horiz pos is valid;
@@ -247,7 +247,7 @@ Shader "SimulCat/Ballistic/Particle Scattering 3D"
                 float lowerEdge = lowerSlitCentre - slitHeight*0.5;
 
                 // Find Vertical position
-                float startPosV =  (_GratingOffset > 0.00001) ? (beamHeight * startHashV) : rowCenter + (startHashV * slitHeight);
+                float startPosV =  (_GratingDistance > 0.00001) ? (beamHeight * startHashV) : rowCenter + (startHashV * slitHeight);
                 
                 float normPosV = frac((startPosV-lowerEdge)/rowPitch)*rowPitch;
                 // check if particle y pos is valid;
