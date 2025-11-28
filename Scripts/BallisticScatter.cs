@@ -66,10 +66,6 @@ public class BallisticScatter : UdonSharpBehaviour
         set
         {
             visibility = Mathf.Clamp01(value);
-            if (matParticleFlow != null)
-            {
-                matParticleFlow.SetFloat("_Visibility", visibility);
-            }
             reviewProbVisibility();
         }
     }
@@ -138,7 +134,7 @@ public class BallisticScatter : UdonSharpBehaviour
         if (targetViz == prevVisibility)
             return;
         prevVisibility = targetViz;
-        matProbabilitySim.SetFloat("_Brightness", targetViz);
+        matProbabilitySim.SetFloat("_Visibility", targetViz);
         crtUpdateRequired = true;
     }
 

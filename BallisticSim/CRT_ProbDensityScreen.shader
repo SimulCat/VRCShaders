@@ -168,40 +168,7 @@ int postionInsideAperture(int numHoles, float holePitch, float holeWidth, float 
     return (int)((offset >= leftEdge) && (offset <= -leftEdge) && (normOffset <= holeWidth));
 }
 
-/*
-float RandomSourcePosition(int numGaps, float gapPitch, float gapWidth, uint rnd)
-{
-    float GapOffset;
-    float GapInnerPosition;
-    float halfGap = gapWidth / 2.0;
-    uint nGap;
 
-    GapInnerPosition =  RandomRange(gapWidth, rnd++) - halfGap;
-    if (numGaps <= 1)
-        return GapInnerPosition;
-    nGap = pcg_hash(rnd++);
-    nGap = nGap % numGaps;
-    GapOffset = ((int)nGap - (numGaps - 1.0f) / 2.0f);
-    GapOffset *= gapPitch;
-    return GapOffset + GapInnerPosition;
-}
-
-
-float applyGratingToPoint(float posX, float posY, uint seed)
-{
-    float xDelta, yDelta;
-    float result = 0.0;
-    float resultx, resulty;
-    int i = 0;
-    while (i++ < 10000)
-    {
-        xDelta = RandomSourcePosition(_SlitCount, _SlitPitch, _SlitWidth,  seed++);
-        yDelta = RandomSourcePosition(_RowCount, _RowPitch, _SlitHeight, seed++);
-//        result += LerpPixelIntensity(posX + xDelta, posY + yDelta);
-    }
-    return result;
-}
-*/
 float4 fragShadow(v2f_customrendertexture i) : SV_Target
 {
     float2 pixPos = i.globalTexcoord.xy;

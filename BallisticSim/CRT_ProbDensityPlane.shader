@@ -4,10 +4,7 @@
     {
         _Color("Colour Wave", color) = (1, 1, 1, 1)
         _ColorNeg("Colour Base", color) = (0, 0.3, 1, 0)
-        _Visibility("Display Brightness", Range(0,10)) = 1
-
-        _SlitCount("Num Sources",Integer) = 2
-        _SlitPitch("Slit Pitch",float) = 448
+        _Visibility("Display Contrast",float) = 1.0
         _SlitWidth("Slit Width", Range(1.0,40.0)) = 12.0
         _BeamWidth("Grating Width", float) = 1
         _GratingDistance("Grating Distance", float) = 0

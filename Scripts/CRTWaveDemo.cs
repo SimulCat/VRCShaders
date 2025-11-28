@@ -48,7 +48,7 @@ public class CRTWaveDemo : UdonSharpBehaviour
     {
         if (matPanel == null)
             return;
-        matPanel.SetFloat("_Brightness", (brightPercent / 50) * visibility);
+        matPanel.SetFloat("_Visibility", (brightPercent / 100) * visibility);
     }
 
     [Header("Mode Colours")]

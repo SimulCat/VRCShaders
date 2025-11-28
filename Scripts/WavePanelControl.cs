@@ -108,7 +108,7 @@ public class WavePanelControl : UdonSharpBehaviour
         if (targetViz == prevVisibility)
             return;
         prevVisibility = targetViz;
-        matSimDisplay.SetFloat("_Brightness", targetViz);
+        matSimDisplay.SetFloat("_Visibility", targetViz);
     }
 
     private float ContrastVal
