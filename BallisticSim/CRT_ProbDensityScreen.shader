@@ -1,9 +1,8 @@
-﻿Shader"SimulCat/CRT/Prob Density Screen CRT"
+﻿Shader"Murpheus/CRT/Prob Density Screen CRT"
 {
     Properties
     {
         _Color("Colour", color) = (1, 1, 1, 1)
-        _ColorNeg("Colour Base", color) = (0, 0.3, 1, 0)
         _Visibility("Display Visibility", Range(0,100)) = 10
         _SlitCount("Slit Count",Integer) = 2
         _RowCount("Row Count",Integer) = 2
@@ -34,7 +33,6 @@ CGINCLUDE
     #define MY(U) tex2D(_MomentumMapY, float2(U))
     
         float4 _Color;
-        float4 _ColorNeg;
         float  _Visibility;
 
         int _SlitCount;
@@ -202,27 +200,24 @@ float4 frag(v2f_customrendertexture i) : SV_Target
 
     float halfSlitWidth = _SlitWidth * 0.5;
     float halfSlitHeight = _SlitHeight * 0.5;
-
-    for (int nAperture = 0; nAperture < _SlitCount; nAperture++)
+    int nAperture;
+    for (nAperture = 0; nAperture < _SlitCount; nAperture++)
     {
         resultX += sampleEdgesX(_SlitsToScreen, (pos.x - slitPosX), halfSlitWidth)/_SlitCount;
         slitPosX -= _SlitPitch;
     }
 
 
-    for (int nAperture = 0; nAperture < _RowCount; nAperture++)
+    for (nAperture = 0; nAperture < _RowCount; nAperture++)
     {
         resultY += sampleEdgesY(_SlitsToScreen, (pos.y - slitPosY), halfSlitHeight)/_RowCount;
         slitPosY -= _RowPitch;
     }
 
     resultX *= resultY;
-    float3 col = (float3)(resultX,resultX,resultX);//  lerp(_ColorNeg,_Color,resultX).rgb;
 
-    return float4(col,(resultX+0.05)*_Visibility);
+    return float4(resultX,resultX,resultX,(resultX+0.03)*_Visibility);
 }
-
-
 
 ENDCG
 

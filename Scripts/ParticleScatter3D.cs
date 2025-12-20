@@ -10,8 +10,8 @@ using VRC.Udon;
 
 public class ParticleScatter3D : UdonSharpBehaviour
 {
-    //[SerializeField]
-    //ProbabilityDisplay probabilityDisplay;
+    [SerializeField]
+    ProbabilityScreen probabilityScreen;
     //[SerializeField]
    // HuygensDisplay huygensDisplay;
     //[SerializeField]
@@ -45,9 +45,9 @@ public class ParticleScatter3D : UdonSharpBehaviour
     private float gratingDistance = 0;
     [SerializeField, Tooltip("Distance from grating to screen")]
     private float screenDistance = 7f;
-    [SerializeField, Range(1, 17)]
+    [SerializeField, UdonSynced, FieldChangeCallback(nameof(RowCount)),Range(1, 17)]
     private int rowCount = 1;
-    [SerializeField, Range(1, 17)]
+    [SerializeField, UdonSynced, FieldChangeCallback(nameof(SlitCount)), Range(1, 17)]
     private int slitCount = 2;
     [SerializeField]
     private float slitPitch = 45f;        // "Slit Pitch" millimetre
@@ -66,9 +66,6 @@ public class ParticleScatter3D : UdonSharpBehaviour
     private float speedRange = 10f;        // Speed Range Percent
 
     [SerializeField, Range(0, 17)] private int MAX_SLITS = 7;
-
-    [SerializeField, Range(1, 10)]
-    private float simScale;
 
     [SerializeField]
     private Color displayColor = Color.cyan;
@@ -98,9 +95,7 @@ public class ParticleScatter3D : UdonSharpBehaviour
     [SerializeField] UdonSlider screenDistanceSlider;
 
 
-    //[SerializeField] private SyncedIncDec selectSlitCount;
     [SerializeField] private TextMeshProUGUI txtSlitCountDisplay;
-    //[SerializeField] private SyncedIncDec selectRowCount;
     [SerializeField] private TextMeshProUGUI txtRowCountDisplay;
 
 
@@ -197,14 +192,43 @@ public class ParticleScatter3D : UdonSharpBehaviour
         }
     }
 
-    public void SlitIncDec(int delta)
+    public void incSlits()
     {
-        SlitCount = Mathf.Clamp(slitCount + delta, 1, MAX_SLITS);
+        if (slitCount < MAX_SLITS)
+        {
+            if (!iamOwner)
+                Networking.SetOwner(player, gameObject);
+            SlitCount = slitCount + 1;
+        }
+    }
+    public void decSlits()
+    {
+        if (slitCount > 1)
+        {
+            if (!iamOwner)
+                Networking.SetOwner(player, gameObject);
+            SlitCount = slitCount - 1;
+        }
     }
 
-    public void RowIncDec(int delta)
+    public void incRows()
     {
-        RowCount = Mathf.Clamp(rowCount + delta, 0, MAX_SLITS);
+        if (rowCount < MAX_SLITS)
+        {
+            if (!iamOwner)
+                Networking.SetOwner(player, gameObject);
+            RowCount = rowCount + 1;
+        }
+    }
+
+    public void decRows()
+    {
+        if (rowCount > 0)
+        {
+            if (!iamOwner)
+                Networking.SetOwner(player, gameObject);
+            RowCount = rowCount - 1;
+        }
     }
     private void reviewPulse()
     {
@@ -212,8 +236,6 @@ public class ParticleScatter3D : UdonSharpBehaviour
             return;
         float width = pulseParticles ? pulseWidth : -1f;
         matParticleFlow.SetFloat("_PulseWidth", width);
-        if (togPulseParticles != null && togPulseParticles.SyncedState != pulseParticles)
-            togPulseParticles.setState(pulseParticles);
 
     }
     public bool PulseParticles
@@ -221,13 +243,12 @@ public class ParticleScatter3D : UdonSharpBehaviour
         get => pulseParticles;
         set
         {
-            bool chg = pulseParticles != value;
+            Debug.Log($"pulse Event {value}");
+            bool isChanged = pulseParticles != value;
             pulseParticles = value;
-            if (togPulseParticles != null && togPulseParticles.SyncedState!= value)
-                togPulseParticles.setState(pulseParticles);
             if (pulseWidthSlider != null)
                 pulseWidthSlider.Interactable = pulseParticles;
-            if (chg)
+            if (isChanged)
                 reviewPulse();
         }
     }
@@ -307,10 +328,10 @@ public class ParticleScatter3D : UdonSharpBehaviour
                 screenModelXfrm.localPosition = pos;
             }
             /*
-            if (probabilityDisplay != null)
+            if (probabilityScreen != null)
             {
-                probabilityDisplay.ScreenOffset = xOffset;
-                probabilityDisplay.SlitsToScreen = slitsToScreen;
+                probabilityScreen.ScreenOffset = xOffset;
+                probabilityScreen.SlitsToScreen = slitsToScreen;
             }*/
             /*
             if (huygensDisplay != null)
@@ -334,8 +355,8 @@ public class ParticleScatter3D : UdonSharpBehaviour
             if (matParticleFlow != null)
                 matParticleFlow.SetFloat("_GratingDistance", gratingDistance);
             float slitsToScreen = screenDistance - gratingDistance;
-            //if (probabilityDisplay != null)
-            //    probabilityDisplay.SlitsToScreen = slitsToScreen;
+            //if (probabilityScreen != null)
+            //    probabilityScreen.SlitsToScreen = slitsToScreen;
             //if (huygensDisplay != null)
             //    huygensDisplay.SlitsToScreen = slitsToScreen;
         }
@@ -349,17 +370,6 @@ public class ParticleScatter3D : UdonSharpBehaviour
             wallLimits = value;
             if (matParticleFlow != null)
                 matParticleFlow.SetVector("_WallLimits", wallLimits);
-        }
-    }
-
-    public float SimScale
-    {
-        get => simScale;
-        set
-        {
-            simScale = value;
-            if (matParticleFlow != null)
-                matParticleFlow.SetFloat("_Scale", simScale);
         }
     }
 
@@ -560,8 +570,8 @@ public class ParticleScatter3D : UdonSharpBehaviour
             particleP = value;
             if (matParticleFlow != null)
                 matParticleFlow.SetFloat("_ParticleP", particleP);
-            //if (probabilityDisplay != null)
-            //    probabilityDisplay.ParticleP = particleP;
+            //if (probabilityScreen != null)
+            //    probabilityScreen.ParticleP = particleP;
             //if (huygensDisplay != null)
             //    huygensDisplay.ParticleP = particleP;
             SetColour();
@@ -573,8 +583,8 @@ public class ParticleScatter3D : UdonSharpBehaviour
         set
         {
             displayColor = value;
-            //if (probabilityDisplay != null)
-            //    probabilityDisplay.LaserColour = displayColor;
+            //if (probabilityScreen != null)
+            //    probabilityScreen.LaserColour = displayColor;
             //if (huygensDisplay != null)
             //    huygensDisplay.LaserColour = displayColor;
             //if (laserModel != null)
@@ -775,11 +785,11 @@ public class ParticleScatter3D : UdonSharpBehaviour
         if (gratingUpdateRequired)
         {
             /*
-            if (probabilityDisplay != null)
+            if (probabilityScreen != null)
             {
-                probabilityDisplay.UpdateGratingSettings(slitCount, rowCount, SlitWidth, SlitHeight, slitPitch, rowPitch);
-                probabilityDisplay.ParticleP = particleP;
-                probabilityDisplay.LaserColour = displayColor;
+                probabilityScreen.UpdateGratingSettings(slitCount, rowCount, SlitWidth, SlitHeight, slitPitch, rowPitch);
+                probabilityScreen.ParticleP = particleP;
+                probabilityScreen.LaserColour = displayColor;
             }*/
             /*
             if (huygensDisplay != null)
@@ -853,11 +863,16 @@ public class ParticleScatter3D : UdonSharpBehaviour
     void Init()
     {
         if (togPulseParticles != null)
+        {
             togPulseParticles.setState(pulseParticles);
+            togPulseParticles.ClientVariableName = nameof(PulseParticles);
+            togPulseParticles.IsBoolean = true;
+        }
 
         if (slitWidthSlider != null)
         {
             slitWidthSlider.SliderUnit = "%";
+            slitWidthSlider.ClientVariableName = nameof(SlitWidthFrac);
             slitWidthSlider.DisplayScale = 100f; // Display in millimetres
             slitWidthSlider.SetLimits(0.01f, 0.95f);
             slitWidthSlider.SetValue(slitWidthFrac);
@@ -867,6 +882,7 @@ public class ParticleScatter3D : UdonSharpBehaviour
         {
             slitHeightSlider.SliderUnit = "<br>%";
             slitHeightSlider.DisplayScale = 100f; // Display in millimetres
+            slitHeightSlider.ClientVariableName = nameof(SlitHeightFrac);
             slitHeightSlider.SetLimits(0.01f, 0.95f);
             slitHeightSlider.SetValue(slitHeightFrac);
             slitHeightSlider.Interactable = true;
@@ -875,6 +891,7 @@ public class ParticleScatter3D : UdonSharpBehaviour
         {
             slitPitchSlider.SliderUnit = "mm";
             slitPitchSlider.DisplayScale = 1f; // Display in millimetres
+            slitPitchSlider.ClientVariableName = nameof(SlitPitch);
             slitPitchSlider.SetLimits(0.1f, 20f);
             slitPitchSlider.SetValue(slitPitch);
             slitPitchSlider.Interactable = true;
@@ -883,6 +900,7 @@ public class ParticleScatter3D : UdonSharpBehaviour
         {
             rowPitchSlider.SliderUnit = "<br>mm";
             rowPitchSlider.DisplayScale = 1f; // Display in millimetres
+            rowPitchSlider.ClientVariableName = nameof(RowPitch);
             rowPitchSlider.SetLimits(0.1f, 40f);
             rowPitchSlider.SetValue(rowPitch);
             rowPitchSlider.Interactable = true;
@@ -892,6 +910,7 @@ public class ParticleScatter3D : UdonSharpBehaviour
         {
             speedRangeSlider.SliderUnit = "%";
             speedRangeSlider.DisplayScale = 1f;
+            speedRangeSlider.ClientVariableName = nameof(SpeedRange);
             speedRangeSlider.SetLimits(0, 50);
             speedRangeSlider.SetValue(speedRange);
             speedRangeSlider.Interactable = true;
@@ -900,6 +919,7 @@ public class ParticleScatter3D : UdonSharpBehaviour
         {
             momentumSlider.SliderUnit = "";
             momentumSlider.DisplayScale = 0.001f;
+            momentumSlider.ClientVariableName = nameof(ParticleP);
             momentumSlider.SetLimits(minParticleP, maxParticleP);
             momentumSlider.SetValue(particleP);
             momentumSlider.Interactable = true;
@@ -908,6 +928,7 @@ public class ParticleScatter3D : UdonSharpBehaviour
         {
             pulseWidthSlider.SliderUnit = "s";
             pulseWidthSlider.DisplayScale = 1f; // Display in seconds
+            pulseWidthSlider.ClientVariableName = nameof(PulseWidth);
             pulseWidthSlider.SetLimits(0.1f, 2f);
             pulseWidthSlider.SetValue(pulseWidth);
             pulseWidthSlider.Interactable = pulseParticles;
@@ -916,6 +937,7 @@ public class ParticleScatter3D : UdonSharpBehaviour
         {
             screenDistanceSlider.SliderUnit = "m";
             screenDistanceSlider.DisplayScale = 1f; // Display in metres
+            screenDistanceSlider.ClientVariableName = nameof(ScreenDistance);
             screenDistanceSlider.SetLimits(gratingDistance + 1, WallLimits.x - 1);
             screenDistanceSlider.SetValue(screenDistance);
             screenDistanceSlider.Interactable = true;
@@ -932,12 +954,12 @@ public class ParticleScatter3D : UdonSharpBehaviour
 
         Init();
         /*
-        if (probabilityDisplay != null)
+        if (probabilityScreen != null)
         {
-            matProbCRT = probabilityDisplay.MatProbCrt;
-            probabilityDisplay.UpdateGratingSettings(slitCount, rowCount, SlitWidth, SlitHeight, slitPitch, rowPitch);
-            probabilityDisplay.ParticleP = particleP;
-            probabilityDisplay.LaserColour = displayColor;
+            matProbCRT = probabilityScreen.MatProbCrt;
+            probabilityScreen.UpdateGratingSettings(slitCount, rowCount, SlitWidth, SlitHeight, slitPitch, rowPitch);
+            probabilityScreen.ParticleP = particleP;
+            probabilityScreen.LaserColour = displayColor;
         }*/
         /*
         if (matParticleFlow != null)
@@ -1014,7 +1036,6 @@ public class ParticleScatter3D : UdonSharpBehaviour
         SlitWidthFrac = slitWidthFrac;
         SlitHeightFrac = slitHeightFrac;
         RowCount = rowCount;
-        SimScale = simScale;
         SpeedRange = speedRange;
         PulseParticles = pulseParticles;
         PulseWidth = pulseWidth;

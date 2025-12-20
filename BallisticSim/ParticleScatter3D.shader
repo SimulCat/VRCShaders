@@ -1,4 +1,4 @@
-Shader "SimulCat/Ballistic/Particle Scattering 3D"
+Shader "Murpheus/Ballistic/Particle Scattering 3D"
 {
     Properties
     {
