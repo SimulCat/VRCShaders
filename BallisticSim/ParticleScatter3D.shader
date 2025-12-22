@@ -5,6 +5,7 @@ Shader "Murpheus/Ballistic/Particle Scattering 3D"
         _MainTex ("Particle Texture", 2D) = "white" {}
         _ColourMap("Colour lookUp", 2D) = "black" {}
         _Visibility("Visibility",Range(0.0,1.0)) = 1.0
+        
         // Horizontal Scattering Momentum Frequency Distribution
         _MomentumMap("Momentum Map Horizontal", 2D ) = "black" {}
         _MapMaxP("Horiz Map max momentum", float ) = 1
@@ -25,12 +26,14 @@ Shader "Murpheus/Ballistic/Particle Scattering 3D"
         _BeamWidth("Beam Width", float) = .5
         _BeamHeight("Beam Height", float) = .2
 
-        _GratingDistance("Grating X Offset", float) = 0
-        _WallLimits("Wall Limits", Vector) = (5.0,2.0,1.0)
+        _GratingDistance("Grating Distance", float) = 0.5
+        _ScreenDistance("Screen Distance", float) = 7
+
+        _WallLimits("Wall Limits", Vector) = (5.0,2.0,2.0)
 
         _ParticleP("Particle Momentum", float) = 1
-        _MinParticleP("Min Momentum", float) = 1
-        _MaxParticleP("Max Momentum", float) = 1
+        _MinParticleP("Min Momentum", float) = 100
+        _MaxParticleP("Max Momentum", float) = 10
         _MaxVelocity("MaxVelocity", float) = 5
         _SpeedRange("Speed Range fraction",Range(0.0,0.5)) = 0
         _PulseWidth("Pulse Width",float) = 0
@@ -44,7 +47,7 @@ Shader "Murpheus/Ballistic/Particle Scattering 3D"
         // Play Control
         _BaseTime("Base Time Offset", Float)= 0
         _PauseTime("Freeze time",Float) = 0
-        _Play("Play Animation", Float) = 1
+        _Play("Play Animation", Integer) = 1
     }
 
     SubShader
@@ -119,6 +122,8 @@ Shader "Murpheus/Ballistic/Particle Scattering 3D"
             float _BeamHeight;
 
             float _GratingDistance;
+            float _ScreenDistance;
+
             float4 _WallLimits;
             float _ParticleP;
             float _MinParticleP;
@@ -137,7 +142,7 @@ Shader "Murpheus/Ballistic/Particle Scattering 3D"
 
             float _BaseTime;
             float _PauseTime;
-            float _Play;
+            int _Play;
 
             // Returns the sampled momentum direction as a normalized 3d vector
             float4 scatterDirection(float incidentP,float rnd01, float rnd02)
@@ -205,10 +210,10 @@ Shader "Murpheus/Ballistic/Particle Scattering 3D"
                 float gratingDistance = _GratingDistance/_Scale;
 
                 _SlitCount = max(1,_SlitCount);
-                _RowCount = max(1,_RowCount);
+                _RowCount = max(0,_RowCount);
                 float gratingWidthScaled = (_SlitCount-1)*slitPitch + slitWidth;
                 float beamWidth = max (_BeamWidth,(gratingWidthScaled + slitWidth));
-                float gratingHeight = (_RowCount-1)*rowPitch + slitHeight;
+                float gratingHeight = _RowCount >= 1 ? (_RowCount-1)*rowPitch + slitHeight : _BeamHeight;
                 float beamHeight = min(_BeamHeight,(gratingHeight + slitHeight*0.5));
 
                 // Set slitCenter to left-most position
@@ -251,7 +256,7 @@ Shader "Murpheus/Ballistic/Particle Scattering 3D"
                 
                 float normPosV = frac((startPosV-lowerEdge)/rowPitch)*rowPitch;
                 // check if particle y pos is valid;
-                bool validPosV = (startPosV >= lowerEdge) && (startPosV <= (-lowerEdge)) && (normPosV <= slitHeight);
+                bool validPosV = (_RowCount < 1) || ((startPosV >= lowerEdge) && (startPosV <= (-lowerEdge)) && (normPosV <= slitHeight));
 
                 float particleV = _MaxVelocity*(_ParticleP/_MapMaxP)/_Scale;
 
@@ -287,7 +292,10 @@ Shader "Murpheus/Ballistic/Particle Scattering 3D"
                 // Sample the horizontal and vertical momentum maps to obtain the momentum Vector
                 float4 sample = scatterDirection(particleP,momentumHashH-1.0,momentumHashV-1.0);
                 // Limit the post grating distance to avoid extreme angles taking particles out of bounds
-                float postGratingFwdMax = (_WallLimits.x > gratingDistance) ? (_WallLimits.x -gratingDistance) : _WallLimits.x;
+                float wallLimitX = min(_WallLimits.x, _ScreenDistance);
+                float postGratingFwdMax = (wallLimitX > gratingDistance) ? (wallLimitX -gratingDistance) : wallLimitX;
+                //float postGratingFwdMax = max(screenX - _GratingDistance,0);
+
                 postGratingFwdMax = postGratingFwdMax / clamp(sample.x,0.1,1.0);
 
                 float postGratingHorizMax = (_WallLimits.y - sign(sample.z)*startPosH);

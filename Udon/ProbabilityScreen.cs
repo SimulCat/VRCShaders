@@ -33,20 +33,20 @@ public class ProbabilityScreen : UdonSharpBehaviour
     [Header("Wavelength/Momentum Units")]
     [SerializeField, Tooltip("Scales control settings in mm to lengths in metres")]
     private float unitsToMetres = 0.001f;
-    [SerializeField]
+    [SerializeField,FieldChangeCallback(nameof(Intensity))]
     float intensity = 12;
     [SerializeField]
     float intensityMax = 20;
     [SerializeField] private ScatterType scatteringType;
 
-    [SerializeField, Tooltip("Show/Hide Probability Denisty")]
+    [SerializeField,FieldChangeCallback(nameof(ShowProbability)), Tooltip("Show/Hide Probability Denisty")]
     private bool showProbability = true;
     [SerializeField]
     private SyncedToggle togProbability;
     [SerializeField, Tooltip("Intensity Control Slider")]
     private UdonSlider intensityControl;
 
-    //[SerializeField] private GiantLaserModel laser;
+    [SerializeField] private GiantLaser laser;
 
     [Tooltip("Set Scattering Shadow, Huygens, or Van Vliet/Duane")]
 
@@ -68,12 +68,11 @@ public class ProbabilityScreen : UdonSharpBehaviour
         {
             matProbCRT.SetFloat("_Visibility", showProbability ? intensity : 0);
         }
-        /*
         if (laser != null)
         {
             laser.LaserOn = showProbability;
             laser.LaserColor = laserColour * (intensity * 2 / intensityMax);
-        }*/
+        }
     }
     public bool ShowProbability
     {
@@ -159,15 +158,15 @@ public class ProbabilityScreen : UdonSharpBehaviour
             laserColour = value;
             if (matProbCRT != null)
                 matProbCRT.SetColor("_Color", value);
-            /*
+            
             if (laser != null)
             {
                 laser.LaserColor = laserColour * (intensity * 2 / intensityMax);
-            }*/
+            }
             if (_screenMaterial != null)
             {
-                //if (_screenMaterial.HasProperty("_EmissionColor"))
-                //    _screenMaterial.SetColor("_EmissionColor", value * 2f);
+                if (_screenMaterial.HasProperty("_EmissionColor"))
+                    _screenMaterial.SetColor("_EmissionColor", value * 2f);
                 _screenMaterial.color = value * 1.25f;
 
             }
@@ -370,13 +369,13 @@ public class ProbabilityScreen : UdonSharpBehaviour
             intensityControl.SetLimits(0, intensityMax);
             intensityControl.SetValue(intensity);
             intensityControl.Interactable = showProbability;
-            intensityControl.ClientVariableName = nameof(Intensity);
+            intensityControl.ClientVariableName = nameof(intensity);
         }
         if (togProbability != null)
         {
             togProbability.IsBoolean = true;
             togProbability.setState(showProbability);
-            togProbability.ClientVariableName = nameof(ShowProbability);
+            togProbability.ClientVariableName = nameof(showProbability);
         }
         if (_targetScreen == null)
             _targetScreen = transform.parent.Find("Target Screen");
@@ -419,5 +418,3 @@ public class ProbabilityScreen : UdonSharpBehaviour
         StartUp();
     }
 }
-
-
