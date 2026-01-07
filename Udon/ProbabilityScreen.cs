@@ -31,8 +31,6 @@ public class ProbabilityScreen : UdonSharpBehaviour
     [SerializeField, Tooltip("Initial Particle Momentum")]
     private float particleP = 1000; //Units
     [Header("Wavelength/Momentum Units")]
-    [SerializeField, Tooltip("Scales control settings in mm to lengths in metres")]
-    private float unitsToMetres = 0.001f;
     [SerializeField,FieldChangeCallback(nameof(Intensity))]
     float intensity = 12;
     [SerializeField]
@@ -71,7 +69,7 @@ public class ProbabilityScreen : UdonSharpBehaviour
         if (laser != null)
         {
             laser.LaserOn = showProbability;
-            laser.LaserColor = laserColour * (intensity * 2 / intensityMax);
+            laser.LaserColor = laserColour * (intensity / intensityMax);
         }
     }
     public bool ShowProbability
@@ -261,10 +259,10 @@ public class ProbabilityScreen : UdonSharpBehaviour
     {
         RowCount = rows;
         SlitCount = slits;
-        SlitWidth = slitWide * unitsToMetres;
-        SlitHeight = slitHigh * unitsToMetres;
-        SlitPitch = slitInterval * unitsToMetres;
-        RowPitch = rowInterval * unitsToMetres;
+        SlitWidth = slitWide;
+        SlitHeight = slitHigh;
+        SlitPitch = slitInterval;
+        RowPitch = rowInterval;
         _gratingSize.x = (slitPitch * (slitCount - 1)) + slitWidth;
 
         if (rowCount <= 0)
