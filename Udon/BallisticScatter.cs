@@ -275,7 +275,7 @@ public class BallisticScatter : UdonSharpBehaviour
         shaderPauseTime = 0;
         matParticleFlow.SetFloat("_PauseTime", 0f);
         matParticleFlow.SetFloat("_BaseTime", shaderBaseTime);
-        matParticleFlow.SetFloat("_Play", 1f);
+        matParticleFlow.SetInteger("_Play", 1);
         shaderPlaying = true;
         //Debug.Log("Init");
     }
@@ -291,7 +291,7 @@ public class BallisticScatter : UdonSharpBehaviour
                 {
                     shaderBaseTime += Time.timeSinceLevelLoad - shaderPauseTime;
                     matParticleFlow.SetFloat("_BaseTime", shaderBaseTime);
-                    matParticleFlow.SetFloat("_Play", 1f);
+                    matParticleFlow.SetInteger("_Play", 1);
                     shaderPlaying = true;
                     //Debug.Log("Play");
                 }
@@ -301,7 +301,7 @@ public class BallisticScatter : UdonSharpBehaviour
                 {
                     shaderPauseTime = Time.timeSinceLevelLoad;
                     matParticleFlow.SetFloat("_PauseTime", shaderPauseTime);
-                    matParticleFlow.SetFloat("_Play", 0f);
+                    matParticleFlow.SetInteger("_Play", 0);
                     shaderPlaying = false;
                     //Debug.Log("Pause");
                 }

@@ -30,7 +30,7 @@ Shader "SimulCat/Ballistic/Particle Scattering Plane"
         // Play Control
         _BaseTime("Base Time Offset", Float)= 0
         _PauseTime("Freeze time",Float) = 0
-        _Play("Play Animation", Float) = 1
+        _Play("Play Animation", Integer) = 1
     }
 
     SubShader
@@ -109,7 +109,7 @@ Shader "SimulCat/Ballistic/Particle Scattering Plane"
 
             float _BaseTime;
             float _PauseTime;
-            float _Play;
+            int _Play;
 
             float3 scatterDirection(float incidentP,float rnd01)
             {
