@@ -39,6 +39,8 @@ public class ProbabilityScreen : UdonSharpBehaviour
 
     [SerializeField,FieldChangeCallback(nameof(ShowProbability)), Tooltip("Show/Hide Probability Denisty")]
     private bool showProbability = true;
+    [SerializeField, FieldChangeCallback(nameof(UseQuantumScatter))] private bool useQuantumScatter;
+
     [SerializeField]
     private SyncedToggle togProbability;
     [SerializeField, Tooltip("Intensity Control Slider")]
@@ -69,7 +71,7 @@ public class ProbabilityScreen : UdonSharpBehaviour
         if (laser != null)
         {
             laser.LaserOn = showProbability;
-            laser.LaserColor = laserColour * (intensity / intensityMax);
+            laser.LaserColor = laserColour * (intensity*2f / intensityMax);
         }
     }
     public bool ShowProbability
@@ -96,6 +98,19 @@ public class ProbabilityScreen : UdonSharpBehaviour
                 pos.x = value;
                 _targetScreen.localPosition = pos;
             }
+        }
+    }
+
+    public bool UseQuantumScatter
+    {
+        get => useQuantumScatter;
+        set
+        {
+            useQuantumScatter = value;
+            if (useQuantumScatter)
+                setCRTPass(ScatterType.Duane);
+            else
+                setCRTPass(ScatterType.Shadow);
         }
     }
 
@@ -164,7 +179,7 @@ public class ProbabilityScreen : UdonSharpBehaviour
             if (_screenMaterial != null)
             {
                 if (_screenMaterial.HasProperty("_EmissionColor"))
-                    _screenMaterial.SetColor("_EmissionColor", value * 2f);
+                    _screenMaterial.SetColor("_EmissionColor", value);
                 _screenMaterial.color = value * 1.25f;
 
             }

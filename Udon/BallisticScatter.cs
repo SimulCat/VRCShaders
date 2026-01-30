@@ -244,7 +244,7 @@ public class BallisticScatter : UdonSharpBehaviour
     //[SerializeField]
     bool crtUpdateRequired = false;
    // [SerializeField]
-    bool gratingUpdateRequired = false;
+    bool experimentUpdateRequired = false;
    // [SerializeField]
     float simPixelScale = 1;
 
@@ -322,7 +322,7 @@ public class BallisticScatter : UdonSharpBehaviour
         minParticleP = momentumMin;
         slitWidth = widthSlit;
         slitPitch = pitchSlits;
-        gratingUpdateRequired = isChanged;
+        experimentUpdateRequired = isChanged;
         if (isChanged)
         {
             if (iHaveProbSimMat) setGratingParams(matProbabilitySim);
@@ -377,7 +377,7 @@ public class BallisticScatter : UdonSharpBehaviour
         {
             if (value != slitCount)
             {
-                gratingUpdateRequired = true;
+                experimentUpdateRequired = true;
                 crtUpdateRequired = true;
             }
             slitCount = value;
@@ -395,7 +395,7 @@ public class BallisticScatter : UdonSharpBehaviour
         {
             if (value != slitWidth)
             {
-                gratingUpdateRequired = true;
+                experimentUpdateRequired = true;
                 crtUpdateRequired = true;
             }
             slitWidth = value;
@@ -438,7 +438,7 @@ public class BallisticScatter : UdonSharpBehaviour
         {
             if (value != slitPitch)
             {
-                gratingUpdateRequired = true;
+                experimentUpdateRequired = true;
                 crtUpdateRequired = true;
             }
             slitPitch = value;
@@ -809,11 +809,11 @@ public class BallisticScatter : UdonSharpBehaviour
             DisplayColour = displayColour;
             return;
         }
-        if (gratingUpdateRequired)
+        if (experimentUpdateRequired)
         {
             CreateTextures();
             crtUpdateRequired = true;
-            gratingUpdateRequired = false;
+            experimentUpdateRequired = false;
             updateTimer += 0.05f;
         }
         else

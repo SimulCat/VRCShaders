@@ -48,6 +48,7 @@ Shader "Murpheus/Ballistic/Particle Scattering 3D"
         _BaseTime("Base Time Offset", Float)= 0
         _PauseTime("Freeze time",Float) = 0
         _Play("Play Animation", Integer) = 1
+        _UseQuantumScatter("Use Quantum Scatter", Integer) = 1
     }
 
     SubShader
@@ -143,6 +144,7 @@ Shader "Murpheus/Ballistic/Particle Scattering 3D"
             float _BaseTime;
             float _PauseTime;
             int _Play;
+            int _UseQuantumScatter;
 
             // Returns the sampled momentum direction as a normalized 3d vector
             float4 scatterDirection(float incidentP,float rnd01, float rnd02)
@@ -157,8 +159,8 @@ Shader "Murpheus/Ballistic/Particle Scattering 3D"
                 float lookUpV = mapMaxV.y*abs(rnd02);
                 float4 sampleV = MV(float4(lookUpV,0.5,0,0));
                                 
-                float pH = sampleH.z*sign(rnd01)/incidentP;
-                float pV = sampleV.z*sign(rnd02)/incidentP;
+                float pH = _UseQuantumScatter * sampleH.z*sign(rnd01)/incidentP;
+                float pV = _UseQuantumScatter * sampleV.z*sign(rnd02)/incidentP;
               
                 float2 pScaledHV = float2(pH,pV);
                 float pHVsq = dot(pScaledHV,pScaledHV);
