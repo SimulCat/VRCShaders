@@ -3,10 +3,10 @@
     Properties
     {
         _PhaseMap("Phase Map", 2D ) = "black" {}
-        _MapWidth("Phase Map Width mm", float) = 2560.0
-        _MapHeight("Phase Map Height mm",float) = 1440.0
-        _ScreenWidth("Screen Width mm", float) = 2560.0
-        _ScreenHeight("Screen Height mm",float) = 1440.0
+        _MapWidth("Phase Map Width", float) = 2560.0
+        _MapHeight("Phase Map Height",float) = 1440.0
+        _ScreenWidth("Screen Width", float) = 2560.0
+        _ScreenHeight("Screen Height",float) = 1440.0
         _Wavelength("Wavelength (mm)", float) = 1.0
         _SlitCount("Slit Count",Integer) = 2
         _RowCount("Row Count",Integer) = 2
@@ -57,10 +57,10 @@
     {
         float GapOffset;
         float GapInnerPosition;
-        float halfGap = gapWidth / 2.0;
+        float gWidth = numGaps <= 0 ? gapPitch*2 : gapWidth;
+        float halfGap = gWidth / 2.0;
         uint nGap;
-
-        GapInnerPosition =  RandomRange(gapWidth, rnd++) - halfGap;
+        GapInnerPosition =  RandomRange(gWidth, rnd++) - halfGap;
         if (numGaps <= 1)
             return GapInnerPosition;
         nGap = pcg_hash(rnd++);
@@ -85,7 +85,7 @@
         {
             xDelta = RandomSourcePosition(_SlitCount, _SlitPitch, _SlitWidth,  seed++);
             yDelta = RandomSourcePosition(_RowCount, _RowPitch, _SlitHeight, seed++);
-            //result += LerpPixelIntensity(baseX + xDelta, baseY + yDelta);
+            result += LerpPixelIntensity(baseX + xDelta, baseY + yDelta);
         }
 
         return float4(result,result,0,1);

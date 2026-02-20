@@ -135,7 +135,7 @@ public class ProbabilityScreen : UdonSharpBehaviour
         set
         {
             value = Mathf.Clamp(value, 0f, intensityMax);
-            bool chg = intensity != value;
+            bool chg = (!_initialized) || intensity != value;
             intensity = value;
             if (chg)
             {
