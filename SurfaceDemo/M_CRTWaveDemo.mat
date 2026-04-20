@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: M_CRTWaveDemo
-  m_Shader: {fileID: 4800000, guid: 6099732345b98e34e8f8c7b0fe404f19, type: 3}
+  m_Shader: {fileID: 4800000, guid: d2a3ac97ec42a9843b45bc8b67829904, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -129,6 +129,7 @@ Material:
     - _UseHeight: 1
     - _UseSquare: 0
     - _UseVelocity: 0
+    - _Visibility: 1
     - _WaveStrength: 0.01
     - _ZWrite: 1
     - _mmHigh: 1000

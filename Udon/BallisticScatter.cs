@@ -828,7 +828,7 @@ public class BallisticScatter : UdonSharpBehaviour
 
     void Start()
     {
-
+        player = Networking.LocalPlayer;
         if (particleMeshRend != null)
             matParticleFlow = particleMeshRend.material;
         //if ((matParticleFlow != null) && matParticleFlow.HasProperty("_ColourMap"))

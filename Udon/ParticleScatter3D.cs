@@ -100,13 +100,9 @@ public class ParticleScatter3D : UdonSharpBehaviour
     [SerializeField]
     float gameLengthToSI = 0.001f;
     [SerializeField]
-    string momentumUnits = "yNs";
-    [SerializeField]
     private float maxParticleP = 13.2f;
     [SerializeField]
     private float minParticleP = 7.64f;
-    [SerializeField]
-    private float particleAMU = 0.00054858f;
     [SerializeField, Range(0.5f,1.125f), FieldChangeCallback(nameof(MomentumAdj))]
     private float momentumAdj = 0.75f;
     private float particleP = 10.0f;
@@ -484,7 +480,7 @@ public class ParticleScatter3D : UdonSharpBehaviour
         get => pulseParticles;
         set
         {
-            Debug.Log($"pulse Event {value}");
+            //Debug.Log($"pulse Event {value}");
             bool isChanged = pulseParticles != value;
             pulseParticles = value;
             if (pulseWidthSlider != null)
@@ -876,10 +872,10 @@ public class ParticleScatter3D : UdonSharpBehaviour
         float prob;
         float planckScaled = h * PlanckScale * SItoSimMomentum;
         float pi_div_h = Mathf.PI/planckScaled; // Assume h = 1 for simplicity, so pi_div_h = π
-        Debug.Log(string.Format("{0} generateSamples: maxP (yNs)={5} pi_div_h {1} s={2} widthSI={3} pitchSI={4}", gameObject.name, pi_div_h, apertureCount, apertureWidthSI, aperturePitchSI, maxP));
+        //Debug.Log(string.Format("{0} generateSamples: maxP (yNs)={5} pi_div_h {1} s={2} widthSI={3} pitchSI={4}", gameObject.name, pi_div_h, apertureCount, apertureWidthSI, aperturePitchSI, maxP));
         float probIntegralSum = 0;
         float maxDistributionP = (10 * planckScaled) / apertureWidthSI;
-        Debug.Log(string.Format("{0} generateSamples: planckScaled={1} maxDistributionP={2}", gameObject.name, planckScaled, maxDistributionP));
+        //Debug.Log(string.Format("{0} generateSamples: planckScaled={1} maxDistributionP={2}", gameObject.name, planckScaled, maxDistributionP));
         maxDistributionP = maxDistributionP < maxP ? maxDistributionP : maxP;
         for (int i = 0; i < pointsWide; i++)
         {
@@ -937,7 +933,7 @@ public class ParticleScatter3D : UdonSharpBehaviour
     public void CopyTexToShaders(string TexKeyword, string MaxPKeyword, string MaxIKeyWord, float mapMaxP, float maxP)
     {
         Color[] texData = new Color[pointsWide + pointsWide];
-        Debug.Log("${gameObject.name} CopyTexToShaders maxP={maxP}, mapMaxP={mapMaxP}");
+        //Debug.Log($"{gameObject.name} CopyTexToShaders maxP={maxP}, mapMaxP={mapMaxP}");
         if (matProbCRT != null)
         {
             var tex = new Texture2D(pointsWide * 2, 1, TextureFormat.RGBAFloat, 0, true);
@@ -993,14 +989,14 @@ public class ParticleScatter3D : UdonSharpBehaviour
             if (horizUpdateRequired)
             {
                 float hMaxP = GenerateSamples(slitCount, slitWidth * gameLengthToSI, slitPitch * gameLengthToSI, maxP);
-                Debug.Log(string.Format("{0} CreateTextures horiz: hMaxP={1}", gameObject.name, hMaxP));
+                //Debug.Log(string.Format("{0} CreateTextures horiz: hMaxP={1}", gameObject.name, hMaxP));
                 GenerateReverseLookup(hMaxP);
                 CopyTexToShaders(texName, "_MapMaxP", "_MapMaxI", hMaxP, maxP);
             }
             if (vertUpdateRequired)
             {
                 float vMaxP = GenerateSamples(rowCount, slitHeight * gameLengthToSI, rowPitch * gameLengthToSI, maxP);
-                Debug.Log(string.Format("{0} CreateTextures vert: vMaxP={1}", gameObject.name, vMaxP));
+                //Debug.Log(string.Format("{0} CreateTextures vert: vMaxP={1}", gameObject.name, vMaxP));
                 GenerateReverseLookup(vMaxP);
                 CopyTexToShaders(texName + "Y", "_MapMaxPy", "_MapMaxIy",vMaxP, maxP);
             }
