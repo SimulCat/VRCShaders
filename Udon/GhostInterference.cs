@@ -3,7 +3,6 @@ using UdonSharp;
 using UnityEngine;
 using UnityEngine.UI;
 using VRC.SDKBase;
-
 using VRC.Udon;
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
@@ -23,7 +22,8 @@ public class GhostInterference : UdonSharpBehaviour
     private int experimentMode = 0;
     [SerializeField, Tooltip("Distribution Points")]
     private int pointsWide = 256;
-    private float[] planckSteps = { 1f, 5f, 10f, 50f, 100f, 500f, 1000f, 5000f };
+    [SerializeField, Tooltip("Planck's constant multiplier for momentum scaling"), Range(1, 10000)]
+    private int planckMultiplier = 1;
     [SerializeField, FieldChangeCallback(nameof(UseQuantumScatter))] private bool useQuantumScatter;
     [Header("Fundamental Constants")]
     // [SerializeField]
@@ -32,28 +32,26 @@ public class GhostInterference : UdonSharpBehaviour
 
     // Planck's constant h in Joule seconds
     [SerializeField]
-    private float h = 6.62607015e-10f; // 
+    private float _h = 6.62607015e-10f; // 
     [SerializeField]
     private const float AMU_ToKg = 1.66054e-27f;
     private const float halfPi = 1.57079632679489661f;
 
-    [Header("Simulation Dimensions")]
-    [SerializeField, Tooltip("Max distance from start to target")] float maxDisplacement = 7f;
-    [SerializeField]
-    private Vector3 wallLimits = new Vector3(0.150f, 0.400f, 0.2f);
     [Header("Grating Configuration & Scale")]
+    [SerializeField, Tooltip("Scale from UI scale 0-1 to range in mm (1 mm is 0.001 Unity units)")]
+    float slitUnitScale = 1e-3f; // Default to millimetres for UI display, but actual scale applied to model is in metres, so 1e6 for microns
     [SerializeField]
-    float slitWidthUnitScale = 10000f; // Scale factor from Unity units to experiment units (1 mm is 0.01 Unity units)
-    [SerializeField]
-    string slitWidthDisplayUnits = "μm";
-    [SerializeField, Tooltip("Distance from source to grating")]
-    private float gratingDistance = 0;
+    string gratingUIUnits = "μm";
+    //[SerializeField, Tooltip("Distance from source to grating")]
+    //private float gratingDistance = 0;
     [SerializeField, UdonSynced, FieldChangeCallback(nameof(SlitCount)), Range(1, 17)]
     private int slitCount = 2;
     [SerializeField, FieldChangeCallback(nameof(SlitPitch))]
-    private float slitPitch = 0.0027f;        // "Slit Pitch" millimetre
+    private float slitPitch = 0.0027f;        // Slit Pitch
+    private float slitPitchSI => slitPitch * slitUnitScale;
     [SerializeField, FieldChangeCallback(nameof(SlitWidth))]
-    private float slitWidth = 0.006f;        // "Slit Width" millimetre
+    private float slitWidth = 0.006f;        // "Slit Width
+    private float slitWidthSI => slitWidth * slitUnitScale;
 
     // Pulsed particles and speed range
     [SerializeField, FieldChangeCallback(nameof(PulseParticles))]
@@ -63,27 +61,28 @@ public class GhostInterference : UdonSharpBehaviour
 
     [SerializeField, Range(0, 17)] private int MAX_SLITS = 7;
 
-    [SerializeField, Tooltip("Simulation Momentum default yocto newton-seconds 1e-24")]
-    float SItoSimMomentum = 1.0e24f;
+    [SerializeField, Tooltip("Simulation Momentum default ronto newton-seconds 1e-27")]
+    float planckToSimMomentum = 1.0e27f;
     [SerializeField]
-    float gameLengthToSI = 0.001f;
+    float modelScale = 10f;
+    [SerializeField, FieldChangeCallback(nameof(LaserParticleP))]
+    float laserParticleP = 1.89f;
+
     [SerializeField]
-    private float maxParticleP = 13.2f;
+    private float maxParticleP = 2f;
     [SerializeField]
     private float minParticleP = 7.64f;
-    private float particleP = 10.0f;
     [Header("UI Elements")]
     [SerializeField] private TextMeshProUGUI planckLabel;
     [SerializeField] private TextMeshProUGUI planckScaleLabel;
 
-    [SerializeField] private Toggle togPlay = null;
-    [SerializeField] private Toggle togPause = null;
-    [SerializeField] private Toggle togStop = null;
+    [SerializeField] private UdonToggleGroup togPlayPause = null;
     [SerializeField, UdonSynced, Tooltip("Particle demo state"), FieldChangeCallback(nameof(ParticlePlayState))]
     private int particlePlayState = 1;
     [SerializeField] private SyncedToggle togPulseParticles;
 
     [SerializeField] private UdonSlider pulseWidthSlider;
+    [SerializeField] private UdonSlider momentumSlider;
 
     [SerializeField] private UdonSlider slitWidthSlider;
     [SerializeField] private UdonSlider slitPitchSlider;
@@ -119,11 +118,11 @@ public class GhostInterference : UdonSharpBehaviour
     private bool iamOwner = false;
     [SerializeField]
     private Vector3[] slitWidthMinMaxNominal = new[] {
-        new Vector3(0.10f,0.3f,0.15f), new Vector3(0.1f,0.3f,0.15f) 
+        new Vector3(100f,300f,150f), new Vector3(100f,300f,150f) 
     };
     [SerializeField]
     private Vector3[] slitPitchMinMaxNominal = new[] {
-        new Vector3(0.35f, 0.55f, 0.45f), new Vector3(0.35f, 0.55f, 0.45f)
+        new Vector3(350f, 550f, 450f), new Vector3(350f, 550f, 450f)
     };
 
     /* 
@@ -152,38 +151,43 @@ public class GhostInterference : UdonSharpBehaviour
     private void UpdateLabels()
     {
         if (planckLabel != null)
-            planckLabel.text = string.Format("h={0:#.##e+0}", h);
+            planckLabel.text = string.Format("h={0:#.##e+0}", _h);
     }
 
     private void configureExperiment(int mode)
     {
         // Update momentum and Planck units
+        Debug.Log($"ConfigureExperiment mode {mode}");
         switch (experimentMode)
         {
             default:
             case 0:
-                gameLengthToSI = 0.1f;
-                slitWidthUnitScale = 1e3f;
-                slitWidthDisplayUnits = "μm";
+                mode=0;
+                modelScale = 10f;
+                slitUnitScale = 1e-6f;
+                gratingUIUnits = "μm";
                 break;
                 // Handle mode change
         }
         if (slitWidthSlider != null)
         {
-            slitWidthSlider.SliderUnit = slitWidthDisplayUnits;
-            slitWidthSlider.DisplayScale = slitWidthUnitScale; // Display in millimetres
+            slitWidthSlider.SliderUnit = gratingUIUnits;
+            slitWidthSlider.DisplayInteger = true;
+            slitWidthSlider.DisplayScale = 1; // Slit engineering units, e.g. microns
             slitWidthSlider.SetLimits(slitWidthMinMaxNominal[mode].x, slitWidthMinMaxNominal[mode].y);
             slitWidthSlider.SetValue(slitWidthMinMaxNominal[mode].z);
         }
         SlitWidth = slitWidthMinMaxNominal[mode].z;
         if (slitPitchSlider != null)
         {
-            slitPitchSlider.SliderUnit = slitWidthDisplayUnits;
-            slitPitchSlider.DisplayScale = slitWidthUnitScale; // Display in nanometres
+            slitPitchSlider.SliderUnit = gratingUIUnits;
+            slitPitchSlider.DisplayInteger = true;
+            slitPitchSlider.DisplayScale = 1; // Display in engineering units microns
             slitPitchSlider.SetLimits(slitPitchMinMaxNominal[mode].x, slitPitchMinMaxNominal[mode].y);
             slitPitchSlider.SetValue(slitPitchMinMaxNominal[mode].z);
         }
         SlitPitch = slitPitchMinMaxNominal[mode].z;
+        Debug.Log($"ConfigureExperiment applied mode {mode} slitPitch={SlitPitch} slitWidth={SlitWidth}");
     }
     public int ExperimentMode
     {
@@ -204,52 +208,8 @@ public class GhostInterference : UdonSharpBehaviour
         set
         {
             particlePlayState = value;
-            switch (particlePlayState)
-            {
-                case 0: // PlayState.Paused:
-                    if (togPause != null && !togPause.isOn)
-                        togPause.SetIsOnWithoutNotify(true);
-                    break;
-                case 1:// PlayState.Playing:
-                    if (togPlay != null && !togPlay.isOn)
-                        togPlay.SetIsOnWithoutNotify(true);
-                    break;
-                default:
-                    if (togStop != null && !togStop.isOn)
-                        togStop.SetIsOnWithoutNotify(true);
-                    break;
-            }
             setParticlePlay(particlePlayState);
             RequestSerialization();
-        }
-    }
-
-    public void simHide()
-    {
-        if (togStop != null && togStop.isOn && particlePlayState >= 0)
-        {
-            if (!iamOwner)
-                Networking.SetOwner(player, gameObject);
-            ParticlePlayState = -1;
-        }
-    }
-    public void simPlay()
-    {
-        if (togPlay != null && togPlay.isOn && particlePlayState <= 0)
-        {
-            if (!iamOwner)
-                Networking.SetOwner(player, gameObject);
-            ParticlePlayState = 1;
-        }
-    }
-
-    public void simPause()
-    {
-        if (togPause != null && togPause.isOn && particlePlayState != 0)
-        {
-            if (!iamOwner)
-                Networking.SetOwner(player, gameObject);
-            ParticlePlayState = 0;
         }
     }
 
@@ -302,7 +262,6 @@ public class GhostInterference : UdonSharpBehaviour
         shaderBaseTime = Time.time;
         shaderPauseTime = shaderBaseTime;
         shaderPlaying = particlePlayState == 1;
-        int play = shaderPlaying ? 1 : 0;
         if (matGhostParticles != null)
         {
             matGhostParticles = particleMeshRend.material;
@@ -310,7 +269,7 @@ public class GhostInterference : UdonSharpBehaviour
 
             matGhostParticles.SetFloat("_PauseTime", shaderPauseTime);
             matGhostParticles.SetFloat("_BaseTime", shaderBaseTime);
-            matGhostParticles.SetInteger("_Play", play);
+            matGhostParticles.SetInteger("_Play", ParticlePlayState);
             matGhostParticles.SetFloat("_MarkerScale", particleSize);
         }
 
@@ -346,18 +305,40 @@ public class GhostInterference : UdonSharpBehaviour
                     //Debug.Log("Pause");
                 }
                 break;
+            case 2: // PlayState Stopped at Limit:
+                if (shaderPlaying)
+                {
+                    shaderPauseTime = Time.timeSinceLevelLoad;
+                    matGhostParticles.SetFloat("_PauseTime", shaderPauseTime);
+                    shaderPlaying = false;
+                    //Debug.Log("Stop");
+                }
+                matGhostParticles.SetInteger("_Play", -1);
+                break;
             default:
                 return;
         }
     }
-    public Vector3 WallLimits
+
+    // Nominal Particle Momentum   
+    public float LaserParticleP
     {
-        get => wallLimits;
+        get => laserParticleP;
         set
         {
-            wallLimits = value;
+            if (value != laserParticleP)
+            {
+                experimentUpdateRequired = true;
+            }
+            laserParticleP = value;
             if (matGhostParticles != null)
-                matGhostParticles.SetVector("_WallLimits", wallLimits);
+            {
+                matGhostParticles.SetFloat("_LaserP", laserParticleP);
+            }
+            if (momentumSlider != null)
+            {
+                momentumSlider.DisplayInteger = (value >= 10);
+            }
         }
     }
 
@@ -449,11 +430,11 @@ public class GhostInterference : UdonSharpBehaviour
         }
         return multiSlitProb * apertureProb;
     }
-    // [SerializeField]
+    [SerializeField]
     private float[] gratingFourierSq;
-    //[SerializeField]
+    [SerializeField]
     private float[] probIntegral;
-    //[SerializeField]
+    [SerializeField]
     private float[] weightedLookup;
     private float GenerateSamples(int apertureCount, float apertureWidthSI, float aperturePitchSI, float maxP)
     {
@@ -465,20 +446,18 @@ public class GhostInterference : UdonSharpBehaviour
             probIntegral = new float[pointsWide + 1];
         }
         // Check the width of the distribution
-        //float pMaxSingle = (float)((7.0d * Math.PI) / (apertureWidth * pointsWide));
-        //float maxP = Mathf.Min(pMaxSingle,maxParticleP*0.667f);
         float impulse;
         float prob;
-        float planckScaled = h * SItoSimMomentum;
-        float pi_div_h = Mathf.PI / planckScaled; // Assume h = 1 for simplicity, so pi_div_h = π
-        //Debug.Log(string.Format("{0} generateSamples: maxP (yNs)={5} pi_div_h {1} s={2} widthSI={3} pitchSI={4}", gameObject.name, pi_div_h, apertureCount, apertureWidthSI, aperturePitchSI, maxP));
+        float planckScaled = _h * planckMultiplier* planckToSimMomentum;
+        float pi_div_h = Mathf.PI / planckScaled; //  
+        Debug.Log($"{gameObject.name} generateSamples: planckScaled={planckScaled} maxP={maxP} pi_div_h {pi_div_h} s={apertureCount} widthSI={apertureWidthSI} pitchSI={aperturePitchSI}");
         float probIntegralSum = 0;
-        float maxDistributionP = (10 * planckScaled) / apertureWidthSI;
-        //Debug.Log(string.Format("{0} generateSamples: planckScaled={1} maxDistributionP={2}", gameObject.name, planckScaled, maxDistributionP));
-        maxDistributionP = maxDistributionP < maxP ? maxDistributionP : maxP;
+        //float maxDistributionP = (10 * planckScaled) / apertureWidthSI;
+        //maxDistributionP = maxDistributionP < maxP ? maxDistributionP : maxP;
+        //Debug.Log($"Set maxDistributionP={maxDistributionP}");
         for (int i = 0; i < pointsWide; i++)
         {
-            impulse = (maxDistributionP * i) / pointsWide;
+            impulse = (maxP * i) / pointsWide;
             prob = sampleDistribution(impulse * pi_div_h, apertureCount, apertureWidthSI, aperturePitchSI);
             gratingFourierSq[i] = prob;
             probIntegral[i] = probIntegralSum;
@@ -489,7 +468,7 @@ public class GhostInterference : UdonSharpBehaviour
         float normScale = (pointsWide - 1) / probIntegral[pointsWide - 1];
         for (int nPoint = 0; nPoint <= pointsWide; nPoint++)
             probIntegral[nPoint] *= normScale;
-        return maxDistributionP;
+        return maxP;
     }
 
     private void GenerateReverseLookup(float maxP)
@@ -525,14 +504,14 @@ public class GhostInterference : UdonSharpBehaviour
                 frac = Mathf.InverseLerp(vmin, vmax, i);
                 val = Mathf.Lerp(indexBelow, indexAbove, frac);
             }
-            weightedLookup[i] = val * norm;///lim;
+            weightedLookup[i] = val * norm;
         }
     }
 
-    public void CopyTexToShaders(string TexKeyword, string MaxPKeyword, string MaxIKeyWord, float mapMaxP, float maxP)
+    public void CopyTexToShaders(string TexKeyword, string MaxPKeyword, float mapMaxP)
     {
         Color[] texData = new Color[pointsWide + pointsWide];
-        //Debug.Log($"{gameObject.name} CopyTexToShaders maxP={maxP}, mapMaxP={mapMaxP}");
+        Debug.Log($"{gameObject.name} CopyTexToShaders {MaxPKeyword}={mapMaxP}");
         if (matGhostParticles != null)
         {
             float norm = 1f / (pointsWide - 1);
@@ -550,7 +529,7 @@ public class GhostInterference : UdonSharpBehaviour
             tex.wrapMode = TextureWrapMode.Clamp;
             tex.Apply();
             matGhostParticles.SetTexture(TexKeyword, tex);
-            matGhostParticles.SetFloat(MaxPKeyword, maxP); // "Map max momentum", float ) = 1
+            matGhostParticles.SetFloat(MaxPKeyword, mapMaxP); // "Map max momentum", float ) = 1
         }
     }
 
@@ -558,14 +537,14 @@ public class GhostInterference : UdonSharpBehaviour
     {
         if (matGhostParticles != null)
         {
-            float maxP = maxParticleP * 0.414f;
+            float maxP = maxParticleP * 0.1f;
             // Load X and Y scattering function lookups into shader 
             if (scatterUpdateRequired)
             {
-                float hMaxP = GenerateSamples(slitCount, slitWidth * gameLengthToSI, slitPitch * gameLengthToSI, maxP);
-                //Debug.Log(string.Format("{0} CreateTextures horiz: hMaxP={1}", gameObject.name, hMaxP));
+                float hMaxP = GenerateSamples(slitCount, slitWidthSI, slitPitchSI, maxP);
+                Debug.Log($"{gameObject.name} CreateTextures horiz: hMaxP={hMaxP}");
                 GenerateReverseLookup(hMaxP);
-                CopyTexToShaders(texName, "_MapMaxP", "_MapMaxI", hMaxP, maxP);
+                CopyTexToShaders(texName, "_MapMaxP", hMaxP);
             }
         }
         scatterUpdateRequired = false;
@@ -591,13 +570,15 @@ public class GhostInterference : UdonSharpBehaviour
         }
         if (experimentUpdateRequired || scatterUpdateRequired)
         {
+            float modelSlitWidth = slitWidthSI * modelScale;
+            float modelSlitPitch = slitPitchSI * modelScale;
             if (slitModel != null)
-                slitModel.UpdateGratingSettings(slitCount, 0, slitWidth, 0, slitPitch, 0);
+                slitModel.UpdateGratingSettings(slitCount, 0, modelSlitWidth, 0, modelSlitPitch, 0);
             if (matGhostParticles != null)
             {
                 matGhostParticles.SetInteger("_SlitCount", slitCount);
-                matGhostParticles.SetFloat("_SlitPitch", slitPitch);
-                matGhostParticles.SetFloat("_SlitWidth", slitWidth);
+                matGhostParticles.SetFloat("_SlitWidth", modelSlitWidth);
+                matGhostParticles.SetFloat("_SlitPitch", modelSlitPitch);
             }
             CreateTextures();
             if (shaderPlaying != (ParticlePlayState == 1))
@@ -657,19 +638,25 @@ public class GhostInterference : UdonSharpBehaviour
         {
             matGhostParticles = particleMeshRend.material;
             particleMeshRend.enabled = false;
+            if (matGhostParticles != null)
+            {
+                matGhostParticles.SetFloat("_MaxParticleP", maxParticleP);
+                matGhostParticles.SetFloat("_MinParticleP", minParticleP);
+                matGhostParticles.SetFloat("_LaserP", laserParticleP);
+            }
         }
         UpdateLabels();
     }
     void Start()
     {
         ReviewOwnerShip();
-        WallLimits = wallLimits;
 
         Init();
         //Debug.Log("BScatter Start");
         SlitCount = slitCount;
         SlitPitch = slitPitch;
         SlitWidth = slitWidth;
+        LaserParticleP = laserParticleP;
         PulseParticles = pulseParticles;
         PulseWidth = pulseWidth;
         reviewPulse();

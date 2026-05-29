@@ -73,7 +73,6 @@ Shader "SimulCat/Ballistic/Particle Scattering Plane"
                 UNITY_VERTEX_OUTPUT_STEREO
             };
             
-            //#define M(U) tex2D(_MomentumMap, float2(U))
             #define M(U) tex2Dlod(_MomentumMap, float4(U))
 
             sampler2D _MainTex;
@@ -82,6 +81,7 @@ Shader "SimulCat/Ballistic/Particle Scattering Plane"
 
             sampler2D _MomentumMap;
             float4 _MomentumMap_ST;
+            float _MapMaxP;
           
             sampler2D _ColourMap;
             float4 _ColourMap_ST;
@@ -95,7 +95,6 @@ Shader "SimulCat/Ballistic/Particle Scattering Plane"
             float _MinParticleP;
             float _MaxParticleP;
 
-            float _MapMaxP;
             float _MaxVelocity;
             float _PulseWidth;
             float _PulseWidthMax;

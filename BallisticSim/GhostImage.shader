@@ -1,6 +1,5 @@
-Shader "Murpheus/Ballistic/Ghost Imaging 3D"
+Shader "Murpheus/Ballistic/Ghost Image"
 {
-
     Properties
     {
         _MainTex ("Particle Texture", 2D) = "white" {}
@@ -167,21 +166,21 @@ Shader "Murpheus/Ballistic/Ghost Imaging 3D"
                 return randomPoint;
             }
 
-            float4 scatterParticle(float incidentP, float3 incidentDirection, float signedRand01)
+            float4 scatterParticle(float incidentP, float2 incidentHV, float rnd01)
             {
                 // Assume paticle incident from Z direction and grating normal is Z, so scatter in XY plane for now. Todo can add support for 3d scattering in future if needed.
-                float3 resultDir = incidentDirection;
-
-                float fracMax = incidentP/_MapMaxP;
-                float4 mapMax = M(float4(fracMax,0.5,0,0));
-                float lookUp = mapMax.y*abs(signedRand01);
-                float4 sample = M(float4(lookUp,0.5,0,0));
-                resultDir.x += _UseQuantumScatter * sample.z*sign(signedRand01)/incidentP;
-                float pHVsq = dot(resultDir.xy, resultDir.xy);
-                float isValid = (float)(pHVsq < 1.0);
-                pHVsq = clamp(pHVsq,0.0,1.0);   
-                resultDir.z = sqrt(1.0-pHVsq);
-                return float4(resultDir,isValid);
+                float2 dirHV = incidentHV;
+                float fracMaxH = incidentP/_MapMaxP;
+                float4 mapMaxH = M(float4(fracMaxH,0.5,0,0));
+                float lookUpH = mapMaxH.y*abs(rnd01);
+                float4 sampleH = M(float4(lookUpH,0.5,0,0));
+                dirHV.x += _UseQuantumScatter * sampleH.z * sign(rnd01)/incidentP;
+                // Todo handle y lookup for 3d in future if needed, currently just using x lookup for horizontal only.
+                float dirHVsq = dot(dirHV, dirHV);
+                int isValid = dirHVsq < 1.0;
+                dirHVsq = clamp(dirHVsq,0.0,0.99999);   
+                float pFwd = sqrt(1.0-dirHVsq);
+                return float4(dirHV.x,dirHV.y,pFwd,isValid);
             }
 
 
@@ -222,9 +221,7 @@ Shader "Murpheus/Ballistic/Ghost Imaging 3D"
                 int continuous = (int)hasPulse == 0;
 
                 // Divide time by period to get fraction of the cycle.
-                int play = (int)(_Play == 1);
-                float cycles = ((play * _Time.y + (1-play)*_PauseTime)-_BaseTime)/cyclePeriod;
-
+                float cycles = ((_Play * _Time.y + (1-_Play)*_PauseTime)-_BaseTime)/cyclePeriod;
 
                 uint nCycle = (uint)cycles;
                 // Get hash of quad ID and also random 0-1;
@@ -234,8 +231,6 @@ Shader "Murpheus/Ballistic/Ghost Imaging 3D"
                 uint pairHash = pcg_hash(idPair);
                 float div = 0x7FFFFF;
                 float pairHash0to1 = ((float)(pairHash & 0x7FFFFF))/div;
-                float altHash0to1 = (float)(pcg_hash(0xFEEDBEEF ^ idPair))/div;
-
                 float hshPlusMinus = (pairHash0to1*2.0)-1.0;
                 
                 // Distance from BBO to Screen, BeamSplitter and Slits
@@ -243,7 +238,7 @@ Shader "Murpheus/Ballistic/Ghost Imaging 3D"
                 float distanceBBOtoSplitter = length(_BeamSplitPos - _BBO_Pos);
                 float distanceBBOtoGrating = length(_GratingPos - _BeamSplitPos) + distanceBBOtoSplitter;
 
-
+                // This version starts from the detector screen
                 // Now get particle XY positions at start and slits based on pairhash;
                 // Find a random slit position for culled particles
                 // Shift slit centre to a randomly chosen slit number 
@@ -255,9 +250,6 @@ Shader "Murpheus/Ballistic/Ghost Imaging 3D"
                 float2 vGratingConeXY =  _LimitHorizontal ? float2(RandomRange(2.0,pairHash ^ 0x33CCFFCC)-1.0,0.0) : 
                     GetRandomPointInCircle(1.0,pairHash ^ 0xCC330033,pairHash ^ 0x33CCFFCC);
                  vGratingConeXY = vGratingConeXY * (distanceBBOtoGrating * tan(_BBO_ConeAngle)); 
-                 
-                 // Pick a random initial particle position within the beam
-
                 float2 initialParticleXY = _LimitHorizontal ? float2(RandomRange(2.0,pairHash ^ 0x5A5AFF00)-1.0,RandomRange(2.0,pairHash ^ 0xA5A500FF)-1.0) : 
                     GetRandomPointInCircle(1, pairHash ^ 0x5A5AFF00 , pairHash ^ 0xA5A500FF);
                  initialParticleXY = initialParticleXY * _BeamRadius;
@@ -282,7 +274,7 @@ Shader "Murpheus/Ballistic/Ghost Imaging 3D"
                 float sourceToBBO = length(posAtBBO - posAtSource);
 
                 float3 screenParticlePos = posAtBBO + particleDirectionA * distanceBBOtoScreen;
-                float cycleTime = cyclePeriod * (_Play >= 0 ? frac(cycles + continuous*altHash0to1) : 0.99);
+                float cycleTime = frac(cycles + continuous*pairHash0to1)*cyclePeriod;
 
                 float pulseDuration = hasPulse * _PulseWidth;
 
@@ -310,13 +302,13 @@ Shader "Murpheus/Ballistic/Ghost Imaging 3D"
                 float3 postGratingDirection = reflectedDirection;
                 float postBBOp = _LaserP*0.5;
                 
-                postGratingDirection = scatterParticle(postBBOp, reflectedDirection, RandomRange(2.0, pairHash+1)-1.0).xyz;
+                postGratingDirection = scatterParticle(postBBOp, reflectedDirection.xy, RandomRange(2.0, pairHash+1)-1.0).xyz;
+                
                 float gratingToDetector = length(_DetectorPos - _GratingPos);
-                bool scatterAligned = length(postGratingDirection.xy*gratingToDetector) <=_DetectorWidth; // Check if scatter is within sensor bounds consider it blocked by grating
                 denom = dot(postGratingDirection, float3(0.0,0.0,-1.0));
                 if (denom < 1.0e-6) gratingToDetector = dot((_DetectorPos.xyz - posAtGrating), float3(0.0,0.0,-1.0))/denom;
                 float3 positionAtDetector = posAtGrating + postGratingDirection*gratingToDetector;
-                int hitsDetector = (int)(validPosAtGrating && scatterAligned);// && (abs(positionAtDetector.x - _DetectorPos.x) < _DetectorWidth*0.5));
+                int hitsDetector = (int)(validPosAtGrating && (abs(positionAtDetector.x - _DetectorPos.x) < _DetectorWidth*0.5));
 
                 // Finally, work out if particle A has reached the screen and if so, where. If not, use position at detector to work out where it would be based on its current direction.
 

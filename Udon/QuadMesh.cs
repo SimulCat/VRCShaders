@@ -42,8 +42,6 @@ public class QuadMesh : UdonSharpBehaviour
     int numDecals;
     //[SerializeField]
     int numVertices;
-    //[SerializeField]
-    int numTriangles;
     private bool generateMesh()
     {
         if (mf == null)
@@ -76,7 +74,6 @@ public class QuadMesh : UdonSharpBehaviour
         Vector3 decalPos = arrayOrigin;
 
         numVertices = 0;
-        numTriangles = 0;
         float decalWidth = Mathf.Min(arraySpacing.x, arraySpacing.y);
 
         Vector3 vxOffset0 = (Vector3.down + Vector3.right) * 0.5f;
