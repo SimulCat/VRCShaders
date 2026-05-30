@@ -76,8 +76,8 @@ public class GhostInterference : UdonSharpBehaviour
     [SerializeField] private TextMeshProUGUI planckLabel;
     [SerializeField] private TextMeshProUGUI planckScaleLabel;
 
-    [SerializeField] private UdonToggleGroup togPlayPause = null;
-    [SerializeField, UdonSynced, Tooltip("Particle demo state"), FieldChangeCallback(nameof(ParticlePlayState))]
+    [SerializeField] private UdonToggleGroup togGroupPlayPause = null;
+    [SerializeField, Tooltip("Particle demo state"), FieldChangeCallback(nameof(ParticlePlayState))]
     private int particlePlayState = 1;
     [SerializeField] private SyncedToggle togPulseParticles;
 
@@ -157,7 +157,7 @@ public class GhostInterference : UdonSharpBehaviour
     private void configureExperiment(int mode)
     {
         // Update momentum and Planck units
-        Debug.Log($"ConfigureExperiment mode {mode}");
+        //Debug.Log($"ConfigureExperiment mode {mode}");
         switch (experimentMode)
         {
             default:
@@ -187,7 +187,7 @@ public class GhostInterference : UdonSharpBehaviour
             slitPitchSlider.SetValue(slitPitchMinMaxNominal[mode].z);
         }
         SlitPitch = slitPitchMinMaxNominal[mode].z;
-        Debug.Log($"ConfigureExperiment applied mode {mode} slitPitch={SlitPitch} slitWidth={SlitWidth}");
+        //Debug.Log($"ConfigureExperiment applied mode {mode} slitPitch={SlitPitch} slitWidth={SlitWidth}");
     }
     public int ExperimentMode
     {
@@ -209,7 +209,6 @@ public class GhostInterference : UdonSharpBehaviour
         {
             particlePlayState = value;
             setParticlePlay(particlePlayState);
-            RequestSerialization();
         }
     }
 
@@ -300,10 +299,10 @@ public class GhostInterference : UdonSharpBehaviour
                 {
                     shaderPauseTime = Time.timeSinceLevelLoad;
                     matGhostParticles.SetFloat("_PauseTime", shaderPauseTime);
-                    matGhostParticles.SetInteger("_Play", 0);
                     shaderPlaying = false;
                     //Debug.Log("Pause");
                 }
+                matGhostParticles.SetInteger("_Play", 0);
                 break;
             case 2: // PlayState Stopped at Limit:
                 if (shaderPlaying)
@@ -450,7 +449,7 @@ public class GhostInterference : UdonSharpBehaviour
         float prob;
         float planckScaled = _h * planckMultiplier* planckToSimMomentum;
         float pi_div_h = Mathf.PI / planckScaled; //  
-        Debug.Log($"{gameObject.name} generateSamples: planckScaled={planckScaled} maxP={maxP} pi_div_h {pi_div_h} s={apertureCount} widthSI={apertureWidthSI} pitchSI={aperturePitchSI}");
+        //Debug.Log($"{gameObject.name} generateSamples: planckScaled={planckScaled} maxP={maxP} pi_div_h {pi_div_h} s={apertureCount} widthSI={apertureWidthSI} pitchSI={aperturePitchSI}");
         float probIntegralSum = 0;
         //float maxDistributionP = (10 * planckScaled) / apertureWidthSI;
         //maxDistributionP = maxDistributionP < maxP ? maxDistributionP : maxP;
@@ -511,7 +510,7 @@ public class GhostInterference : UdonSharpBehaviour
     public void CopyTexToShaders(string TexKeyword, string MaxPKeyword, float mapMaxP)
     {
         Color[] texData = new Color[pointsWide + pointsWide];
-        Debug.Log($"{gameObject.name} CopyTexToShaders {MaxPKeyword}={mapMaxP}");
+        //Debug.Log($"{gameObject.name} CopyTexToShaders {MaxPKeyword}={mapMaxP}");
         if (matGhostParticles != null)
         {
             float norm = 1f / (pointsWide - 1);
@@ -542,7 +541,7 @@ public class GhostInterference : UdonSharpBehaviour
             if (scatterUpdateRequired)
             {
                 float hMaxP = GenerateSamples(slitCount, slitWidthSI, slitPitchSI, maxP);
-                Debug.Log($"{gameObject.name} CreateTextures horiz: hMaxP={hMaxP}");
+                //Debug.Log($"{gameObject.name} CreateTextures horiz: hMaxP={hMaxP}");
                 GenerateReverseLookup(hMaxP);
                 CopyTexToShaders(texName, "_MapMaxP", hMaxP);
             }
@@ -647,8 +646,15 @@ public class GhostInterference : UdonSharpBehaviour
         }
         UpdateLabels();
     }
+
+    void OnEnable()
+    {
+        if (togGroupPlayPause != null)
+            togGroupPlayPause.SetActiveValue(particlePlayState);
+    }
     void Start()
     {
+        player = Networking.LocalPlayer;
         ReviewOwnerShip();
 
         Init();
