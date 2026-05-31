@@ -1,9 +1,7 @@
 ﻿
-using System;
 using TMPro;
 using UdonSharp;
 using UnityEngine;
-using UnityEngine.UI;
 using VRC.SDKBase;
 using VRC.Udon;
 
@@ -24,6 +22,8 @@ public class ParticleScatter3D : UdonSharpBehaviour
 
     [Header("Simulation Components")]
     [SerializeField] private MeshRenderer particleMeshRend = null;
+    private QuadMesh particleMeshLoader;
+
     [SerializeField] private string texName = "_MomentumMap";
     [SerializeField] private float particleVisibility = 1;
     [Header("Scattering Configuration")]
@@ -52,9 +52,8 @@ public class ParticleScatter3D : UdonSharpBehaviour
     [SerializeField,UdonSynced,FieldChangeCallback(nameof(PlanckIndex))]
     private int planckIndex = 1;
     [Header("Simulation Dimensions")]
-    [SerializeField, Tooltip("Max distance from start to target")] float maxDisplacement = 7f;
     [SerializeField]
-    private Vector3 wallLimits = new Vector3(5f, 2f, 1f);
+    private Vector3 particleMeshSize = new Vector3(5f, 2f, 1f);
     [Header("Grating Configuration & Scale")]
     [SerializeField]
     float slitWidthUnitScale = 10000f; // Scale factor from Unity units to experiment units (mm)
@@ -110,11 +109,11 @@ public class ParticleScatter3D : UdonSharpBehaviour
     [SerializeField] private TextMeshProUGUI planckLabel;
     [SerializeField] private TextMeshProUGUI planckScaleLabel;
 
-    [SerializeField] private Toggle togPlay = null;
-    [SerializeField] private Toggle togPause = null;
-    [SerializeField] private Toggle togStop = null;
-    [SerializeField, UdonSynced, Tooltip("Particle demo state"), FieldChangeCallback(nameof(ParticlePlayState))] 
-    private int particlePlayState = 1;
+    [SerializeField] private UdonToggleGroup togGroupPlayPause = null;
+
+
+    [SerializeField, Tooltip("Particle run state"), FieldChangeCallback(nameof(ParticlePlayState))] 
+    public int particlePlayState = 1;
     [SerializeField] private SyncedToggle togPulseParticles;
 
     [SerializeField] private UdonSlider pulseWidthSlider;
@@ -126,7 +125,7 @@ public class ParticleScatter3D : UdonSharpBehaviour
     [SerializeField] private UdonSlider slitPitchSlider;
     [SerializeField] private UdonSlider rowPitchSlider;
     [SerializeField] private UdonSlider screenDistanceSlider;
-    [Tooltip("Exaggerate/Suppress Beam Particle Size"), SerializeField, Range(0.01f, .5f), FieldChangeCallback(nameof(ParticleSize))] float particleSize = 0.15f;
+    [Tooltip("Exaggerate/Suppress Beam Particle Size"), SerializeField, Range(0.01f, .1f), FieldChangeCallback(nameof(ParticleSize))] float particleSize = 0.15f;
     public UdonSlider particleSizeSlider;
 
     private float ParticleSize
@@ -157,7 +156,6 @@ public class ParticleScatter3D : UdonSharpBehaviour
     private float shaderBaseTime = 0;
     //[SerializeField]
     private bool shaderPlaying = true;
-    private VRCPlayerApi player;
     private bool iamOwner = false;
     [SerializeField]
     private Vector3[] slitWidthMinMaxNominal = new[] {
@@ -248,13 +246,13 @@ public class ParticleScatter3D : UdonSharpBehaviour
     public void IncPlanck()
     {    
         if (!iamOwner)
-            Networking.SetOwner(player, gameObject);
+            Networking.SetOwner(Networking.LocalPlayer, gameObject);
         PlanckIndex = planckIndex + 1;
     }
     public void DecPlanck()
     {
         if (!iamOwner)
-            Networking.SetOwner(player, gameObject);
+            Networking.SetOwner(Networking.LocalPlayer, gameObject);
         PlanckIndex = planckIndex - 1;
     }
     private void configureExperiment(int mode)
@@ -359,29 +357,14 @@ public class ParticleScatter3D : UdonSharpBehaviour
         }
     }
 
-    private int ParticlePlayState
+    public int ParticlePlayState
     {
         get => particlePlayState;
         set
         {
+            Debug.Log($"ParticlePlayState changed to {value}");
             particlePlayState = value;
-            switch (particlePlayState)
-            {
-                case 0: // PlayState.Paused:
-                if (togPause != null && !togPause.isOn)
-                    togPause.SetIsOnWithoutNotify(true);
-                break;
-                case 1:// PlayState.Playing:
-                if (togPlay != null && !togPlay.isOn)
-                    togPlay.SetIsOnWithoutNotify(true);
-                break;
-            default:
-                if (togStop != null && !togStop.isOn)
-                    togStop.SetIsOnWithoutNotify(true);
-                break;
-            }
             setParticlePlay(particlePlayState);
-            RequestSerialization();
         }
     }
 
@@ -434,7 +417,7 @@ public class ParticleScatter3D : UdonSharpBehaviour
         if (slitCount < MAX_SLITS)
         {
             if (!iamOwner)
-                Networking.SetOwner(player, gameObject);
+                Networking.SetOwner(Networking.LocalPlayer, gameObject);
             SlitCount = slitCount + 1;
         }
     }
@@ -443,7 +426,7 @@ public class ParticleScatter3D : UdonSharpBehaviour
         if (slitCount > 1)
         {
             if (!iamOwner)
-                Networking.SetOwner(player, gameObject);
+                Networking.SetOwner(Networking.LocalPlayer, gameObject);
             SlitCount = slitCount - 1;
         }
     }
@@ -453,7 +436,7 @@ public class ParticleScatter3D : UdonSharpBehaviour
         if (rowCount < MAX_SLITS)
         {
             if (!iamOwner)
-                Networking.SetOwner(player, gameObject);
+                Networking.SetOwner(Networking.LocalPlayer, gameObject);
             RowCount = rowCount + 1;
         }
     }
@@ -463,7 +446,7 @@ public class ParticleScatter3D : UdonSharpBehaviour
         if (rowCount > 0)
         {
             if (!iamOwner)
-                Networking.SetOwner(player, gameObject);
+                Networking.SetOwner(Networking.LocalPlayer, gameObject);
             RowCount = rowCount - 1;
         }
     }
@@ -551,11 +534,11 @@ public class ParticleScatter3D : UdonSharpBehaviour
         get => screenDistance;
         set
         {
-            value = Mathf.Clamp(value, gratingDistance + 1.5f, maxDisplacement);
+            value = Mathf.Clamp(value, gratingDistance + 1.5f, particleMeshSize.x);
             screenDistance = value;
             if (matParticleFlow != null)
                 matParticleFlow.SetFloat("_ScreenDistance", screenDistance);
-            float xOffset = screenDistance - (wallLimits.x * 0.5f);
+            float xOffset = screenDistance;
             float slitsToScreen = screenDistance - gratingDistance;
             if (screenModelXfrm != null)
             {
@@ -576,9 +559,7 @@ public class ParticleScatter3D : UdonSharpBehaviour
         get => gratingDistance;
         set
         {
-            float halfLength = wallLimits.x * 0.5f;
-            gratingDistance = Mathf.Clamp(value, 0, halfLength);
-            Vector3 gratingLocal = new Vector3(-halfLength + gratingDistance, 0f, 0f);
+            Vector3 gratingLocal = new Vector3(gratingDistance, 0f, 0f);
             if (slitModel != null)
                 slitModel.transform.localPosition = gratingLocal;
             if (matParticleFlow != null)
@@ -589,14 +570,14 @@ public class ParticleScatter3D : UdonSharpBehaviour
         }
     }
 
-    public Vector3 WallLimits
+    public Vector3 ParticleMeshSize
     {
-        get => wallLimits;
+        get => particleMeshSize;
         set
         {
-            wallLimits = value;
+            particleMeshSize = value;
             if (matParticleFlow != null)
-                matParticleFlow.SetVector("_WallLimits", wallLimits);
+                matParticleFlow.SetVector("_WallLimits", particleMeshSize);
         }
     }
 
@@ -1064,36 +1045,8 @@ public class ParticleScatter3D : UdonSharpBehaviour
             updateTimer += 0.033f;
     }
 
-    public void simHide()
-    {
-        if (togStop != null && togStop.isOn && particlePlayState >= 0)
-        {
-            if (!iamOwner)
-                Networking.SetOwner(player, gameObject);
-            ParticlePlayState = -1;
-        }
-    }
-    public void simPlay()
-    {
-        if (togPlay != null && togPlay.isOn && particlePlayState <= 0)
-        {
-            if (!iamOwner)
-                Networking.SetOwner(player, gameObject);
-            ParticlePlayState = 1;
-        }
-    }
 
-    public void simPause()
-    {
-        if (togPause != null && togPause.isOn && particlePlayState != 0)
-        {
-            if (!iamOwner)
-                Networking.SetOwner(player, gameObject);
-            ParticlePlayState = 0;
-        }
-    }
-
-    void Init()
+    void OnEnable()
     {
         if (togPulseParticles != null)
         {
@@ -1107,8 +1060,8 @@ public class ParticleScatter3D : UdonSharpBehaviour
             particleSizeSlider.SliderUnit = "x";
             particleSizeSlider.DisplayScale = 10f; // Display in millimetres
             particleSizeSlider.ClientVariableName = nameof(particleSize);
-            particleSize = Mathf.Clamp(particleSize, 0.01f, 0.5f);
-            particleSizeSlider.SetLimits(0.01f, 0.5f);
+            particleSize = Mathf.Clamp(particleSize, 0.01f, 0.1f);
+            particleSizeSlider.SetLimits(0.01f, 0.1f);
             particleSizeSlider.SetValue(particleSize);
         }
 
@@ -1171,23 +1124,43 @@ public class ParticleScatter3D : UdonSharpBehaviour
             screenDistanceSlider.SliderUnit = "m";
             screenDistanceSlider.DisplayScale = 1f; // Display in metres
             screenDistanceSlider.ClientVariableName = nameof(screenDistance);
-            screenDistanceSlider.SetLimits(gratingDistance+1.5f, WallLimits.x - 1);
+            screenDistanceSlider.SetLimits(gratingDistance + 1.5f, ParticleMeshSize.x - 1);
             screenDistanceSlider.SetValue(screenDistance);
             screenDistanceSlider.Interactable = true;
         }
         if (particleMeshRend != null)
         {
+            particleMeshLoader = particleMeshRend.GetComponent<QuadMesh>();
             matParticleFlow = particleMeshRend.material;
             particleMeshRend.enabled = false;
+            if (particleMeshLoader != null)
+            {
+                particleMeshSize = particleMeshLoader.meshDimensions;
+            }
+            else
+            {
+                particleMeshSize = particleMeshRend.bounds.size;
+                particleMeshSize.x = Mathf.RoundToInt(particleMeshSize.x);
+                particleMeshSize.y = Mathf.RoundToInt(particleMeshSize.y);
+                particleMeshSize.z = Mathf.RoundToInt(particleMeshSize.z);
+            }
+            Transform meshXfrm = particleMeshRend.transform;
+            if (meshXfrm != null)
+            {
+                meshXfrm.localPosition = new Vector3(particleMeshSize.x * 0.5f, 0f, 0f);
+            }
         }
-        UpdateLabels();
+        if (togGroupPlayPause != null)
+        {
+            togGroupPlayPause.SetActiveValue(particlePlayState);
+        }
     }
+
     void Start()
     {
+        UpdateLabels();
         ReviewOwnerShip();
-        WallLimits = wallLimits;
-
-        Init();
+        ParticleMeshSize = particleMeshSize;
         GratingDistance = gratingDistance;
         ScreenDistance = screenDistance;
         //Debug.Log("BScatter Start");

@@ -134,7 +134,6 @@ Shader "Murpheus/Ballistic/Particle Scattering 3D"
             float _PulseWidth;
             float _PulseWidthMax;
             float _SpeedRange;
-            float _MapSum;
 
             float4 _ArraySpacing;
             float4 _ArrayDimension;
@@ -170,6 +169,7 @@ Shader "Murpheus/Ballistic/Particle Scattering 3D"
                 float pFwd = sqrt(1.0-pHVsq);
                 return float4(pFwd,pV,pH,isValid);
             }
+
 
             // 2/Pi
             #define twoDivPi 0.636619772367

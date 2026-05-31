@@ -204,31 +204,7 @@ public class BallisticScatter : UdonSharpBehaviour
         ReviewOwnerShip();
     }
 
-    /*
-     * Synced Properties
-     */
-    private void updatePlayPauseStop()
-    {
-        if (iamOwner)
-            return;
-        switch (particlePlayState)
-        { 
-            case 0:
-                if (togPause != null && !togPause.isOn)
-                    togPause.SetIsOnWithoutNotify(true);
-                break;
-            case 1:
-                if (togPlay != null && !togPlay.isOn)
-                    togPlay.SetIsOnWithoutNotify(true);
-                break;
-            default:
-                if (togShowHide != null && !togShowHide.isOn)
-                    togShowHide.SetIsOnWithoutNotify(true);
-                break;
-        }
-    }
-
-    [SerializeField, UdonSynced,FieldChangeCallback(nameof(ParticlePlayState))] int particlePlayState = 1;
+    [SerializeField, FieldChangeCallback(nameof(ParticlePlayState))] int particlePlayState = 1;
     public int ParticlePlayState
     {
         get => particlePlayState;
@@ -236,8 +212,6 @@ public class BallisticScatter : UdonSharpBehaviour
         {
             particlePlayState = value;
             setParticlePlay(particlePlayState);
-            updatePlayPauseStop();
-            RequestSerialization();
         }
     }
 

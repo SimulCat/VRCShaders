@@ -184,7 +184,7 @@ public class QuadMesh : UdonSharpBehaviour
         }
         return true;
     }
-    void Start()
+    void OnEnable()
     {
         mf = GetComponent<MeshFilter>();
         mr = GetComponent<MeshRenderer>();
