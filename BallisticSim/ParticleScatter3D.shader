@@ -239,16 +239,17 @@ Shader "Murpheus/Ballistic/Particle Scattering 3D"
                 // 'Randomly' assign the particle to a row
                 int nRow = (idHash >> 10) % _RowCount;
 
+                float slitHalfWidth = slitWidth*0.5;
                 float slitCenter = leftSlitCentre + (nSlit * slitPitch);
-                float leftEdge = leftSlitCentre - slitWidth*0.5;
+                float gratingLeftEdge = leftSlitCentre - slitHalfWidth;
                 // check if gratingmakes sense;
 
                 // Find horizontal position across the slits
                 float startPosH =  (_GratingDistance > 0.00001) ? (beamWidth * startHashH) : slitCenter + (startHashH * slitWidth);
                 
-                float normPosH = frac((startPosH-leftEdge)/slitPitch)*slitPitch;
+                float normPosH = frac((startPosH-gratingLeftEdge)/slitPitch)*slitPitch;
                 // check if particle Horiz pos is valid;
-                bool validPosH = (startPosH >= leftEdge) && (startPosH <= (-leftEdge)) && (normPosH <= slitWidth);
+                bool validPosH = (startPosH >= gratingLeftEdge) && (startPosH <= (-gratingLeftEdge)) && (normPosH <= slitWidth);
 
                 float rowCenter = lowerSlitCentre + (nRow * rowPitch);
                 float lowerEdge = lowerSlitCentre - slitHeight*0.5;

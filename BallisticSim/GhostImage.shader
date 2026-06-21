@@ -45,7 +45,7 @@ Shader "Murpheus/Ballistic/Ghost Image"
         _PauseTime("Freeze time",Float) = 0
         _Play("Play Animation", Integer) = 1
         [Toggle] _UseQuantumScatter("Use Quantum Scatter", Integer) = 1
-        [Toggle] _CullToSlits("Cull to Slits", Integer) = 1
+        [Toggle] _CullSetting("Cull to Slits", Integer) = 1
         [Toggle] _LimitHorizontal("Only Horizontal", Integer) = 1
     }
 
@@ -137,7 +137,7 @@ Shader "Murpheus/Ballistic/Ghost Image"
             float _PauseTime;
             int _Play;
             int _UseQuantumScatter;
-            int _CullToSlits;
+            int _CullSetting;
             int _LimitHorizontal;
 
             // 2/Pi
@@ -245,7 +245,7 @@ Shader "Murpheus/Ballistic/Ghost Image"
                 int nSlit = (idPair >> 8) % _SlitCount;
                 float leftSlitCenter = -(_SlitCount - 1)*_SlitPitch*0.5;
                 float slitCenter = leftSlitCenter + (nSlit * _SlitPitch);
-                float leftEdge = slitCenter - _SlitWidth*0.5;
+                float gratingLeftEdge = slitCenter - _SlitWidth*0.5;
                 // Cone radius back from grating to BBO
                 float2 vGratingConeXY =  _LimitHorizontal ? float2(RandomRange(2.0,pairHash ^ 0x33CCFFCC)-1.0,0.0) : 
                     GetRandomPointInCircle(1.0,pairHash ^ 0xCC330033,pairHash ^ 0x33CCFFCC);
@@ -255,7 +255,7 @@ Shader "Murpheus/Ballistic/Ghost Image"
                  initialParticleXY = initialParticleXY * _BeamRadius;
 
                 float2 vGratingParticleXY = initialParticleXY + vGratingConeXY;
-                vGratingParticleXY.x =  _CullToSlits ? leftEdge + (pairHash0to1 * _SlitWidth) : vGratingParticleXY.x;
+                vGratingParticleXY.x =  _CullSetting ? gratingLeftEdge + (pairHash0to1 * _SlitWidth) : vGratingParticleXY.x;
 
                 // Assume screen particle starts out along X axis
                 
@@ -295,8 +295,8 @@ Shader "Murpheus/Ballistic/Ghost Image"
                 // Now use x component of B leg particle position to check if particle at grating is within slit positions to determine if it is blocked or not.
                 float gratingX = _GratingPos.x - posAtGrating.x;
                                 // Set slitCenter to left-most position
-                float normPos = frac((gratingX-leftEdge)/_SlitPitch)*_SlitPitch;
-                bool validPosAtGrating = _CullToSlits || ((gratingX >= leftEdge) && (gratingX <= (-leftEdge)) && (normPos <= _SlitWidth));
+                float normPos = frac((gratingX-gratingLeftEdge)/_SlitPitch)*_SlitPitch;
+                bool validPosAtGrating = _CullSetting || ((gratingX >= gratingLeftEdge) && (gratingX <= (-gratingLeftEdge)) && (normPos <= _SlitWidth));
               
                 // Work out particle direction if it passes the grating. 
                 float3 postGratingDirection = reflectedDirection;

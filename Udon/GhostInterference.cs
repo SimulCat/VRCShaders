@@ -1,7 +1,6 @@
 ﻿using TMPro;
 using UdonSharp;
 using UnityEngine;
-using UnityEngine.UI;
 using VRC.SDKBase;
 using VRC.Udon;
 
@@ -53,7 +52,7 @@ public class GhostInterference : UdonSharpBehaviour
     private float slitWidth = 0.006f;        // "Slit Width
     private float slitWidthSI => slitWidth * slitUnitScale;
 
-    // Pulsed particles and speed range
+    // Pulsed particles and pulse width
     [SerializeField, FieldChangeCallback(nameof(PulseParticles))]
     private bool pulseParticles = false;
     [SerializeField, FieldChangeCallback(nameof(PulseWidth)), Range(0.01f, 1.5f)]
@@ -86,6 +85,50 @@ public class GhostInterference : UdonSharpBehaviour
 
     [SerializeField] private UdonSlider slitWidthSlider;
     [SerializeField] private UdonSlider slitPitchSlider;
+    [SerializeField] private UdonSlider particleSpeedSlider;
+
+    [Header("Particle Display Controls")]
+
+    [SerializeField,Tooltip("Particle Speed"),Range(0.01f, 1.5f), FieldChangeCallback(nameof(ParticleSpeed))]
+    private float particleSpeed = 1f;
+
+    public float ParticleSpeed
+    {
+        get => particleSpeed;
+        set
+        {
+            particleSpeed = value;
+            if (matGhostParticles != null)
+                matGhostParticles.SetFloat("_ParticleSpeed", particleSpeed);
+        }
+    }
+
+    [SerializeField, Tooltip("Cull Particles 0=none, 1=Slits, 2=Detector"), FieldChangeCallback(nameof(CullMode))]
+    int cullMode = 0;
+    [SerializeField] private UdonToggleGroup togGroupCullMode = null;
+    private int CullMode
+    {
+        get => cullMode;
+        set
+        {
+            cullMode = value;
+            if (matGhostParticles != null)
+                matGhostParticles.SetInteger("_CullMode", cullMode);
+        }
+    }
+    [SerializeField, Tooltip("Coincidence Display Mode"), FieldChangeCallback(nameof(ShowCoincidence))]
+    int showCoincidence = 0;
+    [SerializeField] private UdonToggleGroup togGroupCoincidence = null;
+    private int ShowCoincidence
+    {
+        get => showCoincidence;
+        set
+        {
+            showCoincidence = value;
+            if (matGhostParticles != null)
+                matGhostParticles.SetInteger("_ShowCoincidence", showCoincidence);
+        }
+    }
 
     [Tooltip("Exaggerate/Suppress Beam Particle Size"), SerializeField, Range(0.01f, .5f), FieldChangeCallback(nameof(ParticleSize))] float particleSize = 0.15f;
     public UdonSlider particleSizeSlider;
@@ -187,6 +230,17 @@ public class GhostInterference : UdonSharpBehaviour
             slitPitchSlider.SetValue(slitPitchMinMaxNominal[mode].z);
         }
         SlitPitch = slitPitchMinMaxNominal[mode].z;
+
+        if (particleSpeedSlider != null)
+        {
+            particleSpeedSlider.ClientVariableName = "particleSpeed";
+            particleSpeedSlider.SliderUnit = "m/sec";
+            particleSpeedSlider.DisplayInteger = false;
+            particleSpeedSlider.DisplayScale = 1; // Display in m/s, but actual value is in m/s
+            particleSpeedSlider.SetLimits(0.01f, 1.5f);
+            particleSpeedSlider.SetValue(particleSpeed);
+        }
+        ParticleSpeed = particleSpeed;
         //Debug.Log($"ConfigureExperiment applied mode {mode} slitPitch={SlitPitch} slitWidth={SlitWidth}");
     }
     public int ExperimentMode
@@ -651,6 +705,10 @@ public class GhostInterference : UdonSharpBehaviour
     {
         if (togGroupPlayPause != null)
             togGroupPlayPause.SetActiveValue(particlePlayState);
+        if (togGroupCullMode != null)
+            togGroupCullMode.SetActiveValue(cullMode);
+        if (togGroupCoincidence != null)
+            togGroupCoincidence.SetActiveValue(showCoincidence);
     }
     void Start()
     {

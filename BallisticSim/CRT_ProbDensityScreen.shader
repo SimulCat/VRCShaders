@@ -161,9 +161,9 @@ int postionInsideAperture(int numHoles, float holePitch, float holeWidth, float 
 {
     // Distance to centre of leftmost slit
     float leftHoleCentre = -(max((numHoles - 1),0) * holePitch) *0.5;
-    float leftEdge = leftHoleCentre - (holeWidth * 0.5);
-    float normOffset = frac((offset-leftEdge)/holePitch)* holePitch;
-    return (int)((offset >= leftEdge) && (offset <= -leftEdge) && (normOffset <= holeWidth));
+    float gratingLeftEdge = leftHoleCentre - (holeWidth * 0.5);
+    float normOffset = frac((offset-gratingLeftEdge)/holePitch)* holePitch;
+    return (int)((offset >= gratingLeftEdge) && (offset <= -gratingLeftEdge) && (normOffset <= holeWidth));
 }
 
 

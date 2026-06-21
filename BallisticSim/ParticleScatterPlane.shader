@@ -154,16 +154,16 @@ Shader "SimulCat/Ballistic/Particle Scattering Plane"
                 // Set slitCenter to left-most position
                 float leftSlitCenter = -(_SlitCount - 1)*slitPitch*0.5;
                 float slitCenter = leftSlitCenter + (nSlit * slitPitch);
-                float leftEdge = leftSlitCenter - slitWidth*0.5;
+                float gratingLeftEdge = leftSlitCenter - slitWidth*0.5;
                 // check if gratingmakes sense;
 
                 // Now to pick a start position within theslit
                 float startHash = RandomRange(1.0,idHash ^ 0xAC3FFF)-0.5;
                 float speedHash = RandomRange(2.0,idHash >> 3)-1.0;
                 float startPosY =  (_GratingDistance > 0.00001) ? (beamWidth * startHash) : slitCenter + (startHash * slitWidth);
-                float normPos = frac((startPosY-leftEdge)/slitPitch)*slitPitch;
+                float normPos = frac((startPosY-gratingLeftEdge)/slitPitch)*slitPitch;
                 // check if particle y pos is valid;
-                bool validPosY = (startPosY >= leftEdge) && (startPosY <= (-leftEdge)) && (normPos <= slitWidth);
+                bool validPosY = (startPosY >= gratingLeftEdge) && (startPosY <= (-gratingLeftEdge)) && (normPos <= slitWidth);
                 //(0.0 > (frac((rightEdge - startPosY)/slitPitch)*slitPitch + slitWidth));
 
 

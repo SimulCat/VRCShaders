@@ -41,11 +41,11 @@ float4 frag(v2f_customrendertexture i) : SV_Target
     float halfTankWidth = _CustomRenderTextureHeight * 0.5f;
     float halfGratingWidth = ((_SlitPitch * _SlitCount-1) + _SlitWidth)*0.5f;
     float leftSlitCenter = -0.5*(_SlitCount - 1)*_SlitPitch;
-    float leftEdge = leftSlitCenter - (_SlitWidth*0.5f);
+    float gratingLeftEdge = leftSlitCenter - (_SlitWidth*0.5f);
     float pixelPosY = halfTankWidth-yPixel;
     // find slitCenter to right-most position
-    float normPos = frac((pixelPosY-leftEdge)/ _SlitPitch) * _SlitPitch;
-    int inValidPosY = (int)((normPos > _SlitWidth) || (pixelPosY < leftEdge) || (pixelPosY > -leftEdge));
+    float normPos = frac((pixelPosY-gratingLeftEdge)/ _SlitPitch) * _SlitPitch;
+    int inValidPosY = (int)((normPos > _SlitWidth) || (pixelPosY < gratingLeftEdge) || (pixelPosY > -gratingLeftEdge));
     int _SlitCount = round(_SlitCount);
     return (float4)(_Color * inBarrierZone * inValidPosY);
 }

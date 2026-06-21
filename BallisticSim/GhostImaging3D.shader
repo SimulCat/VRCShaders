@@ -1,6 +1,5 @@
 Shader "Murpheus/Ballistic/Ghost Imaging 3D"
 {
-
     Properties
     {
         _MainTex ("Particle Texture", 2D) = "white" {}
@@ -19,7 +18,7 @@ Shader "Murpheus/Ballistic/Ghost Imaging 3D"
         _LaserP("Laser Momentum", float) = 0.8
         _MinParticleP("Min Momentum", float) = 0.0
         _MaxParticleP("Max Momentum", float) = 1.0
-        _ParticleVelocity("Particle Velocity", float) = 1.0
+        _ParticleSpeed("Particle Speed", float) = 1.0
 
         _SourcePos("Source Position", Vector) = (-2,0,0,0)
         _BBO_Pos("BBO Down Convert Position", Vector) = (-1,0,0,0)
@@ -46,7 +45,8 @@ Shader "Murpheus/Ballistic/Ghost Imaging 3D"
         _PauseTime("Freeze time",Float) = 0
         _Play("Play Animation", Integer) = 1
         [Toggle] _UseQuantumScatter("Use Quantum Scatter", Integer) = 1
-        [Toggle] _CullToSlits("Cull to Slits", Integer) = 1
+        _CullMode("Cull Setting (0=none, 1=Slits, 2=Detector)", Integer) = 1
+        _ShowCoincidence("Show Coincidence (0=none, 1=Both, 2=Just Coincidences)", Integer) = 1
         [Toggle] _LimitHorizontal("Only Horizontal", Integer) = 1
     }
 
@@ -111,7 +111,7 @@ Shader "Murpheus/Ballistic/Ghost Imaging 3D"
             float _LaserP;
             float _MinParticleP;
             float _MaxParticleP;
-            float _ParticleVelocity;
+            float _ParticleSpeed;
 
 
             float4 _SourcePos;
@@ -138,7 +138,8 @@ Shader "Murpheus/Ballistic/Ghost Imaging 3D"
             float _PauseTime;
             int _Play;
             int _UseQuantumScatter;
-            int _CullToSlits;
+            int _CullMode;
+            int _ShowCoincidence;
             int _LimitHorizontal;
 
             // 2/Pi
@@ -215,7 +216,7 @@ Shader "Murpheus/Ballistic/Ghost Imaging 3D"
                 float gratingDistance = length(_BeamSplitPos - _GratingPos) + length(_SourcePos - _BeamSplitPos);
                 float screenDistance = length(_ScreenPos - _SourcePos);
                 // Timing
-                float cyclePeriod = (screenDistance/_ParticleVelocity) + _DwellTime;
+                float cyclePeriod = (screenDistance/_ParticleSpeed) + _DwellTime;
 
                 // Check pulse parameters
                 float hasPulse = (int)(_PulseWidth > 0);
@@ -243,14 +244,15 @@ Shader "Murpheus/Ballistic/Ghost Imaging 3D"
                 float distanceBBOtoSplitter = length(_BeamSplitPos - _BBO_Pos);
                 float distanceBBOtoGrating = length(_GratingPos - _BeamSplitPos) + distanceBBOtoSplitter;
 
-
                 // Now get particle XY positions at start and slits based on pairhash;
                 // Find a random slit position for culled particles
                 // Shift slit centre to a randomly chosen slit number 
                 int nSlit = (idPair >> 8) % _SlitCount;
                 float leftSlitCenter = -(_SlitCount - 1)*_SlitPitch*0.5;
                 float slitCenter = leftSlitCenter + (nSlit * _SlitPitch);
-                float leftEdge = slitCenter - _SlitWidth*0.5;
+                float slitLeftEdge = slitCenter - _SlitWidth*0.5;
+                float slitWide = _SlitWidth * 1.25; // Add a bit of extra width to make it more likely to get some hits for display purposes, can set to 1.0 for more accuracy if needed.
+                float leftWideEdge = slitCenter - slitWide*0.5;
                 // Cone radius back from grating to BBO
                 float2 vGratingConeXY =  _LimitHorizontal ? float2(RandomRange(2.0,pairHash ^ 0x33CCFFCC)-1.0,0.0) : 
                     GetRandomPointInCircle(1.0,pairHash ^ 0xCC330033,pairHash ^ 0x33CCFFCC);
@@ -263,7 +265,8 @@ Shader "Murpheus/Ballistic/Ghost Imaging 3D"
                  initialParticleXY = initialParticleXY * _BeamRadius;
 
                 float2 vGratingParticleXY = initialParticleXY + vGratingConeXY;
-                vGratingParticleXY.x =  _CullToSlits ? leftEdge + (pairHash0to1 * _SlitWidth) : vGratingParticleXY.x;
+                float gratingWidth = (_SlitCount-1)*_SlitPitch + _SlitWidth * 1.25;
+                vGratingParticleXY.x =  _CullMode > 0 ? leftWideEdge + (pairHash0to1 * slitWide) : vGratingParticleXY.x;
 
                 // Assume screen particle starts out along X axis
                 
@@ -301,10 +304,9 @@ Shader "Murpheus/Ballistic/Ghost Imaging 3D"
                 float3 posAtGrating = posAtBeamSplitB + reflectedDirection*splitterToGrating;
                 
                 // Now use x component of B leg particle position to check if particle at grating is within slit positions to determine if it is blocked or not.
-                float gratingX = _GratingPos.x - posAtGrating.x;
+                float gratingX = posAtGrating.x - _GratingPos.x;
                                 // Set slitCenter to left-most position
-                float normPos = frac((gratingX-leftEdge)/_SlitPitch)*_SlitPitch;
-                bool validPosAtGrating = _CullToSlits || ((gratingX >= leftEdge) && (gratingX <= (-leftEdge)) && (normPos <= _SlitWidth));
+                bool validPosAtGrating = (gratingX >= slitLeftEdge) && (gratingX <= slitLeftEdge+_SlitWidth);
               
                 // Work out particle direction if it passes the grating. 
                 float3 postGratingDirection = reflectedDirection;
@@ -316,13 +318,13 @@ Shader "Murpheus/Ballistic/Ghost Imaging 3D"
                 denom = dot(postGratingDirection, float3(0.0,0.0,-1.0));
                 if (denom < 1.0e-6) gratingToDetector = dot((_DetectorPos.xyz - posAtGrating), float3(0.0,0.0,-1.0))/denom;
                 float3 positionAtDetector = posAtGrating + postGratingDirection*gratingToDetector;
-                int hitsDetector = (int)(validPosAtGrating && scatterAligned);// && (abs(positionAtDetector.x - _DetectorPos.x) < _DetectorWidth*0.5));
+                int hitsDetector = (int)(validPosAtGrating && scatterAligned && _ShowCoincidence != 0);// && (abs(positionAtDetector.x - _DetectorPos.x) < _DetectorWidth*0.5));
 
                 // Finally, work out if particle A has reached the screen and if so, where. If not, use position at detector to work out where it would be based on its current direction.
 
                 // Now calculate the particle pair's distance travelled since emission, to allow us to work out where each particle should be along their respective tracks
                 float timeOffset =  pulseDuration * INV_PI * asin(hshPlusMinus);
-                float trackDistance = (cycleTime + timeOffset)*_ParticleVelocity;
+                float trackDistance = (cycleTime + timeOffset)*_ParticleSpeed;
                 float trackPastBBO = max(0.0, trackDistance - sourceToBBO);
                 float trackPastBeamSplitB = max(trackPastBBO - bbOToBeamSplitB, 0.0);
                 float trackPastGrating = max(trackPastBeamSplitB - splitterToGrating, 0.0);
@@ -346,7 +348,7 @@ Shader "Murpheus/Ballistic/Ghost Imaging 3D"
                 particlePosB = pastDetectorPlane ? positionAtDetector : particlePosB;
 
                 // Update particle position in model to reflect either new position or original grid position
-               float3 triCentreInModel = isParticleA ? particlePosA : particlePosB;
+                float3 triCentreInModel = isParticleA ? particlePosA : particlePosB;
 
                 vertexOffset *= _MarkerScale; // * (0.5 + hitsDetector * 0.5) ;                    // Scale the quad corner offset to world, now we billboard
                 v.vertex.xyz =  triCentreInModel+vertexOffset;
@@ -359,13 +361,16 @@ Shader "Murpheus/Ballistic/Ghost Imaging 3D"
                 //      2) Just add the scaled xy model offset to lock the vertex orientation to the camera view.
                 //      3) Transform the result by the Projection matrix (UNITY_MATRIX_P) and we now have the billboarded vertex in clip space.
                 o.vertex = mul(UNITY_MATRIX_P,mul(UNITY_MATRIX_MV, camModelCentre) + camVertexOffset);
-               float pfrac =  (((trackDistance > sourceToBBO) ? postBBOp : _LaserP) - _MinParticleP)/(_MaxParticleP-_MinParticleP);
-               float4 colSample = tex2Dlod(_ColourMap,float4(pfrac,0.5,0,0));
-               particleValidB = particleValidB && (trackDistance > sourceToBBO);
-               int valid = (int)(isParticleA || particleValidB); // Use alpha channel of colour map as validity flag for particle (1=valid, 0=invalid)
-               float alpha = valid > 0 ? 1 : -1;
-               hitsDetector = hitsDetector * valid;
-                o.color = float4(hitsDetector*colSample.rgb + (1-hitsDetector)*0.05*colSample.grb, alpha);
+                float pfrac =  (((trackDistance > sourceToBBO) ? postBBOp : _LaserP) - _MinParticleP)/(_MaxParticleP-_MinParticleP);
+                float4 colSample = tex2Dlod(_ColourMap,float4(pfrac,0.5,0,0));
+                particleValidB = particleValidB && (trackDistance > sourceToBBO);
+                int valid = (int)((isParticleA || particleValidB) && (_ShowCoincidence < 2 || hitsDetector > 0)); // Use alpha channel of colour map as validity flag for particle (1=valid, 0=invalid)
+                float alpha = valid > 0 ? 1 : -1;
+                hitsDetector = hitsDetector * valid;
+                if (pastBBO)
+                    o.color = float4(hitsDetector*colSample.brr + (1-hitsDetector)*0.25*colSample.rgb, alpha);
+                else
+                    o.color = float4(colSample.rgb, isParticleA ? 1.5 : -1 );
 
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 return o;
