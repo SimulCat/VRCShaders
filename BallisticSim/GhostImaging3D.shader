@@ -28,7 +28,7 @@ Shader "Murpheus/Ballistic/Ghost Imaging 3D"
         _GratingPos("Grating Position", Vector) = (0,0,0,0)
         _DetectorPos("Detector Position", Vector) = (0,0,0,0)
         _DetectorWidth("Detector Width", float) = 0.02
-        _DetectorOffset("Detector Offset", float) = 2
+        _BackstopPos("Backstop Position", Vector) = (0,0,7.7,0)
         _ScreenPos("Screen Position", Vector) = (0,0,0,0)
         _DwellTime("Dwell Time (secs)", float) =3
 
@@ -121,8 +121,8 @@ Shader "Murpheus/Ballistic/Ghost Imaging 3D"
             float4 _GratingPos;
             float4 _GratingNormal; // Normal of the plane of the grating, facing towards the source
             float4 _DetectorPos;
+            float4 _BackstopPos;
             float _DetectorWidth;
-            float _DetectorOffset;
             float4 _ScreenPos;
             
             float _DwellTime;
@@ -314,10 +314,12 @@ Shader "Murpheus/Ballistic/Ghost Imaging 3D"
                 
                 postGratingDirection = scatterParticle(postBBOp, reflectedDirection, RandomRange(2.0, pairHash+1)-1.0).xyz;
                 float gratingToDetector = length(_DetectorPos - _GratingPos);
+                float gratingToBackstop = length(_BackstopPos - _GratingPos);
                 bool scatterAligned = length(postGratingDirection.xy*gratingToDetector) <=_DetectorWidth; // Check if scatter is within sensor bounds consider it blocked by grating
                 denom = dot(postGratingDirection, float3(0.0,0.0,-1.0));
                 if (denom < 1.0e-6) gratingToDetector = dot((_DetectorPos.xyz - posAtGrating), float3(0.0,0.0,-1.0))/denom;
                 float3 positionAtDetector = posAtGrating + postGratingDirection*gratingToDetector;
+                float3 positionAtBackstop = posAtGrating + postGratingDirection*gratingToBackstop;
                 int hitsDetector = (int)(validPosAtGrating && scatterAligned && _ShowCoincidence != 0);// && (abs(positionAtDetector.x - _DetectorPos.x) < _DetectorWidth*0.5));
 
                 // Finally, work out if particle A has reached the screen and if so, where. If not, use position at detector to work out where it would be based on its current direction.
@@ -337,7 +339,8 @@ Shader "Murpheus/Ballistic/Ghost Imaging 3D"
                 bool pastScreen = trackDistance >= (length(screenParticlePos - posAtBBO)+sourceToBBO);
                 bool pastGrating = trackPastBeamSplitB > splitterToGrating;
                 bool pastDetectorPlane = trackPastGrating >= gratingToDetector;
-               
+                bool pastBackstopPlane = trackPastGrating >= gratingToBackstop;
+
                 float3 preBBOParticlePos = posAtSource + initialDirection*trackDistance;
                 float3 particlePosA = pastBBO ? posAtBBO + particleDirectionA*trackPastBBO : preBBOParticlePos;
                 particlePosA = pastScreen ? screenParticlePos : particlePosA;
@@ -345,7 +348,8 @@ Shader "Murpheus/Ballistic/Ghost Imaging 3D"
                 float3 particlePosB = pastBBO ? posAtBBO + particleDirectionB*trackPastBBO : preBBOParticlePos;
                 particlePosB = pastBeamSplitB ? (posAtBeamSplitB + trackPastBeamSplitB*reflectedDirection) : particlePosB;
                 particlePosB = pastGrating ? (posAtGrating + trackPastGrating*postGratingDirection) : particlePosB;
-                particlePosB = pastDetectorPlane ? positionAtDetector : particlePosB;
+                particlePosB = pastDetectorPlane && (hitsDetector > 0) ? positionAtDetector : particlePosB;
+                particlePosB = pastBackstopPlane ? positionAtBackstop : particlePosB;
 
                 // Update particle position in model to reflect either new position or original grid position
                 float3 triCentreInModel = isParticleA ? particlePosA : particlePosB;
