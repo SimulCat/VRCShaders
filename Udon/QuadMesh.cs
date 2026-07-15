@@ -42,15 +42,17 @@ public class QuadMesh : UdonSharpBehaviour
     int numDecals;
     //[SerializeField]
     int numVertices;
+    int numTriangles;
     private bool generateMesh()
     {
         if (mf == null)
             return false;
 
         arrayRadius = meshDimensions * 0.5f;
-        if (pointsAcross.x < 1) pointsAcross.x = 1;
-        if (pointsAcross.y < 1) pointsAcross.y = 1;
-        if (pointsAcross.z < 1) pointsAcross.z   = 1;
+        pointsAcross.x = Mathf.Min(pointsAcross.x, 1);
+        pointsAcross.y = Mathf.Min(pointsAcross.y, 1);
+        pointsAcross.z = Mathf.Min(pointsAcross.z, 1);
+
         Vector3Int numGridPoints = pointsAcross;
 
         numGridPoints.x = numGridPoints.x % 2 == 1 ? numGridPoints.x : numGridPoints.x + 1;
@@ -74,6 +76,7 @@ public class QuadMesh : UdonSharpBehaviour
         Vector3 decalPos = arrayOrigin;
 
         numVertices = 0;
+        numTriangles = 0;
         float decalWidth = Mathf.Min(arraySpacing.x, arraySpacing.y);
 
         Vector3 vxOffset0 = (Vector3.down + Vector3.right) * 0.5f;
@@ -103,8 +106,6 @@ public class QuadMesh : UdonSharpBehaviour
         uvs = new Vector2[numVertices];
         //Debug.Log($"Calculated {numDecals} decals, allocating {vertices.Length} vertices and {triangles.Length} triangle indices.");
         bool positionInRange = true;
-        int vertexIndex = 0;
-        int triangleIndex = 0;
         for (int nPlane = 0; nPlane < numGridPoints.z; nPlane++)
         {
             decalPos.y = arrayOrigin.y;
@@ -132,27 +133,27 @@ public class QuadMesh : UdonSharpBehaviour
                     if (positionInRange)
                     {
 
-                        triangles[triangleIndex++] = vertexIndex;
-                        triangles[triangleIndex++] = vertexIndex + 2;
-                        triangles[triangleIndex++] = vertexIndex + 1;
+                        triangles[numTriangles++] = numVertices;
+                        triangles[numTriangles++] = numVertices + 2;
+                        triangles[numTriangles++] = numVertices + 1;
                         if (!useTriangles)
                         {
-                            triangles[triangleIndex++] = vertexIndex + 2;
-                            triangles[triangleIndex++] = vertexIndex + 3;
-                            triangles[triangleIndex++] = vertexIndex  + 1;
+                            triangles[numTriangles++] = numVertices + 2;
+                            triangles[numTriangles++] = numVertices + 3;
+                            triangles[numTriangles++] = numVertices  + 1;
                         }
-                        uvs[vertexIndex] = uv0;
-                        vertices[vertexIndex++] = decalPos + vxOffset0;
+                        uvs[numVertices] = uv0;
+                        vertices[numVertices++] = decalPos + vxOffset0;
 
-                        uvs[vertexIndex] = uv1;
-                        vertices[vertexIndex++] = decalPos + vxOffset1;
-                        uvs[vertexIndex] = uv2;
-                        vertices[vertexIndex++] = decalPos + vxOffset2;
+                        uvs[numVertices] = uv1;
+                        vertices[numVertices++] = decalPos + vxOffset1;
+                        uvs[numVertices] = uv2;
+                        vertices[numVertices++] = decalPos + vxOffset2;
 
                         if (!useTriangles)
                         {
-                            uvs[vertexIndex] = uv3;
-                            vertices[vertexIndex++] = decalPos + vxOffset3;
+                            uvs[numVertices] = uv3;
+                            vertices[numVertices++] = decalPos + vxOffset3;
                         }
                     }
                     decalPos.x += arraySpacing.x;
@@ -161,7 +162,7 @@ public class QuadMesh : UdonSharpBehaviour
             }
             decalPos.z += arraySpacing.z;
         }
-        //Debug.Log($"Generated { vertexIndex} vertices for {triangleIndex/3} triangles.");
+        //Debug.Log($"Generated { numVertices} vertices for {numTriangles/3} triangles.");
         mesh = mf.mesh;
         mesh.Clear();
         if (triangles.Length >= 32767)

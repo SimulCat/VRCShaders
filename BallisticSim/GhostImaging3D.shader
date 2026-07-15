@@ -285,7 +285,7 @@ Shader "Murpheus/Ballistic/Ghost Imaging 3D"
                 float sourceToBBO = length(posAtBBO - posAtSource);
 
                 float3 screenParticlePos = posAtBBO + particleDirectionA * distanceBBOtoScreen;
-                float cycleTime = cyclePeriod * (_Play >= 0 ? frac(cycles + continuous*altHash0to1) : 0.99);
+                float cycleTime = cyclePeriod * (_Play >= 0 ? frac(cycles + continuous*altHash0to1) : 0.9999);
 
                 float pulseDuration = hasPulse * _PulseWidth;
 
@@ -320,7 +320,9 @@ Shader "Murpheus/Ballistic/Ghost Imaging 3D"
                 if (denom < 1.0e-6) gratingToDetector = dot((_DetectorPos.xyz - posAtGrating), float3(0.0,0.0,-1.0))/denom;
                 float3 positionAtDetector = posAtGrating + postGratingDirection*gratingToDetector;
                 float3 positionAtBackstop = posAtGrating + postGratingDirection*gratingToBackstop;
-                int hitsDetector = (int)(validPosAtGrating && scatterAligned && _ShowCoincidence != 0);// && (abs(positionAtDetector.x - _DetectorPos.x) < _DetectorWidth*0.5));
+                int triggersSensor = (int)(validPosAtGrating && scatterAligned && _ShowCoincidence != 0);// && (abs(positionAtDetector.x - _DetectorPos.x) < _DetectorWidth*0.5));
+                bool hitsSensor = (triggersSensor > 0) || (abs(positionAtDetector.x - _DetectorPos.x) < _DetectorWidth*0.5);
+
 
                 // Finally, work out if particle A has reached the screen and if so, where. If not, use position at detector to work out where it would be based on its current direction.
 
@@ -330,16 +332,17 @@ Shader "Murpheus/Ballistic/Ghost Imaging 3D"
                 float trackPastBBO = max(0.0, trackDistance - sourceToBBO);
                 float trackPastBeamSplitB = max(trackPastBBO - bbOToBeamSplitB, 0.0);
                 float trackPastGrating = max(trackPastBeamSplitB - splitterToGrating, 0.0);
-                bool particleValidB = validPosAtGrating || (trackPastGrating <= 2.0);
+                bool particleValidB = validPosAtGrating || ((trackPastGrating <= 2.0) || (_Play<=0));
                 trackPastGrating = validPosAtGrating ? trackPastGrating : 0.0; 
+                float trackPastSensor = hitsSensor || triggersSensor ? 0.0 : trackPastGrating; 
 
 
                 bool pastBBO = trackPastBBO > 0.0;
                 bool pastBeamSplitB = trackPastBeamSplitB > 0.0;
                 bool pastScreen = trackDistance >= (length(screenParticlePos - posAtBBO)+sourceToBBO);
                 bool pastGrating = trackPastBeamSplitB > splitterToGrating;
-                bool pastDetectorPlane = trackPastGrating >= gratingToDetector;
-                bool pastBackstopPlane = trackPastGrating >= gratingToBackstop;
+                bool pastDetector = trackPastGrating >= gratingToDetector;
+                bool pastBackstopPlane = trackPastSensor >= gratingToBackstop;
 
                 float3 preBBOParticlePos = posAtSource + initialDirection*trackDistance;
                 float3 particlePosA = pastBBO ? posAtBBO + particleDirectionA*trackPastBBO : preBBOParticlePos;
@@ -348,13 +351,13 @@ Shader "Murpheus/Ballistic/Ghost Imaging 3D"
                 float3 particlePosB = pastBBO ? posAtBBO + particleDirectionB*trackPastBBO : preBBOParticlePos;
                 particlePosB = pastBeamSplitB ? (posAtBeamSplitB + trackPastBeamSplitB*reflectedDirection) : particlePosB;
                 particlePosB = pastGrating ? (posAtGrating + trackPastGrating*postGratingDirection) : particlePosB;
-                particlePosB = pastDetectorPlane && (hitsDetector > 0) ? positionAtDetector : particlePosB;
+                particlePosB = pastDetector && hitsSensor ? positionAtDetector : particlePosB;
                 particlePosB = pastBackstopPlane ? positionAtBackstop : particlePosB;
 
                 // Update particle position in model to reflect either new position or original grid position
                 float3 triCentreInModel = isParticleA ? particlePosA : particlePosB;
 
-                vertexOffset *= _MarkerScale; // * (0.5 + hitsDetector * 0.5) ;                    // Scale the quad corner offset to world, now we billboard
+                vertexOffset *= _MarkerScale; // * (0.5 + triggersSensor * 0.5) ;                    // Scale the quad corner offset to world, now we billboard
                 v.vertex.xyz =  triCentreInModel+vertexOffset;
                 // billboard the triangle
                 float4 camModelCentre = float4(triCentreInModel,1.0);
@@ -368,11 +371,11 @@ Shader "Murpheus/Ballistic/Ghost Imaging 3D"
                 float pfrac =  (((trackDistance > sourceToBBO) ? postBBOp : _LaserP) - _MinParticleP)/(_MaxParticleP-_MinParticleP);
                 float4 colSample = tex2Dlod(_ColourMap,float4(pfrac,0.5,0,0));
                 particleValidB = particleValidB && (trackDistance > sourceToBBO);
-                int valid = (int)((isParticleA || particleValidB) && (_ShowCoincidence < 2 || hitsDetector > 0)); // Use alpha channel of colour map as validity flag for particle (1=valid, 0=invalid)
+                int valid = (int)((isParticleA || particleValidB) && (_ShowCoincidence < 2 || triggersSensor > 0)); // Use alpha channel of colour map as validity flag for particle (1=valid, 0=invalid)
                 float alpha = valid > 0 ? 1 : -1;
-                hitsDetector = hitsDetector * valid;
+                triggersSensor = triggersSensor * valid;
                 if (pastBBO)
-                    o.color = float4(hitsDetector*colSample.brr + (1-hitsDetector)*0.25*colSample.rgb, alpha);
+                    o.color = float4(triggersSensor*colSample.brr + (1-triggersSensor)*0.25*colSample.rgb, alpha);
                 else
                     o.color = float4(colSample.rgb, isParticleA ? 1.5 : -1 );
 
