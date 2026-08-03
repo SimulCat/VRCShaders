@@ -1,4 +1,4 @@
-﻿Shader"SimulCat/Wave/Wave Sim CRT"
+﻿Shader"Murpheus/Wave/Wave Sim CRT"
 {
     /*
     A CRT is a cross between a regular shader and a compute shader.

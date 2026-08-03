@@ -54,6 +54,8 @@ public class ParticleScatter3D : UdonSharpBehaviour
     [Header("Simulation Dimensions")]
     [SerializeField]
     private Vector3 particleMeshSize = new Vector3(5f, 2f, 1f);
+    [SerializeField]
+    private Vector2 screenWidthHeight = new Vector2(2f, 2f);
     [Header("Grating Configuration & Scale")]
     [SerializeField]
     float slitWidthUnitScale = 10000f; // Scale factor from Unity units to experiment units (mm)
@@ -576,8 +578,9 @@ public class ParticleScatter3D : UdonSharpBehaviour
         set
         {
             particleMeshSize = value;
+            Vector3 wallLimits = new Vector3(particleMeshSize.x, Mathf.Min(screenWidthHeight.y * 0.5f, particleMeshSize.y * 0.5f), Mathf.Min(screenWidthHeight.x * 0.5f, particleMeshSize.z * 0.5f));
             if (matParticleFlow != null)
-                matParticleFlow.SetVector("_WallLimits", particleMeshSize);
+                matParticleFlow.SetVector("_WallLimits", wallLimits);
         }
     }
 

@@ -1,4 +1,4 @@
-﻿Shader"SimulCat/Wave/Barrier Image CRT"
+﻿Shader"Murpheus/Wave/Barrier Image CRT"
 {
     Properties
     {

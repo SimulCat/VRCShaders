@@ -30,7 +30,7 @@ Shader "Murpheus/Ballistic/Ghost Image"
         _DetectorWidth("Detector Width", float) = 0.02
         _DetectorOffset("Detector Offset", float) = 2
         _ScreenPos("Screen Position", Vector) = (0,0,0,0)
-        _DwellTime("Dwell Time (secs)", float) =3
+        _DwellPortion("Proportion of Cycle for Dwell", Range(0.1,1.0)) = 0.33
 
         _PulseWidth("Pulse Width",float) = 0
         _PulseWidthMax("Max Pulse Width",float) = 1.5
@@ -124,7 +124,7 @@ Shader "Murpheus/Ballistic/Ghost Image"
             float _DetectorOffset;
             float4 _ScreenPos;
             
-            float _DwellTime;
+            float _DwellPortion;
 
             float _PulseWidth;
             float _PulseWidthMax;
@@ -214,7 +214,7 @@ Shader "Murpheus/Ballistic/Ghost Image"
                 float gratingDistance = length(_BeamSplitPos - _GratingPos) + length(_SourcePos - _BeamSplitPos);
                 float screenDistance = length(_ScreenPos - _SourcePos);
                 // Timing
-                float cyclePeriod = (screenDistance/_ParticleVelocity) + _DwellTime;
+                float cyclePeriod = (screenDistance/_ParticleVelocity)*(1+_DwellPortion);
 
                 // Check pulse parameters
                 float hasPulse = (int)(_PulseWidth > 0);

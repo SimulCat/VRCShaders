@@ -30,6 +30,8 @@ Shader "Murpheus/Ballistic/Particle Scattering 3D"
         _ScreenDistance("Screen Distance", float) = 7
 
         _WallLimits("Wall Limits", Vector) = (5.0,2.0,2.0)
+        [Toggle]
+        _DecorateWalls("Decorate Walls", Integer) = 1
 
         _ParticleP("Particle Momentum", float) = 1
         _MinParticleP("Min Momentum", float) = 100
@@ -37,6 +39,7 @@ Shader "Murpheus/Ballistic/Particle Scattering 3D"
         _MaxVelocity("MaxVelocity", float) = 5
         _SpeedRange("Speed Range fraction",Range(0.0,0.5)) = 0
         _PulseWidth("Pulse Width",float) = 0
+        _DwellPortion("Cycle Dwell",Range(0.1,1.0)) = 0.33
         _PulseWidthMax("Max Pulse Width",float) = 1.5
         // Particle Decal Array
         _ArraySpacing("Array Spacing", Vector) = (0.1,0.1,0.1,0)
@@ -126,12 +129,14 @@ Shader "Murpheus/Ballistic/Particle Scattering 3D"
             float _ScreenDistance;
 
             float4 _WallLimits;
+            float _DecorateWalls;
             float _ParticleP;
             float _MinParticleP;
             float _MaxParticleP;
 
             float _MaxVelocity;
             float _PulseWidth;
+            float _DwellPortion;
             float _PulseWidthMax;
             float _SpeedRange;
 
@@ -249,7 +254,7 @@ Shader "Murpheus/Ballistic/Particle Scattering 3D"
                 
                 float normPosH = frac((startPosH-gratingLeftEdge)/slitPitch)*slitPitch;
                 // check if particle Horiz pos is valid;
-                bool validPosH = (startPosH >= gratingLeftEdge) && (startPosH <= (-gratingLeftEdge)) && (normPosH <= slitWidth);
+                bool validGratingH = (startPosH >= gratingLeftEdge) && (startPosH <= (-gratingLeftEdge)) && (normPosH <= slitWidth);
 
                 float rowCenter = lowerSlitCentre + (nRow * rowPitch);
                 float lowerEdge = lowerSlitCentre - slitHeight*0.5;
@@ -259,7 +264,7 @@ Shader "Murpheus/Ballistic/Particle Scattering 3D"
                 
                 float normPosV = frac((startPosV-lowerEdge)/rowPitch)*rowPitch;
                 // check if particle y pos is valid;
-                bool validPosV = (_RowCount < 1) || ((startPosV >= lowerEdge) && (startPosV <= (-lowerEdge)) && (normPosV <= slitHeight));
+                bool validGratingV = (_RowCount < 1) || ((startPosV >= lowerEdge) && (startPosV <= (-lowerEdge)) && (normPosV <= slitHeight));
 
                 float particleV = _MaxVelocity*(_ParticleP/_MapMaxP)/_Scale;
 
@@ -270,7 +275,7 @@ Shader "Murpheus/Ballistic/Particle Scattering 3D"
                 float pulseDuration = hasPulse * _PulseWidth;
                 float pulseMax = hasPulse * _PulseWidthMax;
                 float voffset = 1 + (_SpeedRange * invPi * asin(speedHash));
-                float cyclePeriod = (maxDiagonalDistance/particleV) + pulseMax;
+                float cyclePeriod = (_ScreenDistance/particleV)*(1+_DwellPortion) + pulseMax;
 
                 // Divide time by period to get fraction of the cycle.
                 float cycles = ((_Play * _Time.y + (1-_Play)*_PauseTime)-_BaseTime)/cyclePeriod;
@@ -280,7 +285,8 @@ Shader "Murpheus/Ballistic/Particle Scattering 3D"
                 float trackDistance = (cycleTime + timeOffset)*particleV*voffset;
                 bool beforeGrating = (trackDistance <= gratingDistance);
                 float postGratingDist = max(0.0,trackDistance-gratingDistance);
-                bool stuckGrating = ((!validPosH || !validPosV) && (!beforeGrating) && (postGratingDist < gratingDistance));
+
+                bool stuckGrating = ((!validGratingH || !validGratingV) && (!beforeGrating) && (postGratingDist < gratingDistance));
  
                 postGratingDist = stuckGrating ? 0.0 : postGratingDist;
                 float preGratingDist = min(gratingDistance,trackDistance);
@@ -295,21 +301,29 @@ Shader "Murpheus/Ballistic/Particle Scattering 3D"
                 // Sample the horizontal and vertical momentum maps to obtain the momentum Vector
                 float4 sample = scatterDirection(particleP,momentumHashH-1.0,momentumHashV-1.0);
                 // Limit the post grating distance to avoid extreme angles taking particles out of bounds
-                float wallLimitX = min(_WallLimits.x, _ScreenDistance);
-                float postGratingFwdMax = (wallLimitX > gratingDistance) ? (wallLimitX -gratingDistance) : wallLimitX;
+                float screenX = min(_WallLimits.x, _ScreenDistance);
+                float postGratingFwdMax = (screenX > gratingDistance) ? (screenX -gratingDistance) : screenX;
                 //float postGratingFwdMax = max(screenX - _GratingDistance,0);
 
                 postGratingFwdMax = postGratingFwdMax / clamp(sample.x,0.1,1.0);
-
-                float postGratingHorizMax = (_WallLimits.y - sign(sample.z)*startPosH);
+                float postGratingVertMax = (_WallLimits.y - sign(sample.y)*startPosV);
+                postGratingVertMax = postGratingVertMax/max(abs(sample.y),0.001);
+                float postGratingHorizMax = (_WallLimits.z - sign(sample.z)*startPosH);
                 postGratingHorizMax = postGratingHorizMax/max(abs(sample.z),0.001);
                 postGratingDist = min(postGratingDist, postGratingFwdMax);
+                
+                bool stuckWallV = !beforeGrating && postGratingDist > postGratingVertMax;
+                bool stuckWallH = !beforeGrating && postGratingDist > postGratingHorizMax;
                 postGratingDist = min(postGratingDist, postGratingHorizMax);
 
                 float3 particlePos = startPos + sample.xyz*postGratingDist;
-                int posIsInside = (int)(beforeGrating || ((validPosH && validPosV) || stuckGrating));
-               
-                               // Check inside bounding box
+                                            // Check inside bounding box
+                
+                bool validPos =  (beforeGrating || ((validGratingH && validGratingV) || stuckGrating));
+                validPos = validPos && (_DecorateWalls || (!stuckWallH && !stuckWallV));
+
+                int posIsInside = (int)validPos;
+                
                 posIsInside *= floor(sample.w)*int((abs(particlePos.x) < localGridCentre.x) && (abs(particlePos.y) <= localGridCentre.y) 
                                 && (abs(particlePos.z) <= localGridCentre.z));
 

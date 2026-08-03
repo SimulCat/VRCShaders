@@ -1,13 +1,13 @@
-﻿Shader"SimulCat/CRT/HuygensImage CRT"
+﻿Shader"Murpheus/CRT/HuygensImage CRT"
 {
     Properties
     {
         _PhaseMap("Phase Map", 2D ) = "black" {}
+        _BaseColor("Colour", color) = (1, 1, 1, 1)
         _MapWidth("Phase Map Width", float) = 2560.0
         _MapHeight("Phase Map Height",float) = 1440.0
         _ScreenWidth("Screen Width", float) = 2560.0
         _ScreenHeight("Screen Height",float) = 1440.0
-        _Wavelength("Wavelength (mm)", float) = 1.0
         _SlitCount("Slit Count",Integer) = 2
         _RowCount("Row Count",Integer) = 2
         _SlitPitch("Slit Pitch",float) = 448
@@ -18,15 +18,16 @@
     }
 
     CGINCLUDE
-    #define Phase(U) tex2D(_PhaseMap, float2(U))
-
     #include "UnityCustomRenderTexture.cginc"
-        Texture2D _PhaseMap;
+
+        #define PH(U) tex2D(_PhaseMap, float2(U))
+
+        sampler2D _PhaseMap;
+        float4 _BaseColor;
         float _MapWidth;
         float _MapHeight;
         float  _ScreenWidth;
         float  _ScreenHeight;
-        float  _Wavelength;
 
         int _SlitCount;
         int _RowCount;
@@ -72,23 +73,28 @@
 
     float4 frag(v2f_customrendertexture i) : SV_Target
     {
-        float2 pos = i.globalTexcoord.xy;
-        pos.x *= _ScreenWidth;
-        pos.y *= _ScreenHeight;
-        pos.x -= _ScreenWidth/2.0;
-        pos.y -= _ScreenHeight/2.0;
+        float2 screenPos = i.globalTexcoord.xy;
+        screenPos.x *= _ScreenWidth;
+        screenPos.y *= _ScreenHeight;
+        screenPos.x -= _ScreenWidth/2.0;
+        screenPos.y -= _ScreenHeight/2.0;
         float xDelta, yDelta;
-        float result = 0.0;
+        float2 summedPhase = float2(0.0,0.0);
         int n = 0;
-        uint seed = asuint(pos.x) + asuint(pos.y)*73856093u;
-        while (n++ < 100)
+        uint seed = asuint(screenPos.x) + asuint(screenPos.y)*73856093u;
+        float2 mapUV;
+        float4 Sample;
+        while (n++ < 2000)
         {
             xDelta = RandomSourcePosition(_SlitCount, _SlitPitch, _SlitWidth,  seed++);
             yDelta = RandomSourcePosition(_RowCount, _RowPitch, _SlitHeight, seed++);
-            result += LerpPixelIntensity(baseX + xDelta, baseY + yDelta);
+            mapUV.x = (screenPos.x + xDelta)/_MapWidth + 0.5;
+            mapUV.y = (screenPos.y + yDelta)/_MapHeight + 0.5;
+            Sample = PH(mapUV);
+            summedPhase += float2(cos(Sample.x),sin(Sample.x))*Sample.y;
         }
-
-        return float4(result,result,0,1);
+        float value = dot(summedPhase, summedPhase)*0.00005;
+        return float4(_BaseColor.rgb * value, 1);
     }
 
 

@@ -1,4 +1,4 @@
-Shader "SimulCat/Ballistic/Prob Density Display"
+Shader "Murpheus/Ballistic/Prob Density Display"
 {
     Properties
     {

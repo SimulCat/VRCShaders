@@ -1,4 +1,4 @@
-﻿Shader"SimulCat/Wave/CRT Scroll With Display"
+﻿Shader"Murpheus/Wave/CRT Scroll With Display"
 {
     /*
     A CRT is a cross between a regular shader and a compute shader.

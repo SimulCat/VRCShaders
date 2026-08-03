@@ -1,15 +1,16 @@
-﻿Shader"SimulCat/CRT/PhasePlane CRT"
+﻿Shader"Murpheus/CRT/PhasePlane CRT"
 {
     Properties
     {
-        _PlaneWidth("Screen Width mm", float) = 2560.0
-        _PlaneHeight("Screen Height mm",float) = 1440.0
-        _Wavelength("Wavelength (mm)", float) = 1.0
-        _Distance("Distance (mm)", float) = 5000.0
+        _PlaneWidth("Screen Width", float) = 2560.0
+        _PlaneHeight("Screen Height",float) = 1440.0
+        _Wavelength("Wavelength", float) = 1.0
+        _Distance("Distance", float) = 5000.0
     }
 
 CGINCLUDE
-
+    #define twoPI 6.28318531f
+    #define PI 3.14159265f  
     #include "UnityCustomRenderTexture.cginc"
 
         float  _PlaneWidth;
@@ -23,17 +24,16 @@ float4 frag(v2f_customrendertexture i) : SV_Target
     float2 pos = i.globalTexcoord.xy;
     pos.x *= _PlaneWidth;
     pos.y *= _PlaneHeight;
-    pos.x -= _PlaneWidth/2.0;
-    pos.y -= _PlaneHeight/2.0;
-    float r = length(pos);
-    float delta = r*sin(atan2(r,_Distance));
-    float phase = delta/_Wavelength;
-    float normAmplitude = _Distance/(_Distance+delta);
-
-    return float4(delta,normAmplitude,phase,frac(phase));
+    pos.x -= _PlaneWidth * 0.5;
+    pos.y -= _PlaneHeight * 0.5;
+    float distSquared = _Distance * _Distance;
+    float posSquared = dot(pos, pos);
+    float r = sqrt(distSquared + posSquared);
+    float normAmplitude = _Distance/r; // Normalised amplitude for spherical wavefront 1 = amplitude at centre
+    float delta = posSquared/(r + _Distance);
+    float phaseDelta = (twoPI*delta)/_Wavelength;
+    return float4(phaseDelta,normAmplitude,delta,1.0);
 }
-
-
 
 ENDCG
 

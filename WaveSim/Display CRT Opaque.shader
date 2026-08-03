@@ -1,4 +1,4 @@
-Shader"SimulCat/Wave/Display Phase from CRT Opaque"
+Shader"Murpheus/Wave/Display Phase from CRT Opaque"
 {
     Properties
     {

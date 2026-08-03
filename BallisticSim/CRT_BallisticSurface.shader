@@ -1,4 +1,4 @@
-Shader "SimulCat/Ballistic/Prob Surface Display"
+Shader "Murpheus/Ballistic/Prob Surface Display"
 {
     Properties
     {

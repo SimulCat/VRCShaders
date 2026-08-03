@@ -49,9 +49,9 @@ public class QuadMesh : UdonSharpBehaviour
             return false;
 
         arrayRadius = meshDimensions * 0.5f;
-        pointsAcross.x = Mathf.Min(pointsAcross.x, 1);
-        pointsAcross.y = Mathf.Min(pointsAcross.y, 1);
-        pointsAcross.z = Mathf.Min(pointsAcross.z, 1);
+        pointsAcross.x = Mathf.Max(pointsAcross.x, 1);
+        pointsAcross.y = Mathf.Max(pointsAcross.y, 1);
+        pointsAcross.z = Mathf.Max(pointsAcross.z, 1);
 
         Vector3Int numGridPoints = pointsAcross;
 
@@ -101,9 +101,9 @@ public class QuadMesh : UdonSharpBehaviour
         Vector2 uv3 = Vector2.one;
         numDecals = (isRectangular && makeEvenCount) ? (halfGridX*2 * numGridPoints.y * numGridPoints.z) : numGridPoints.x * numGridPoints.y * numGridPoints.z;
         triangles = new int[numDecals * (useTriangles ? 3 : 6)];
-        numVertices = numDecals * (useTriangles ? 3 : 4);
-        vertices = new Vector3[numVertices];
-        uvs = new Vector2[numVertices];
+        int requiredVertices = numDecals * (useTriangles ? 3 : 4);
+        vertices = new Vector3[requiredVertices];
+        uvs = new Vector2[requiredVertices];
         //Debug.Log($"Calculated {numDecals} decals, allocating {vertices.Length} vertices and {triangles.Length} triangle indices.");
         bool positionInRange = true;
         for (int nPlane = 0; nPlane < numGridPoints.z; nPlane++)
