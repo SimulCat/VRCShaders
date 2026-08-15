@@ -10,7 +10,7 @@ public class BallisticScatter : UdonSharpBehaviour
     [SerializeField,Tooltip("CRT to generate probability density")]
     CustomRenderTexture probabilityCRT;
     [SerializeField,Tooltip("Simulation Panel Dimensions")]
-    Vector2 simSize = new Vector2(2.56f, 1.6f);
+    Vector3 simSize = new Vector3(2.56f, 0.1f, 1.6f);
     [SerializeField,UdonSynced,FieldChangeCallback(nameof(ShowProbability))] 
     public bool showProbability = true;
     [SerializeField, FieldChangeCallback(nameof(ProbVisPercent))]
@@ -228,7 +228,8 @@ public class BallisticScatter : UdonSharpBehaviour
         mat.SetFloat("_SlitWidth", slitWidth * simPixelScale);
         mat.SetFloat("_SlitPitch", slitPitch * simPixelScale);
         mat.SetFloat("_Scale", simScale);
-        mat.SetFloat("_GratingOffset", gratingOffset);
+        mat.SetFloat("_GratingDistance", gratingOffset);
+
     }
     private void setParticleParams(Material mat)
     {
@@ -236,7 +237,9 @@ public class BallisticScatter : UdonSharpBehaviour
         mat.SetFloat("_SlitWidth", slitWidth);
         mat.SetFloat("_SlitPitch", slitPitch);
         mat.SetFloat("_Scale", simScale);
-        mat.SetFloat("_GratingOffset", gratingOffset);
+        mat.SetFloat("_GratingDistance", gratingOffset);
+        Vector4 wallLimits = new Vector4(simSize.x, simSize.y / 2f, simSize.z / 2f, 0f);
+        mat.SetVector("_WallLimits", wallLimits);
         mat.SetFloat("_SpeedRange", speedRange / 100f);
         mat.SetFloat("_ParticleP", particleP);
         mat.SetFloat("_MaxParticleP", maxParticleP);
@@ -305,6 +308,21 @@ public class BallisticScatter : UdonSharpBehaviour
         }
     }
     */
+
+    private float ScreenDistance
+    {
+        get => simSize.x;
+        set
+        {
+            simSize.x = value;
+            simPixelScale = simPixels.x / simSize.x;
+            if (iHaveProbSimMat)
+                matProbabilitySim.SetFloat("_ScreenDistance", simSize.x * simPixelScale);
+            if (matParticleFlow != null)
+                matParticleFlow.SetFloat("_ScreenDistance", simSize.x);
+        }
+    }
+
     
     private float GratingOffset
     {
@@ -314,9 +332,9 @@ public class BallisticScatter : UdonSharpBehaviour
             gratingOffset = value;
             //Debug.Log("GratingOffset=" + value.ToString());
             if (iHaveProbSimMat)
-                matProbabilitySim.SetFloat("_GratingOffset", gratingOffset*simPixelScale);
+                matProbabilitySim.SetFloat("_GratingDistance", gratingOffset*simPixelScale);
             if (matParticleFlow != null)
-                matParticleFlow.SetFloat("_GratingOffset", gratingOffset);
+                matParticleFlow.SetFloat("_GratingDistance", gratingOffset);
         }
     }
     
@@ -638,7 +656,7 @@ public class BallisticScatter : UdonSharpBehaviour
 
     public bool CreateTextures()
     {
-        simPixelScale = simPixels.y / simSize.y;
+        simPixelScale = simPixels.x / simSize.x;
 
         GenerateSamples();
 
@@ -811,7 +829,7 @@ public class BallisticScatter : UdonSharpBehaviour
         //Debug.Log("BScatter Start");
         ReviewOwnerShip();
         iHaveProbability = probabilityCRT != null;
-        simPixelScale = simPixels.y / simSize.y;
+        simPixelScale = simPixels.x / simSize.x;
         if (iHaveProbability)
             matProbabilitySim = probabilityCRT.material;
         iHaveProbSimMat = hasMaterialWithProperty(matProbabilitySim, texName);
@@ -839,6 +857,7 @@ public class BallisticScatter : UdonSharpBehaviour
             probVizSlider.SetValue(probVisPercent);
         reviewPulse();
         GratingOffset = gratingOffset;
+        ScreenDistance = simSize.x;
         ParticleP = particleP;
         crtUpdateRequired = true;
         //Debug.Log("BScatter Started");
