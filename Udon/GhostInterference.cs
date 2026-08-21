@@ -89,7 +89,7 @@ public class GhostInterference : UdonSharpBehaviour
 
     [Header("Particle Display Controls")]
 
-    [SerializeField,Tooltip("Particle Speed"),Range(0.01f, 1.5f), FieldChangeCallback(nameof(ParticleSpeed))]
+    [SerializeField,Tooltip("Particle Speed"),Range(0.001f, 1.0f), FieldChangeCallback(nameof(ParticleSpeed))]
     private float particleSpeed = 1f;
 
     public float ParticleSpeed
@@ -237,7 +237,7 @@ public class GhostInterference : UdonSharpBehaviour
             particleSpeedSlider.SliderUnit = "m/sec";
             particleSpeedSlider.DisplayInteger = false;
             particleSpeedSlider.DisplayScale = 1; // Display in m/s, but actual value is in m/s
-            particleSpeedSlider.SetLimits(0.01f, 1.5f);
+            particleSpeedSlider.SetLimits(0.01f, 1.0f);
             particleSpeedSlider.SetValue(particleSpeed);
         }
         ParticleSpeed = particleSpeed;
