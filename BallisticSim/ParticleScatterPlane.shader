@@ -25,7 +25,7 @@ Shader "Murpheus/Ballistic/Particle Scattering Plane"
         _ArraySpacing("Array Spacing", Vector) = (0.1,0.1,0.1,0)
         // x,y,z count of array w= total.
         _ArrayDimension("Array Dimension", Vector) = (128,80,1,10240)
-        _MarkerScale ("Marker Scale", Range(0.01,10)) = 1
+        _MarkerScale ("Marker Scale", Range(0.1,50)) = 1.0
         _Scale("Scale Demo",Float) = 1
         // Play Control
         _BaseTime("Base Time Offset", Float)= 0
