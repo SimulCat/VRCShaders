@@ -34,9 +34,11 @@ public class BallisticScatter : UdonSharpBehaviour
     [SerializeField, UdonSynced,FieldChangeCallback(nameof(GratingOffset))] 
     public float gratingOffset = 0;
     [SerializeField,Range(1,17),FieldChangeCallback(nameof(SlitCount))]
-    public int slitCount = 2;          // _SlitCount("Num Sources", float)
+    private int slitCount = 2;          // _SlitCount("Num Sources", float)
     [SerializeField, FieldChangeCallback(nameof(SlitPitch))]
     public float slitPitch = 45f;        // "Slit Pitch" millimetre
+    [SerializeField]
+    private float slitPitchMin = 1f;
     [SerializeField,FieldChangeCallback(nameof(SlitWidth))]
     public float slitWidth = 12f;        // "Slit Width" millimetres
 // Pulsed particles and speed range
@@ -54,8 +56,7 @@ public class BallisticScatter : UdonSharpBehaviour
     [SerializeField, Range(1, 10), FieldChangeCallback(nameof(SimScale))]
     public float simScale;
     [SerializeField, Tooltip("Exaggerate/Suppress Beam Particle Size"), Range(0.1f, 5f), FieldChangeCallback(nameof(ParticleSize))] float particleSize = 1;
-    public UdonSlider particleSizeSlider;
-
+    [SerializeField] private float maxParticleSize = 1;
     [SerializeField,FieldChangeCallback(nameof(DisplayColour))]
     public Color displayColour = Color.cyan;
     [SerializeField,FieldChangeCallback(nameof(MaxParticleP))]
@@ -103,11 +104,15 @@ public class BallisticScatter : UdonSharpBehaviour
     [SerializeField] UdonToggleGroup togPlayPauseStop;
     [SerializeField] SyncedToggle togProbability;
     [SerializeField] SyncedToggle togPulseParticles;
+    [SerializeField] UdonSlider particleSizeSlider;
     [SerializeField] UdonSlider probVizSlider;
     [SerializeField] UdonSlider pulseWidthSlider;
     [SerializeField] UdonSlider speedRangeSlider;
     [SerializeField] UdonSlider particlePslider;
-    [SerializeField] UdonSlider partcleSizeSlider;
+    // Slit Configuration
+    [SerializeField] SyncedIncDec slitCountIncDec;
+    [SerializeField] UdonSlider slitWidthSlider;
+    [SerializeField] UdonSlider slitPitchSlider;
 
     [Header("For tracking in Editor")]
     //[SerializeField, Tooltip("Shown for editor reference, loaded at Start")]
@@ -146,6 +151,8 @@ public class BallisticScatter : UdonSharpBehaviour
     {
         if (matParticleFlow == null)
             return;
+        if (pulseWidthSlider != null)
+            pulseWidthSlider.Interactable = pulseParticles;
         float width = pulseParticles ? pulseWidth : -1f;
         matParticleFlow.SetFloat("_PulseWidth", width);
     }
@@ -755,6 +762,12 @@ public class BallisticScatter : UdonSharpBehaviour
             matParticleFlow = particleMeshRend.material;
         if (iHaveProbability)
             matProbabilitySim = probabilityCRT.material;
+        if (slitCountIncDec != null)
+        {
+            slitCountIncDec.SetLimits(1, 17);
+            slitCountIncDec.SetValueWithoutNotification(slitCount);
+            slitCountIncDec.clientVariableName = "slitCount";
+        }
         if (togProbability != null)
         {
             togProbability.IsBoolean = true;
@@ -767,10 +780,17 @@ public class BallisticScatter : UdonSharpBehaviour
             togPulseParticles.ClientVariableName = "pulseParticles";
             togPulseParticles.setState(pulseParticles);
         }
-        if (partcleSizeSlider != null)
+        if (particlePslider != null)
         {
-            partcleSizeSlider.SetLimits(0.1f, 5f);
-            partcleSizeSlider.SetValue(particleSize);
+            particlePslider.SetLimits(minParticleP, maxParticleP);
+            particlePslider.SetValue(particleP);
+        }
+        if (particleSizeSlider != null)
+        {
+            particleSize = Mathf.Clamp(particleSize, 0.1f, maxParticleSize);
+            particleSizeSlider.SetLimits(0.1f, maxParticleSize);
+            particleSizeSlider.SetValue(particleSize);
+            particleSizeSlider.ClientVariableName = "particleSize";
         }
         if (speedRangeSlider != null)
         {
@@ -780,7 +800,28 @@ public class BallisticScatter : UdonSharpBehaviour
         if (pulseWidthSlider != null)
         {
             pulseWidthSlider.SetLimits(0.1f, 1.5f);
+            pulseWidthSlider.ClientVariableName = "pulseWidth";
             pulseWidthSlider.SetValue(pulseWidth);
+            pulseWidthSlider.Interactable = pulseParticles;
+        }
+        if (probVizSlider != null)
+        {
+            probVizSlider.SetLimits(1.5f, 60);
+            probVizSlider.ClientVariableName = "probVisPercent";
+            probVizSlider.SetValue(probVisPercent);
+            probVizSlider.Interactable = showProbability;
+        }
+        if (slitWidthSlider != null)
+        {
+            slitWidthSlider.SetLimits(slitPitchMin* 0.2f, slitPitchMin*0.9f);
+            slitWidthSlider.ClientVariableName = "slitWidth";
+            slitWidthSlider.SetValue(slitWidth);
+        }
+        if (slitPitchSlider != null)
+        {
+            slitPitchSlider.SetLimits(slitPitchMin,slitPitchMin*5f);
+            slitPitchSlider.ClientVariableName = "slitPitch";
+            slitPitchSlider.SetValue(slitPitch);
         }
     }
     void Start()

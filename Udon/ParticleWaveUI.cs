@@ -29,7 +29,7 @@ public class ParticleWaveUI : UdonSharpBehaviour
     [Header("Grating Properties")]
     [SerializeField,Tooltip("Scales control settings in mm to lengths in metres")]
     private float mmToMetres = 0.001f;
-    [SerializeField, UdonSynced, FieldChangeCallback(nameof(SlitCount))]
+    [SerializeField, FieldChangeCallback(nameof(SlitCount))]
     private int slitCount;
     [SerializeField, FieldChangeCallback(nameof(SlitWidth))]
     private float slitWidth;
@@ -62,7 +62,8 @@ public class ParticleWaveUI : UdonSharpBehaviour
     float waveSpeed = 10;
     [SerializeField]
     TextMeshProUGUI lblLambda;
-    [SerializeField]
+    [SerializeField,Tooltip("Slits Up/Down Control")]
+    SyncedIncDec slitCountControl;
     TextMeshProUGUI lblSlitCount;
     [Header("Particle Properties")]
 
@@ -193,19 +194,6 @@ public class ParticleWaveUI : UdonSharpBehaviour
         ReviewOwnerShip();
     }
 
-    public void incSlits()
-    {
-        if (!iamOwner)
-            Networking.SetOwner(player, gameObject);
-        SlitCount = slitCount + 1;
-    }
-    public void decSlits()
-    {
-        if (!iamOwner)
-            Networking.SetOwner(player, gameObject);
-        SlitCount = slitCount - 1;
-    }
-
     private void initSimulations()
     {
         minMaxMomentum = new Vector2(1 / (maxLambda * mmToMetres), 1 / (minLambda * mmToMetres));
@@ -233,24 +221,14 @@ public int SlitCount
         get => slitCount;
         set
         {
-            if (value < 1)
-                value = 1;
-            else if (value > MAX_SLITS)
-                value = MAX_SLITS;
-            if (value != slitCount)
-            {
-                slitCount = value;
-                crtUpdateRequired = true;
-            }
-            if (lblSlitCount != null)
-                lblSlitCount.text = value.ToString();
+            slitCount = Mathf.Clamp(value, 1, MAX_SLITS);
+            crtUpdateRequired = true;
             if (vectorDrawing != null)
                 vectorDrawing.SetProgramVariable<int>("slitCount", slitCount);
             if (iHaveParticleSim)
                 particleSim.SetProgramVariable<int>("slitCount", slitCount);
             if (iHaveWaveCRT)
                 matWaveCRT.SetInteger("_SlitCount", slitCount);
-            RequestSerialization();
         }
     }
 
@@ -361,13 +339,27 @@ public int SlitCount
         started = true;
     }
 
+    void OnEnable()
+    {
+        started = false;
+        timeCount = 1;
+        iHavePitchSlider = pitchSlider != null;
+        iHaveWidthSlider = widthSlider != null;
+        iHaveMomentumSlider = momentumSlider != null;
+        iHaveParticleSim = particleSim != null;
+        iHaveWaveDemo = waveDemo != null;
+        iHaveWaveCRT = waveCRT != null;
+        if (slitCountControl != null)
+        {
+            slitCountControl.SetLimits(1, MAX_SLITS);
+            slitCountControl.SetValueWithoutNotification(slitCount);
+            slitCountControl.clientVariableName = "slitCount";
+        }
+    }
     void Start()
     {
         minMaxMomentum = new Vector2(1 / (maxLambda * mmToMetres), 1 / (minLambda * mmToMetres));
         particleP = 1 / (lambda * mmToMetres);
-        iHaveParticleSim = particleSim != null;
-        iHaveWaveDemo = waveDemo != null;
-        iHaveWaveCRT = waveCRT != null;
         if (iHaveWaveCRT)
         {
             matWaveCRT = waveCRT.material;
@@ -378,9 +370,6 @@ public int SlitCount
         player = Networking.LocalPlayer;
         ReviewOwnerShip();
 
-        iHavePitchSlider = pitchSlider != null;
-        iHaveWidthSlider = widthSlider != null;
-        iHaveMomentumSlider = momentumSlider != null; 
         
         iHaveScaleSlider = scaleSlider != null;
         initSimulations();
