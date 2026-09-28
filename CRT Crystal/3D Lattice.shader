@@ -95,11 +95,7 @@ Shader "SimulCat/Crystal/3D Lattice"
                 uint quadID = v.id/3;
                 uint cornerID = v.id%3;
                 float3 centerOffset;
-                /*
-                      vxOffset0 = new Vector2(0.5f, -0.288675135f);
-                      vxOffset1 = new Vector2(-0.5f, -0.288675135f);
-                        vxOffset2 = new Vector2(0, 0.57735027f);
-                */
+
                 switch(cornerID)
                 {
                     case 2:
@@ -114,25 +110,7 @@ Shader "SimulCat/Crystal/3D Lattice"
                 }
 
                 float3 vertexOffset = centerOffset*_ArraySpacing;
-/* Quad
-                float3 halfSpacing = (_ArraySpacing.xyz)*0.5;
-                switch(cornerID)
-                {
-                    case 3:
-                        centerOffset = float3(-1,1,0); 
-                        break;
-                    case 2:
-                        centerOffset = float3(1,1,0); 
-                        break;
-                    case 1:
-                        centerOffset = float3(-1,-1,0);
-                        break;
-                    default:
-                        centerOffset = float3(1,-1,0);
-                        break;
-                }
-                float3 vertexOffset = centerOffset*halfSpacing;
-                */
+
                 float3 decalCenterInMesh = v.vertex - vertexOffset;
                 
                 int3 indices = int3(round(decalCenterInMesh/_ArraySpacing));

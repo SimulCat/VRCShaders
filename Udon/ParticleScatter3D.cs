@@ -1054,7 +1054,7 @@ public class ParticleScatter3D : UdonSharpBehaviour
         if (togPulseParticles != null)
         {
             togPulseParticles.IsBoolean = true;
-            togPulseParticles.setState(pulseParticles);
+            togPulseParticles.SetState(pulseParticles);
             togPulseParticles.ClientVariableName = nameof(pulseParticles);
         }
         if (particleSizeSlider != null)

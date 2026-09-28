@@ -9,6 +9,8 @@ public class BallisticScatter : UdonSharpBehaviour
     [Header("Simulation Components")]
     [SerializeField,Tooltip("CRT to generate probability density")]
     CustomRenderTexture probabilityCRT;
+    [SerializeField, Tooltip("Diagram Frame to show grating and screen")]
+    ParticleFrame2D diagramFrame;
     [SerializeField,Tooltip("Simulation Panel Dimensions")]
     Vector3 simSize = new Vector3(2.56f, 0.1f, 1.6f);
     [SerializeField,FieldChangeCallback(nameof(ShowProbability))] 
@@ -175,10 +177,8 @@ public class BallisticScatter : UdonSharpBehaviour
         get => pulseParticles;
         set
         {
-            bool chg = pulseParticles != value;
             pulseParticles = value;
-            if (chg) 
-                reviewPulse();
+            reviewPulse();
         }
     }
 
@@ -227,12 +227,15 @@ public class BallisticScatter : UdonSharpBehaviour
 
     private void setGratingParams(Material mat)
     {
+        if (diagramFrame != null)
+            diagramFrame.SetGratingParams(simSize, slitCount, slitWidth, slitPitch, gratingOffset);
+        if (mat == null)
+            return;
         mat.SetInteger("_SlitCount", slitCount);
         mat.SetFloat("_SlitWidth", slitWidth * simPixelScale);
         mat.SetFloat("_SlitPitch", slitPitch * simPixelScale);
         mat.SetFloat("_Scale", simScale);
         mat.SetFloat("_GratingDistance", gratingOffset);
-
     }
     private void setParticleParams(Material mat)
     {
@@ -388,6 +391,8 @@ public class BallisticScatter : UdonSharpBehaviour
                 matProbabilitySim.SetInteger("_SlitCount", slitCount);
             if (matParticleFlow)
                 matParticleFlow.SetInteger("_SlitCount", slitCount);
+            if (diagramFrame != null)
+                diagramFrame.SlitCount = slitCount;
             UpdatebeamWidth();
         }
     }
@@ -406,6 +411,8 @@ public class BallisticScatter : UdonSharpBehaviour
                 matProbabilitySim.SetFloat("_SlitWidth", slitWidth * simPixelScale);
             if (matParticleFlow)
                 matParticleFlow.SetFloat("_SlitWidth", slitWidth);
+            if (diagramFrame != null)
+                diagramFrame.SlitWidth = slitWidth;
             UpdatebeamWidth();
         }
     }
@@ -449,6 +456,8 @@ public class BallisticScatter : UdonSharpBehaviour
                 matProbabilitySim.SetFloat("_SlitPitch", slitPitch * simPixelScale);
             if (matParticleFlow != null)
                 matParticleFlow.SetFloat("_SlitPitch", slitPitch);
+            if (diagramFrame != null)
+                diagramFrame.SlitPitch = slitPitch;
             UpdatebeamWidth();
         }
     }
@@ -772,13 +781,13 @@ public class BallisticScatter : UdonSharpBehaviour
         {
             togProbability.IsBoolean = true;
             togProbability.ClientVariableName = "showProbability";
-            togProbability.setState(showProbability);
+            togProbability.SetState(showProbability);
         }
         if (togPulseParticles != null)
         {
             togPulseParticles.IsBoolean = true;
             togPulseParticles.ClientVariableName = "pulseParticles";
-            togPulseParticles.setState(pulseParticles);
+            togPulseParticles.SetState(pulseParticles);
         }
         if (particlePslider != null)
         {

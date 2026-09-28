@@ -387,7 +387,7 @@ public class ProbabilityScreen : UdonSharpBehaviour
         if (togProbability != null)
         {
             togProbability.IsBoolean = true;
-            togProbability.setState(showProbability);
+            togProbability.SetState(showProbability);
             togProbability.ClientVariableName = nameof(showProbability);
         }
         if (_targetScreen == null)

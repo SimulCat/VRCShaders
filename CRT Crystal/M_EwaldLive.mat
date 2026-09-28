@@ -14,7 +14,7 @@ Material:
   m_ValidKeywords: []
   m_InvalidKeywords:
   - _ISRECIPROCAL_ON
-  - _ORIGINATCORNER_ON
+  - _LIMITTOBASE_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -69,7 +69,8 @@ Material:
     - _HighlightEwald: 0
     - _IsReciprocal: 1
     - _LatticeType: 0
-    - _OriginAtCorner: 1
+    - _LimitToBase: 1
+    - _OriginAtCorner: 0
     m_Floats:
     - _BumpScale: 1
     - _CellFormat: 1
@@ -112,6 +113,7 @@ Material:
     - _CellSize: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _ColorFlow: {r: 1, g: 0.29999998, b: 0, a: 0}
+    - _ColorN: {r: 1, g: 0.7, b: 0, a: 1}
     - _ColorNeg: {r: 0, g: 0.29999998, b: 1, a: 0}
     - _ColorVel: {r: 0, g: 0.29999998, b: 1, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}

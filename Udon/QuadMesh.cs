@@ -8,7 +8,7 @@ public class QuadMesh : UdonSharpBehaviour
 {
     [Tooltip("Width/Height/Depth in model space")] public Vector3 meshDimensions = Vector3.one;
     [SerializeField, Tooltip("Uncheck for circular/sphere point distribution")] 
-    public bool isRectangular = false;
+    private bool isRectangular = false;
     [Tooltip("#  across")] 
     public Vector3Int pointsAcross = new Vector3Int(16,16,16);
     [Tooltip("Make even particle count by ensuring an even number of X points")] 
@@ -29,7 +29,7 @@ public class QuadMesh : UdonSharpBehaviour
     Vector3 arraySpacing;
     [SerializeField]
     Vector3 arrayRadius;
-    //[SerializeField]
+    [SerializeField]
     Vector3 arrayOrigin;
     // Only Uncomment for verification in editor 
     //[SerializeField]
@@ -54,7 +54,7 @@ public class QuadMesh : UdonSharpBehaviour
         pointsAcross.z = Mathf.Max(pointsAcross.z, 1);
 
         Vector3Int numGridPoints = pointsAcross;
-
+        // Enforce odd number of points. particularly for spherical distributions to ensure a center point exists
         numGridPoints.x = numGridPoints.x % 2 == 1 ? numGridPoints.x : numGridPoints.x + 1;
         numGridPoints.y = numGridPoints.y % 2 == 1 ? numGridPoints.y : numGridPoints.y + 1;
         numGridPoints.z = numGridPoints.z % 2 == 1 ? numGridPoints.z : numGridPoints.z + 1;
@@ -67,11 +67,8 @@ public class QuadMesh : UdonSharpBehaviour
         //          $"Half Grid X: {halfGridX}\n" +
         //          $"Array Spacing: {arraySpacing}\n" +
         //          $"Array Radius: {arrayRadius}");
-        radiusSq = arrayRadius.x + (arraySpacing.x * 0.1f);
-        radiusSq *=radiusSq;
-        arrayOrigin = Vector3.zero;
-        if (isRectangular)
-            arrayOrigin = Vector3.Scale(-arrayRadius, new Vector3(numGridPoints.x <= 1 ? 0 : 1, numGridPoints.y <= 1 ? 0 : 1, numGridPoints.z <= 1 ? 0 : 1));
+        radiusSq = arrayRadius.x * arrayRadius.x + arraySpacing.x * 0.25f;
+        arrayOrigin = Vector3.Scale(-arrayRadius, new Vector3(numGridPoints.x <= 1 ? 0 : 1, numGridPoints.y <= 1 ? 0 : 1, numGridPoints.z <= 1 ? 0 : 1));
         
         Vector3 decalPos = arrayOrigin;
 
@@ -175,13 +172,17 @@ public class QuadMesh : UdonSharpBehaviour
         uvs = null;
         if (material != null)
         {
-            material.SetVector("_ArraySpacing", arraySpacing);
-            if (material.HasProperty("_ArrayDimension"))
+            if (mr.material == null || mr.material != material)
+                mr.material = material;
+        }
+        if (mr.material != null)
+        {
+            mr.material.SetVector("_ArraySpacing", arraySpacing);
+            if (mr.material.HasProperty("_ArrayDimension"))
             {
                 Vector4 pointVec = new Vector4(numGridPoints.x, numGridPoints.y, numGridPoints.z, numGridPoints.x * numGridPoints.y * numGridPoints.z);
-                material.SetVector("_ArrayDimension", pointVec);
+                mr.material.SetVector("_ArrayDimension", pointVec);
             }
-            mr.material = material;
         }
         return true;
     }
