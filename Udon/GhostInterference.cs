@@ -341,7 +341,7 @@ public class GhostInterference : UdonSharpBehaviour
             case 1: // PlayState.Playing:
                 if (!shaderPlaying)
                 {
-                    shaderBaseTime += Time.timeSinceLevelLoad - shaderPauseTime;
+                    shaderBaseTime += (Networking.GetServerTimeInMilliseconds()*0.001f) - shaderPauseTime;
                     matGhostParticles.SetFloat("_BaseTime", shaderBaseTime);
                     matGhostParticles.SetInteger("_Play", 1);
                     shaderPlaying = true;
@@ -351,7 +351,7 @@ public class GhostInterference : UdonSharpBehaviour
             case 0: // PlayState.Paused:
                 if (shaderPlaying)
                 {
-                    shaderPauseTime = Time.timeSinceLevelLoad;
+                    shaderPauseTime = (Networking.GetServerTimeInMilliseconds()*0.001f);
                     matGhostParticles.SetFloat("_PauseTime", shaderPauseTime);
                     shaderPlaying = false;
                     //Debug.Log("Pause");
@@ -361,7 +361,7 @@ public class GhostInterference : UdonSharpBehaviour
             case 2: // PlayState Stopped at Limit:
                 if (shaderPlaying)
                 {
-                    shaderPauseTime = Time.timeSinceLevelLoad;
+                    shaderPauseTime = (Networking.GetServerTimeInMilliseconds()*0.001f);
                     matGhostParticles.SetFloat("_PauseTime", shaderPauseTime);
                     shaderPlaying = false;
                     //Debug.Log("Stop");

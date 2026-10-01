@@ -152,10 +152,32 @@ public class ParticleScatter3D : UdonSharpBehaviour
     [SerializeField]
     Material matProbCRT;
 
-    //[SerializeField]
+    [SerializeField,UdonSynced,FieldChangeCallback(nameof(ShaderPauseTime))]
     private float shaderPauseTime = 0;
-    //[SerializeField]
+    private float ShaderPauseTime
+    {
+        get => shaderPauseTime;
+        set
+        {
+            shaderPauseTime = value;
+            if (matParticleFlow != null)
+                matParticleFlow.SetFloat("_PauseTime", shaderPauseTime);
+            RequestSerialization();
+        }
+    }
+    [SerializeField,UdonSynced,FieldChangeCallback(nameof(ShaderBaseTime))]
     private float shaderBaseTime = 0;
+    private float ShaderBaseTime
+    {
+        get => shaderBaseTime;
+        set
+        {
+            shaderBaseTime = value;
+            if (matParticleFlow != null)
+                matParticleFlow.SetFloat("_BaseTime", shaderBaseTime);
+            RequestSerialization();
+        }
+    }
     //[SerializeField]
     private bool shaderPlaying = true;
     private bool iamOwner = false;
@@ -509,7 +531,7 @@ public class ParticleScatter3D : UdonSharpBehaviour
             case 1: // PlayState.Playing:
                 if (!shaderPlaying)
                 {
-                    shaderBaseTime += Time.timeSinceLevelLoad - shaderPauseTime;
+                    shaderBaseTime += Networking.GetServerTimeInMilliseconds()*0.001f - shaderPauseTime;
                     matParticleFlow.SetFloat("_BaseTime", shaderBaseTime);
                     matParticleFlow.SetInteger("_Play", 1);
                     shaderPlaying = true;
@@ -519,7 +541,7 @@ public class ParticleScatter3D : UdonSharpBehaviour
             case 0: // PlayState.Paused:
                 if (shaderPlaying)
                 {
-                    shaderPauseTime = Time.timeSinceLevelLoad;
+                    shaderPauseTime = Networking.GetServerTimeInMilliseconds()*0.001f;
                     matParticleFlow.SetFloat("_PauseTime", shaderPauseTime);
                     matParticleFlow.SetInteger("_Play", 0);
                     shaderPlaying = false;
