@@ -109,7 +109,6 @@ Shader "Murpheus/Ballistic/Particle Scattering Plane"
             float _BaseTime;
             float _PauseTime;
             int _Play;
-            float _VRChatTimeNetworkMs;
 
             float3 scatterDirection(float incidentP,float rnd01)
             {
@@ -201,7 +200,7 @@ Shader "Murpheus/Ballistic/Particle Scattering Plane"
                 float cyclePeriod = (maxDiagonalDistance/particleV) + pulseMax;
 
                 // Divide time by period to get fraction of the cycle.
-                float cycles = ((_Play * (_VRChatTimeNetworkMs * 0.001) + (1-_Play)*_PauseTime)-_BaseTime)/cyclePeriod;
+                float cycles = ((_Play * _Time.y + (1-_Play)*_PauseTime)-_BaseTime)/cyclePeriod;
                 float cycleTime = frac(cycles + continuous*hsh01)*cyclePeriod - pulseMax;
                 float timeOffset =  pulseDuration * invPi * asin(hshPlusMinus);
                 float trackDistance = (cycleTime + timeOffset)*particleV*voffset;

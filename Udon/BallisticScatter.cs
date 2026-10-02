@@ -126,37 +126,40 @@ public class BallisticScatter : UdonSharpBehaviour
     bool iHaveProbability = false;
     //[SerializeField]
     bool iHaveProbSimMat = false;
-    [SerializeField, UdonSynced, FieldChangeCallback(nameof(ShaderPauseTime))]
-    private float shaderPauseTime = 0;
-    private float ShaderPauseTime
+    [SerializeField, UdonSynced, FieldChangeCallback(nameof(ShaderPauseTimeNet))]
+    private float shaderPauseTimeNet = 0;
+    private float ShaderPauseTimeNet
     {
-        get => shaderPauseTime;
+        get => shaderPauseTimeNet;
         set
         {
-            shaderPauseTime = value;
+            shaderPauseTimeNet = value;
             if (matParticleFlow != null)
-                matParticleFlow.SetFloat("_PauseTime", shaderPauseTime);
+            {
+                float netTimeDelta = (Networking.GetServerTimeInMilliseconds() * 0.001f) - Time.timeSinceLevelLoad;
+                matParticleFlow.SetFloat("_PauseTime", shaderPauseTimeNet-netTimeDelta);
+            }
             RequestSerialization();
         }
     }
-    [SerializeField, UdonSynced, FieldChangeCallback(nameof(ShaderBaseTime))]
-    private float shaderBaseTime = 0;
-    private float ShaderBaseTime
+    [SerializeField, UdonSynced, FieldChangeCallback(nameof(ShaderBaseTimeNet))]
+    private float shaderBaseTimeNet = 0;
+    private float ShaderBaseTimeNet
     {
-        get => shaderBaseTime;
+        get => shaderBaseTimeNet;
         set
         {
-            shaderBaseTime = value;
+            shaderBaseTimeNet = value;
             if (matParticleFlow != null)
-                matParticleFlow.SetFloat("_BaseTime", shaderBaseTime);
+            {
+                float netTimeDelta = (Networking.GetServerTimeInMilliseconds() * 0.001f) - Time.timeSinceLevelLoad;
+                matParticleFlow.SetFloat("_BaseTime", shaderBaseTimeNet-netTimeDelta);
+            }
             RequestSerialization();
         }
     }
     [SerializeField]
     private bool shaderPlaying = false;
-    private VRCPlayerApi player;
-    private bool iamOwner = false;
-
 
     private float prevVisibility = -1;
     private void reviewProbVisibility()
@@ -217,17 +220,6 @@ public class BallisticScatter : UdonSharpBehaviour
     }
 
 
-    /* 
-     * Udon Sync Stuff
-     */
-    private void ReviewOwnerShip()
-    {
-        iamOwner = Networking.IsOwner(this.gameObject);
-    }
-    public override void OnOwnershipTransferred(VRCPlayerApi player)
-    {
-        ReviewOwnerShip();
-    }
 
     [SerializeField, FieldChangeCallback(nameof(ParticlePlayState))] int particlePlayState = 1;
     public int ParticlePlayState
@@ -276,12 +268,13 @@ public class BallisticScatter : UdonSharpBehaviour
 
     private void initParticlePlay(Material mat)
     {
-        float t = Networking.GetServerTimeInMilliseconds() * 0.001f;
-        shaderBaseTime = t;
-        shaderPauseTime = t;
-        matParticleFlow.SetFloat("_PauseTime", shaderPauseTime);
-        matParticleFlow.SetFloat("_BaseTime", shaderBaseTime);
-        matParticleFlow.SetInteger("_Play", 1);
+        float netTimeDelta = (Networking.GetServerTimeInMilliseconds() * 0.001f) - Time.timeSinceLevelLoad;
+        if (matParticleFlow != null)
+        {
+            matParticleFlow.SetFloat("_PauseTime", shaderPauseTimeNet - netTimeDelta);
+            matParticleFlow.SetFloat("_BaseTime", shaderBaseTimeNet - netTimeDelta);
+            matParticleFlow.SetInteger("_Play", shaderPlaying ? 1 : 0);
+        }
         shaderPlaying = true;
         //Debug.Log("Init");
     }
@@ -299,7 +292,7 @@ public class BallisticScatter : UdonSharpBehaviour
                 if (!shaderPlaying)
                 {
                     if (amOwner)
-                        ShaderBaseTime += (Networking.GetServerTimeInMilliseconds()*0.001f) - shaderPauseTime;
+                        ShaderBaseTimeNet += (Networking.GetServerTimeInMilliseconds() - shaderPauseTimeNet)*0.001f;
                     matParticleFlow.SetInteger("_Play", 1);
                     shaderPlaying = true;
                     //Debug.Log("Play");
@@ -309,7 +302,7 @@ public class BallisticScatter : UdonSharpBehaviour
                 if (shaderPlaying)
                 {
                     if (amOwner)
-                        ShaderPauseTime = Networking.GetServerTimeInMilliseconds() * 0.001f;
+                        ShaderPauseTimeNet = Networking.GetServerTimeInMilliseconds()*0.001f;
                     matParticleFlow.SetInteger("_Play", 0);
                     shaderPlaying = false;
                     //Debug.Log("Pause");
@@ -792,6 +785,8 @@ public class BallisticScatter : UdonSharpBehaviour
 
     void OnEnable()
     {
+        shaderBaseTimeNet = Networking.GetServerTimeInMilliseconds() * 0.001f;
+        shaderPauseTimeNet = shaderBaseTimeNet;
         iHaveProbability = probabilityCRT != null;
         if (particleMeshRend != null)
             matParticleFlow = particleMeshRend.material;
@@ -861,10 +856,8 @@ public class BallisticScatter : UdonSharpBehaviour
     }
     void Start()
     {
-        player = Networking.LocalPlayer;
         if (particleMeshRend != null)
             matParticleFlow = particleMeshRend.material;
-        ReviewOwnerShip();
         simPixelScale = simPixels.x / simSize.x;
         if (iHaveProbability)
             matProbabilitySim = probabilityCRT.material;
