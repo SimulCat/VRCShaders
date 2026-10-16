@@ -228,7 +228,7 @@ public class BallisticScatter : UdonSharpBehaviour
         set
         {
             particlePlayState = value;
-            setParticlePlay(particlePlayState);
+            setParticlePlay();
         }
     }
 
@@ -278,15 +278,16 @@ public class BallisticScatter : UdonSharpBehaviour
         shaderPlaying = true;
         //Debug.Log("Init");
     }
-    private void setParticlePlay(int playState)
+    private void setParticlePlay()
     {
         if (particleMeshRend == null)
             return;
-        particleMeshRend.enabled = (playState >= 0 && playState < 2);
+        particlePlayState = Mathf.Clamp(particlePlayState, -1, 1);
+        particleMeshRend.enabled = particlePlayState >= 0;
         bool amOwner = togPlayPauseStop == null || togPlayPauseStop.IsOwner;
         if (amOwner && !Networking.IsOwner(gameObject))
             Networking.SetOwner(Networking.LocalPlayer, gameObject);
-        switch (playState)
+        switch (particlePlayState)
         {
             case 1:
                 if (!shaderPlaying)
@@ -853,6 +854,11 @@ public class BallisticScatter : UdonSharpBehaviour
             slitPitchSlider.ClientVariableName = "slitPitch";
             slitPitchSlider.SetValue(slitPitch);
         }
+        if (togPlayPauseStop != null)
+        {
+            togPlayPauseStop.SetActiveValue(particlePlayState);
+            togPlayPauseStop.clientVariable = "particlePlayState";
+        }
     }
     void Start()
     {
@@ -878,6 +884,7 @@ public class BallisticScatter : UdonSharpBehaviour
         GratingOffset = gratingOffset;
         ScreenDistance = simSize.x;
         ParticleP = particleP;
+        ParticlePlayState = particlePlayState;
         crtUpdateRequired = true;
         //Debug.Log("BScatter Started");
     }
