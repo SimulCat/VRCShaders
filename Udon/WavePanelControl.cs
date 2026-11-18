@@ -41,10 +41,9 @@ public class WavePanelControl : UdonSharpBehaviour
     [SerializeField] UdonSlider speedSlider;
     private bool iHaveSpeedControl = false;
     [SerializeField, FieldChangeCallback(nameof(WaveSpeed))] public float waveSpeed;
-    private float initialSpeed = 1;
-    [SerializeField] UdonSlider momentumSlider;
+
+    [SerializeField] UdonSlider lambdaSlider; // Inverse of wavelength
     private bool iHaveLambdaControl = false;
-    [SerializeField, Range(1, 100)] float defaultLambda = 24;
     [SerializeField, Range(1, 100), FieldChangeCallback(nameof(Lambda))] public float lambda = 24;
 
     [SerializeField]
@@ -57,19 +56,15 @@ public class WavePanelControl : UdonSharpBehaviour
 
     [SerializeField, Range(20, 500), FieldChangeCallback(nameof(SlitPitch))]
     float slitPitch = 250;
-    float defaultPitch = 250;
 
     [SerializeField, Range(20, 500), FieldChangeCallback(nameof(SlitWidth))]
     float slitWidth = 10;
-    float defaultWidth = 10;
 
-    int defaultSources = 2;
-    [SerializeField, UdonSynced, FieldChangeCallback(nameof(NumSources))] private int numSources = 2;
-    [SerializeField] TextMeshProUGUI lblSourceCount;
+    [SerializeField, FieldChangeCallback(nameof(NumSources))] private int numSources = 2;
+    [SerializeField] SyncedIncDec sourceCountControl;
 
     [SerializeField] UdonSlider scaleSlider;
     private bool iHaveScaleControl = false;
-    [SerializeField, Range(1, 10)] float defaultScale = 24;
     [SerializeField, Range(1, 10), FieldChangeCallback(nameof(SimScale))] public float simScale = 24;
 
     [SerializeField, FieldChangeCallback(nameof(ContrastVal))]
@@ -92,7 +87,7 @@ public class WavePanelControl : UdonSharpBehaviour
     private bool iHavePanelMaterial = false;
     //[SerializeField]
     private bool iHaveSimDisplay = false;
-    //[SerializeField]
+    [SerializeField]
     private bool iHaveSimControl = false;
     [SerializeField]
     private bool CRTUpdatesMovement = false;
@@ -190,7 +185,7 @@ public class WavePanelControl : UdonSharpBehaviour
     private void UpdateWaveSpeed()
     {
         if (iHaveSimDisplay)
-            matSimDisplay.SetFloat("_Frequency", playSim ?  waveSpeed * defaultLambda / lambda : 0f);
+            matSimDisplay.SetFloat("_Frequency", playSim ?  waveSpeed : 0f);
         crtUpdateNeeded |= iHaveCRT;
     }
 
@@ -243,15 +238,8 @@ public class WavePanelControl : UdonSharpBehaviour
         get => numSources;
         set
         {
-            if (value < 1)
-                value = 1;
-            if (value > 17)
-                value = 17;
             numSources = value;
             updateGrating();
-            if (lblSourceCount != null)
-                lblSourceCount.text = numSources.ToString();
-            RequestSerialization();
         }
     }
     
@@ -461,11 +449,9 @@ public class WavePanelControl : UdonSharpBehaviour
            UpdateSimulation();
         }
     }
-    void Start()
-    {
-        player = Networking.LocalPlayer;
-        ReviewOwnerShip();
 
+    void OnEnable()
+    {
         iHaveTogReal = togReal != null;
         iHaveTogIm = togImaginary != null;
         iHaveTogRealPwr = togRealPwr != null;
@@ -473,45 +459,69 @@ public class WavePanelControl : UdonSharpBehaviour
         iHaveTogProb = togProbability != null;
         iHaveTogAmp = togAmplitude != null;
 
+        iHaveWidthControl = widthSlider != null;
+        iHaveSpeedControl = speedSlider != null;
+        iHaveLambdaControl = lambdaSlider != null;
+        iHaveScaleControl = scaleSlider != null;
+        iHavePitchControl = pitchSlider != null;
+
         if (thePanel != null)
             matPanel = thePanel.material;
         iHavePanelMaterial = matPanel != null;
+        iHaveCRT = simCRT != null;
 
-        if (simCRT != null)
-            iHaveCRT = true;
-        //Debug.Log(gameObject.name + "Start() iHaveCRT=" + iHaveCRT.ToString());
         configureSimControl(PanelHasScrollingMaterial);
-        if (iHaveSimControl)
+        /*if (iHaveSimControl)
         {
-            defaultWidth = matSimControl.GetFloat("_SlitWidth");
-            defaultLambda = matSimControl.GetFloat("_Lambda");
-            defaultScale = matSimControl.GetFloat("_Scale");
-            defaultPitch = matSimControl.GetFloat("_SlitPitch"); 
-            defaultSources = matSimControl.GetInteger("_SlitCount");
-        }
-        initialSpeed = waveSpeed;
+            slitWidth = matSimControl.GetFloat("_SlitWidth");
+            lambda = matSimControl.GetFloat("_Lambda");
+            simScale = matSimControl.GetFloat("_Scale");
+            slitPitch = matSimControl.GetFloat("_SlitPitch");
+            numSources = matSimControl.GetInteger("_SlitCount");
+        }*/
         if (iHaveSimDisplay)
-            initialSpeed = matSimDisplay.GetFloat("_Frequency");
+            waveSpeed = matSimDisplay.GetFloat("_Frequency");
 
-        slitPitch = defaultPitch;
-        slitWidth = defaultWidth;
-        numSources = defaultSources;
-
-
-        iHaveWidthControl = widthSlider != null;
-        iHaveSpeedControl = speedSlider != null;
-        iHaveLambdaControl = momentumSlider != null;
-        iHaveScaleControl = scaleSlider != null;
-        ContrastVal = contrastVal;
-        if (contrastSlider != null)
-            contrastSlider.SetValue(contrastVal);
-
+        if (sourceCountControl != null)
+        {
+            sourceCountControl.SetLimits(1, 17);
+            sourceCountControl.SetValueWithoutNotification(numSources);
+            sourceCountControl.clientVariableName = "numSources";
+        }
         if (iHaveScaleControl)
         {
             scaleSlider.SetLimits(1, 10);
             scaleSlider.SetValue(simScale);
         }
-        iHavePitchControl = pitchSlider != null;
+        if (iHaveLambdaControl)
+            lambdaSlider.SetValue(lambda);
+        if (iHaveSpeedControl)
+            speedSlider.SetValue(waveSpeed);
+        if (iHaveScaleControl)
+            scaleSlider.SetValue(simScale);
+        if (iHavePitchControl)
+        {
+            pitchSlider.SetLimits(20, 500);
+            pitchSlider.SetValue(slitPitch);
+        }
+        if (iHaveWidthControl)
+            widthSlider.SetValue(slitWidth);
+
+        if (contrastSlider != null)
+            contrastSlider.SetValue(contrastVal);
+
+        if (iHaveCRT)
+            simCRT.Initialize();
+    }
+    void Start()
+    {
+        player = Networking.LocalPlayer;
+        ReviewOwnerShip();
+
+
+
+        //Debug.Log(gameObject.name + "Start() iHaveCRT=" + iHaveCRT.ToString());
+
         if (iHaveSimDisplay && displayMode < 0)
         {
             int dMode = Mathf.RoundToInt(matSimDisplay.GetFloat("_ShowReal")) > 0 ? 1 : 0;
@@ -534,25 +544,12 @@ public class WavePanelControl : UdonSharpBehaviour
                     break;
             }
         }
-        Lambda = defaultLambda;
-        if (iHaveLambdaControl)
-            momentumSlider.SetValue(defaultLambda);
-        WaveSpeed = initialSpeed;
-        if (iHaveSpeedControl)
-            speedSlider.SetValue(initialSpeed);
-        SimScale = defaultScale;
-        if (iHaveScaleControl)
-            scaleSlider.SetValue(defaultScale);
-        SlitPitch = defaultPitch;
-        if (iHavePitchControl)
-        {
-            pitchSlider.SetLimits(20,500);
-            pitchSlider.SetValue(defaultPitch);
-        }
-        NumSources = defaultSources;
-        SlitWidth = defaultWidth;
-        if (iHaveWidthControl) 
-            widthSlider.SetValue(defaultWidth);
+        Lambda = lambda;
+        WaveSpeed = waveSpeed;
+        SimScale = simScale;
+        SlitPitch = slitPitch;
+        NumSources = numSources;
+        SlitWidth = slitWidth;
         crtUpdateNeeded |= iHaveCRT;
         DisplayMode = displayMode;
     }

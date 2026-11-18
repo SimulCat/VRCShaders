@@ -50,6 +50,8 @@ float4 frag(v2f_customrendertexture i) : SV_Target
     return (float4)(_Color * inBarrierZone * inValidPosY);
 }
 
+
+
 ENDCG
 
     SubShader
