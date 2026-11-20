@@ -1,4 +1,4 @@
-Shader "SimulCat/Wave Surface/From Height"
+Shader "Murpheus/Wave Surface/From Height"
 {
     Properties
     {

@@ -1,4 +1,4 @@
-Shader"SimulCat/Young/CRT Display Mode"
+Shader"Murpheus/Young/CRT Display Mode"
 {
     Properties
     {

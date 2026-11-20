@@ -4,7 +4,6 @@ Shader "Murpheus/Ballistic/Particle Scattering 3D"
     {
         _MainTex ("Particle Texture", 2D) = "white" {}
         _ColourMap("Colour lookUp", 2D) = "black" {}
-        _Visibility("Visibility",Range(0.0,1.0)) = 1.0
         
         // Horizontal Scattering Momentum Frequency Distribution
         _MomentumMap("Momentum Map Horizontal", 2D ) = "black" {}
@@ -99,7 +98,6 @@ Shader "Murpheus/Ballistic/Particle Scattering 3D"
 
             sampler2D _MainTex;
             float4 _MainTex_ST;
-            float _Visibility;
 
             sampler2D _MomentumMap;
             float4 _MomentumMap_ST;
@@ -219,6 +217,7 @@ Shader "Murpheus/Ballistic/Particle Scattering 3D"
 
                 _SlitCount = max(1,_SlitCount);
                 _RowCount = max(0,_RowCount);
+
                 float gratingWidthScaled = (_SlitCount-1)*slitPitch + slitWidth;
                 float beamWidth = max (_BeamWidth,(gratingWidthScaled + slitWidth));
                 float gratingHeight = _RowCount >= 1 ? (_RowCount-1)*rowPitch + slitHeight : _BeamHeight;
@@ -281,7 +280,7 @@ Shader "Murpheus/Ballistic/Particle Scattering 3D"
                 float cycleTime = frac(cycles + continuous*hsh01)*cyclePeriod - pulseMax;
                 float timeOffset =  pulseDuration * invPi * asin(hshPlusMinus);
                 // Calculate distance travelled
-                float trackDistance = (cycleTime + timeOffset)*particleV*voffset;
+                float trackDistance = max(0.0, (cycleTime + timeOffset)*particleV*voffset);
                 bool beforeGrating = (trackDistance <= gratingDistance);
                 float postGratingDist = max(0.0,trackDistance-gratingDistance);
 
@@ -361,7 +360,6 @@ Shader "Murpheus/Ballistic/Particle Scattering 3D"
 					clip(-1);
 					col = 0;
 				}
-                col *= _Visibility;
                 return col;
             }
             ENDCG

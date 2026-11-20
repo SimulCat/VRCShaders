@@ -1,4 +1,4 @@
-Shader "SimulCat/Crystal/3D Lattice Model"
+Shader "Murpheus/Crystal/3D Lattice Model"
 {
     Properties
     {

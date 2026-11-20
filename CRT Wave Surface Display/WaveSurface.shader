@@ -1,4 +1,4 @@
-Shader "SimulCat/Wave Surface/From Tank CRT"
+Shader "Murpheus/Wave Surface/From Tank CRT"
 {
     Properties
     {
